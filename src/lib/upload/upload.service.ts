@@ -18,6 +18,7 @@ export class UploadService {
         this.s3Client = new S3Client({
             region: this.config.getOrThrow<string>('AWS_REGION'),
             endpoint: this.config.getOrThrow<string>("AWS_ENDPOINT"),
+            forcePathStyle: true,
             credentials: {
                 accessKeyId: this.config.getOrThrow<string>('AWS_ACCESS_KEY_ID'),
                 secretAccessKey: this.config.getOrThrow<string>('AWS_SECRET_ACCESS_KEY'),
@@ -33,7 +34,7 @@ export class UploadService {
         userId?: string
     }): Promise<FileInstance > {
         const bucketName = this.config.getOrThrow<string>('AWS_BUCKET_NAME');
-        const fileId = uuid4().toString()
+        const fileId = `${file.originalname}-${uuid4()}`
         await this.s3Client.send(new PutObjectCommand({
             Bucket: bucketName,
             Key: fileId,
@@ -45,6 +46,7 @@ export class UploadService {
         // Construct the public URL
         return this.db.fileInstance.create({
             data: {
+                fileId,
                 path: await this.getPresignedUrl(fileId, 3600 * 24 * 7),
                 bucket: bucketName,
                 name: file.originalname,
@@ -53,7 +55,7 @@ export class UploadService {
         })
     }
 
-    private async getPresignedUrl(fileName: string, expiresIn): Promise<string> {
+    public async getPresignedUrl(fileName: string, expiresIn): Promise<string> {
         const bucketName = this.config.getOrThrow<string>('AWS_BUCKET_NAME');
 
         const command = new GetObjectCommand({

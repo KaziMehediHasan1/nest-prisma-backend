@@ -37,6 +37,7 @@ model User {
 model FileInstance {
   id        String   @id @default(uuid())
   name      String
+  fileId    String @unique
   path      String
   createdAt DateTime @default(now())
   expiresAt DateTime
