@@ -25,6 +25,9 @@ export class UploadService {
             },
         });
     }
+    private sanitizeFileName(fileName: string): string {
+        return fileName.replace(/\s+/g, '_').replace(/[^\w.-]/g, '');
+    }
 
     async uploadFile({
         file,
@@ -34,7 +37,10 @@ export class UploadService {
         userId?: string
     }): Promise<FileInstance > {
         const bucketName = this.config.getOrThrow<string>('AWS_BUCKET_NAME');
-        const fileId = `${file.originalname}-${uuid4()}`
+        const sanitizedFileName = this.sanitizeFileName(file.originalname);
+        console.log(sanitizedFileName);
+        
+        const fileId = `${sanitizedFileName}-${uuid4()}`;
         await this.s3Client.send(new PutObjectCommand({
             Bucket: bucketName,
             Key: fileId,

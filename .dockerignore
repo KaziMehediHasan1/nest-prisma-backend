@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+dist
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env.*.local
+.idea
+.vscode
+.DS_Store
+coverage
+logs
+tmp
+test
+docker-compose.yml

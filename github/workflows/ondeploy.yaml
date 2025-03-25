@@ -1,0 +1,35 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main  # Trigger the workflow on push to 'main' branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up SSH
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: root  # Use your username if it's not root
+        password: ${{ secrets.VPS_PASSWORD }}
+        port: 22
+        script: |
+          # Go to your app directory
+          cd onurtaskiner/
+
+          # Pull latest changes from Git
+          git pull origin main
+
+          # Build and deploy with Docker Compose
+          docker-compose pull
+          docker-compose up -d --build
+
+          # Optionally, check the status of containers
+          docker-compose ps

@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { LibModule } from './lib/lib.module';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { MainModule } from './main/main.module';
 
 
 
@@ -16,6 +17,7 @@ import { ScheduleModule } from '@nestjs/schedule';
       isGlobal: true,
     }),
     ScheduleModule.forRoot(),
+    MainModule,
   ],
 })
 export class AppModule {}
