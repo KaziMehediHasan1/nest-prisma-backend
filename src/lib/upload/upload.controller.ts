@@ -35,4 +35,31 @@ export class UploadController {
     ) {
         return this.uploadService.uploadFile({ file });
     }
+
+    @Post('file')
+    @UseInterceptors(FileInterceptor('image'))
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                image: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+        },
+    })
+    uploadFile(
+        @UploadedFile(
+            new ParseFilePipe({
+                validators: [
+                    new MaxFileSizeValidator({ maxSize: 100 * 1024 * 1024 }), // 5MB limit
+                ],
+            }),
+        ) 
+        file: Express.Multer.File,
+    ) {
+        return this.uploadService.uploadFile({ file });
+    }
 }

@@ -13,11 +13,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// User Role start===========================================================
 enum UserRole {
   ADMIN
   VENDOR
   PLANNER
 }
+// User Role end=============================================================
+
+// File Type start===========================================================
+enum FileType {
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+}
+// File Type end=============================================================
 
 // User Instance start=======================================================
 
@@ -42,6 +53,7 @@ model FileInstance {
   createdAt DateTime @default(now())
   expiresAt DateTime
   bucket    String
+  type      FileType
 }
 
 // File Instance end=========================================================

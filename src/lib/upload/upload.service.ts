@@ -2,10 +2,9 @@ import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } fro
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DbService } from '../db/db.service';
-import { FileInstance } from '@prisma/client';
-import { v4 as uuid4 } from "uuid"
+import { FileInstance, FileType } from '@prisma/client';
+import { v4 as uuid4 } from "uuid";
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-
 
 @Injectable()
 export class UploadService {
@@ -25,20 +24,27 @@ export class UploadService {
             },
         });
     }
+
     private sanitizeFileName(fileName: string): string {
         return fileName.replace(/\s+/g, '_').replace(/[^\w.-]/g, '');
+    }
+
+    private getFileType(mimeType: string): FileType {
+        if (mimeType.startsWith('image/')) return FileType.IMAGE;
+        if (mimeType.startsWith('video/')) return FileType.VIDEO;
+        if (mimeType.startsWith('audio/')) return FileType.AUDIO;
+        return FileType.DOCUMENT;
     }
 
     async uploadFile({
         file,
         userId
-    }:{
+    }: {
         file: Express.Multer.File,
         userId?: string
-    }): Promise<FileInstance > {
+    }): Promise<FileInstance> {
         const bucketName = this.config.getOrThrow<string>('AWS_BUCKET_NAME');
         const sanitizedFileName = this.sanitizeFileName(file.originalname);
-        console.log(sanitizedFileName);
         
         const fileId = `${sanitizedFileName}-${uuid4()}`;
         await this.s3Client.send(new PutObjectCommand({
@@ -46,10 +52,11 @@ export class UploadService {
             Key: fileId,
             Body: file.buffer,
             ContentType: file.mimetype,
-            ACL: 'public-read', // Optional: makes the file publ¸Z1icly 
+            ACL: 'public-read',
         }));
 
-        // Construct the public URL
+        const fileType = this.getFileType(file.mimetype);
+
         return this.db.fileInstance.create({
             data: {
                 fileId,
@@ -57,8 +64,9 @@ export class UploadService {
                 bucket: bucketName,
                 name: file.originalname,
                 expiresAt: new Date(Date.now() + 3600 * 24 * 7 * 1000),
+                type: fileType,
             }
-        })
+        });
     }
 
     public async getPresignedUrl(fileName: string, expiresIn): Promise<string> {
@@ -69,7 +77,7 @@ export class UploadService {
             Key: fileName,
         });
 
-        const signedUrl = await getSignedUrl(this.s3Client, command, { expiresIn }); 
+        const signedUrl = await getSignedUrl(this.s3Client, command, { expiresIn });
         return signedUrl;
     }
 
