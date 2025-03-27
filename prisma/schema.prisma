@@ -14,11 +14,7 @@ datasource db {
 }
 
 // User Role start===========================================================
-enum UserRole {
-  ADMIN
-  VENDOR
-  PLANNER
-}
+
 // User Role end=============================================================
 
 // File Type start===========================================================
@@ -28,6 +24,7 @@ enum FileType {
   AUDIO
   DOCUMENT
 }
+
 // File Type end=============================================================
 
 // User Instance start=======================================================
@@ -35,10 +32,86 @@ enum FileType {
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
+  phone     String   @unique
   password  String
   role      UserRole @default(PLANNER)
+  profile   Profile?
+  otp       Otp?
+  review    Review[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  ADMIN
+  PLANNER
+  SERVICE_PROVIDER
+  VENUE_OWNER
+}
+
+model Otp {
+  id     String  @id @default(uuid())
+  otp    String?
+  userId String  @unique
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Profile {
+  id       String  @id @default(uuid())
+  userId   String  @unique
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location String
+  venue    Venue[]
+}
+
+model Venue {
+  id String @id @default(uuid())
+
+  Profile           Profile?      @relation(fields: [profileId], references: [id])
+  profileId         String?
+  name              String
+  city              String
+  area              String
+  capacity          Int
+  type              VenueType
+  amenities         Amenities[]
+  arrangementsImage FileInstance?
+  Reviews           Review[]
+  price             Int
+  bookingType       BookingType
+}
+
+enum BookingType {
+  INSTANT_BOOKING
+  REQUEST_BASED_BOOKING
+}
+
+enum VenueType {
+  HOTEL
+  RESTAURANT
+  CONFERENCE_HALL
+  BANQUET
+  RESORT
+  OUTDOOR
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  venueId   String
+  userId    String // Assuming a user can leave a review
+  rating    Int // Rating (e.g., 1-5 stars)
+  comment   String? // Optional comment
+  createdAt DateTime @default(now())
+  Venue     Venue    @relation(fields: [venueId], references: [id])
+
+  User User @relation(fields: [userId], references: [id])
+}
+
+model Amenities {
+  id      String  @id @default(uuid())
+  name    String  @unique
+  Venue   Venue?  @relation(fields: [venueId], references: [id])
+  venueId String?
 }
 
 // User Instance end=========================================================
@@ -48,12 +121,14 @@ model User {
 model FileInstance {
   id        String   @id @default(uuid())
   name      String
-  fileId    String @unique
+  fileId    String   @unique
   path      String
   createdAt DateTime @default(now())
   expiresAt DateTime
   bucket    String
   type      FileType
+  Venue     Venue?   @relation(fields: [venueId], references: [id])
+  venueId   String?  @unique
 }
 
 // File Instance end=========================================================
