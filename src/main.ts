@@ -2,7 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { GlobalErrorHandlerFilter } from './error/globalerror.filter';
-
+import { AdminSeeder } from './seed/admin.seed';
+import { AmenitiesSeeder } from './seed/amenitiesSeeder.seed';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix("v2")
@@ -15,6 +16,8 @@ async function bootstrap() {
     .build()
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, documentFactory);
+  await app.get(AdminSeeder).seedAdmin()
+  await app.get(AmenitiesSeeder).seedAmenities()
   app.useGlobalFilters(new GlobalErrorHandlerFilter());
   await app.listen(process.env.PORT ?? 3000);
 }

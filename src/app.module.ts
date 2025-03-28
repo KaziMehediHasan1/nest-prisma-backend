@@ -5,12 +5,16 @@ import { LibModule } from './lib/lib.module';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MainModule } from './main/main.module';
-
-
+import { AdminSeeder } from './seed/admin.seed';
+import { AmenitiesSeeder } from './seed/amenitiesSeeder.seed';
 
 @Module({
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService, 
+    AdminSeeder,
+    AmenitiesSeeder
+  ],
   imports: [
     LibModule,
     ConfigModule.forRoot({

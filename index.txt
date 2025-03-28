@@ -1,0 +1,13 @@
+enum Amenities {
+  Wifi
+  Parking
+  AC
+  Pool
+  Stage_Lighting
+  Sound_System
+  Bar_Service
+  Elevator
+  Rest_room
+  Event_Staff
+  In_House_Catering
+}
