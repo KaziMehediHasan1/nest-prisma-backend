@@ -38,10 +38,8 @@ export class UploadService {
 
     async uploadFile({
         file,
-        userId
     }: {
         file: Express.Multer.File,
-        userId?: string
     }): Promise<FileInstance> {
         const bucketName = this.config.getOrThrow<string>('AWS_BUCKET_NAME');
         const sanitizedFileName = this.sanitizeFileName(file.originalname);

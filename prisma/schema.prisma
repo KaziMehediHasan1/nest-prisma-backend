@@ -34,6 +34,7 @@ model User {
   email     String   @unique
   phone     String   @unique
   password  String
+  name      String
   role      UserRole @default(PLANNER)
   profile   Profile?
   otp       Otp?
