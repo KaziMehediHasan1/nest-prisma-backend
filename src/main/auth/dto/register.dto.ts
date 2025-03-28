@@ -6,9 +6,9 @@ import {
   MinLength, 
   MaxLength, 
   IsOptional, 
-  IsEnum, 
-  Matches 
+  IsEnum 
 } from 'class-validator';
+import { IsValidPhone } from 'src/validators/phone.validator';
 
 export class RegisterDto {
   @ApiProperty({
@@ -28,9 +28,6 @@ export class RegisterDto {
   @IsString({ message: 'Password must be a string' })
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
   @MaxLength(50, { message: 'Password cannot be longer than 50 characters' })
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
-    message: 'Password must include uppercase, lowercase, number, and special character'
-  })
   password: string;
 
   @ApiProperty({
@@ -43,11 +40,12 @@ export class RegisterDto {
   name: string;
 
   @ApiProperty({
-    description: 'User phone number',
-    example: '+1234567890'
+    description: 'User phone number with country code',
+    example: '+1 212 555 4567'
   })
-  @IsString({ message: 'Phone must be a string' })
-  @Matches(/^\+?[1-9]\d{1,14}$/, { message: 'Invalid phone number format' })
+  @IsValidPhone("ANY", { 
+    message: 'Invalid phone number or country code' 
+  })
   phone: string;
 
   @ApiProperty({
