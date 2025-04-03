@@ -43,6 +43,11 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
+// User Instance end=========================================================
+
+
+// User Type start=========================================================
+
 enum UserRole {
   ADMIN
   PLANNER
@@ -50,6 +55,9 @@ enum UserRole {
   VENUE_OWNER
 }
 
+// User Type end=========================================================
+
+// Otp start========================================================
 model Otp {
   id     String  @id @default(uuid())
   otp    String?
@@ -57,6 +65,9 @@ model Otp {
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+// Otp end========================================================
+
+//profile start===================================================
 model Profile {
   id       String  @id @default(uuid())
   userId   String  @unique
@@ -64,7 +75,10 @@ model Profile {
   location String
   venue    Venue[]
 }
+//profile end===================================================
 
+
+// Venue stat=================================================== 
 model Venue {
   id String @id @default(uuid())
 
@@ -82,10 +96,18 @@ model Venue {
   bookingType       BookingType
 }
 
+// Venue edn===================================================
+
+// Booking type stat===================================================
+
 enum BookingType {
   INSTANT_BOOKING
   REQUEST_BASED_BOOKING
 }
+
+// Booking type end===================================================
+
+// Venue type stat===================================================
 
 enum VenueType {
   HOTEL
@@ -95,6 +117,11 @@ enum VenueType {
   RESORT
   OUTDOOR
 }
+
+// Venue type end===================================================
+
+
+// Review stat===================================================
 
 model Review {
   id        String   @id @default(uuid())
@@ -107,6 +134,8 @@ model Review {
 
   User User @relation(fields: [userId], references: [id])
 }
+
+// Review end===================================================
 
 model Amenities {
   id      String  @id @default(uuid())
