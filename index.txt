@@ -11,3 +11,11 @@ enum Amenities {
   Event_Staff
   In_House_Catering
 }
+
+docker run -d \
+  --name postgres-db2 \
+  -e POSTGRES_USER=myuser \
+  -e POSTGRES_PASSWORD=mypassword \
+  -e POSTGRES_DB=mydatabase \
+  -p 5433:5432 \
+  postgres
