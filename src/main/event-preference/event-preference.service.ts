@@ -3,14 +3,14 @@ import { CreateEventPreferenceDto } from './dto/create-event-preference.dto';
 import { UpdateEventPreferenceDto } from './dto/update-event-preference.dto';
 import { DbService } from 'src/lib/db/db.service';
 import { UploadService } from 'src/lib/upload/upload.service';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventService } from 'src/lib/event/event.service';
 
 @Injectable()
 export class EventPreferenceService {
   constructor(
     private readonly db: DbService,
     private readonly uploadService: UploadService,
-    private eventEmitter: EventEmitter2,
+    private eventEmitter: EventService,
   ) {}
   public async create(createEventPreference: CreateEventPreferenceDto) {
     if (!createEventPreference.avatar)
