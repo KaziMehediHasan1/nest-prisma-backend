@@ -10,6 +10,7 @@ import { AmenitiesSeeder } from './seed/amenitiesSeeder.seed';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategy/jwt.strategy';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   controllers: [AppController],
@@ -34,7 +35,8 @@ import { JwtStrategy } from './strategy/jwt.strategy';
         signOptions: { expiresIn: '7d' }
       }),
       inject: [ConfigService]
-    })
+    }),
+    EventEmitterModule.forRoot(),
   ],
   exports: [JwtStrategy]
 })

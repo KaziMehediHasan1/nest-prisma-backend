@@ -44,7 +44,6 @@ model User {
 
 // User Instance end=========================================================
 
-
 // User Type start=========================================================
 
 enum UserRole {
@@ -52,21 +51,42 @@ enum UserRole {
   PLANNER
   SERVICE_PROVIDER
   VENUE_OWNER
+  GUEST
 }
 
 // User Type end=========================================================
 
-
 //profile start===================================================
 model Profile {
-  id       String  @id @default(uuid())
-  userId   String  @unique
-  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  location String
-  venue    Venue[]
+  id               String            @id @default(uuid())
+  userId           String            @unique
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location         String
+  venue            Venue[]
+  gender           Gender
+  image            FileInstance?
+  reviews          Review[]
+  fileInstanceId   String?
+  eventPreferences EventPreference[]
 }
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
 //profile end===================================================
 
+//eventPreferences start================================================
+model EventPreference {
+  id        String        @id @default(uuid())
+  name      String        @unique
+  avatar    FileInstance?
+  Profile   Profile[]
+}
+
+//eventPreferences end================================================
 
 // Venue stat=================================================== 
 model Venue {
@@ -110,7 +130,6 @@ enum VenueType {
 
 // Venue type end===================================================
 
-
 // Review stat===================================================
 
 model Review {
@@ -122,7 +141,9 @@ model Review {
   createdAt DateTime @default(now())
   Venue     Venue    @relation(fields: [venueId], references: [id])
 
-  User User @relation(fields: [userId], references: [id])
+  User      User     @relation(fields: [userId], references: [id])
+  Profile   Profile? @relation(fields: [profileId], references: [id])
+  profileId String?
 }
 
 // Review end===================================================
@@ -139,16 +160,20 @@ model Amenities {
 // File Instance start=======================================================
 
 model FileInstance {
-  id        String   @id @default(uuid())
-  name      String
-  fileId    String   @unique
-  path      String
-  createdAt DateTime @default(now())
-  expiresAt DateTime
-  bucket    String
-  type      FileType
-  Venue     Venue?   @relation(fields: [venueId], references: [id])
-  venueId   String?  @unique
+  id                String           @id @default(uuid())
+  name              String
+  fileId            String           @unique
+  path              String
+  createdAt         DateTime         @default(now())
+  expiresAt         DateTime
+  bucket            String
+  type              FileType
+  Venue             Venue?           @relation(fields: [venueId], references: [id])
+  venueId           String?          @unique
+  Profile           Profile?         @relation(fields: [profileId], references: [id])
+  profileId         String?          @unique
+  EventPreference   EventPreference? @relation(fields: [eventPreferenceId], references: [id])
+  eventPreferenceId String?          @unique
 }
 
 // File Instance end=========================================================
