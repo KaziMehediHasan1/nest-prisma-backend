@@ -11,6 +11,7 @@ import { FileInstance, FileType } from '@prisma/client';
 import { v4 as uuid4 } from 'uuid';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { OnEvent } from '@nestjs/event-emitter';
+import { EVENT_TYPES, FileDeleteEvent } from 'src/interfaces/event';
 
 @Injectable()
 export class UploadService {
@@ -89,8 +90,8 @@ export class UploadService {
     return signedUrl;
   }
 
-  @OnEvent('FILE_DELETE')
-  async deleteFile({ Key }: { Key: string }): Promise<void> {
+  @OnEvent(EVENT_TYPES.FILE_DELETE)
+  async deleteFile({ Key }: FileDeleteEvent): Promise<void> {
     const bucketName = this.config.getOrThrow<string>('AWS_BUCKET_NAME');
 
     await this.s3Client.send(
