@@ -11,6 +11,9 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { CacheModule } from '@nestjs/cache-manager';
+import * as redisStore from 'cache-manager-redis-store';
+
 
 @Module({
   controllers: [AppController],
@@ -20,11 +23,13 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     AmenitiesSeeder,
     JwtStrategy,
   ],
+  
   imports: [
     LibModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+
     ScheduleModule.forRoot(),
     MainModule,
     PassportModule,
@@ -36,7 +41,20 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
       }),
       inject: [ConfigService]
     }),
+
     EventEmitterModule.forRoot(),
+    
+    CacheModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      isGlobal: true,
+      useFactory: (configService: ConfigService) => ({
+        store: redisStore,
+        host: configService.getOrThrow('REDIS_HOST', 'localhost'),
+        port: configService.getOrThrow('REDIS_PORT', 6379),
+        password: configService.getOrThrow('REDIS_PASSWORD', undefined),
+      }),
+    }),
   ],
   exports: [JwtStrategy]
 })

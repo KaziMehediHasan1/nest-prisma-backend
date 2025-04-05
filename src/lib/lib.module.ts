@@ -6,11 +6,13 @@ import { UploadController } from './upload/upload.controller';
 import { FileInstanceCronService } from 'src/cron/FileInstanceCronService';
 import { MailService } from './mail/mail.service';
 import { EventService } from './event/event.service';
+import { VerificationService } from './verification/verification.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Global()
 @Module({
-  providers: [UtilService, DbService, UploadService, FileInstanceCronService, MailService, EventService],
-  exports: [UtilService, DbService, UploadService, FileInstanceCronService, EventService],
+  providers: [UtilService, DbService, UploadService, FileInstanceCronService, MailService, EventService, VerificationService],
+  exports: [UtilService, DbService, UploadService, FileInstanceCronService, EventService, VerificationService],
   controllers: [UploadController],
 })
 export class LibModule {}

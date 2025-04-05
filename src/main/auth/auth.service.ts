@@ -21,7 +21,6 @@ import { RegisterDto } from './dto/register.dto';
     ) {}
   
     async register(dto: RegisterDto) {
-      // Check if user already exists
       const existingUser = await this.db.user.findUnique({
         where: { email: dto.email }
       });
@@ -30,13 +29,11 @@ import { RegisterDto } from './dto/register.dto';
         throw new ConflictException('User already exists');
       }
   
-      // Hash password
       const hashedPassword = await this.utilService.hashPassword({
         password: dto.password,
         round: 10
       });
   
-      // Create user with default role if not specified
       const user = await this.db.user.create({
         data: {
           ...dto,
@@ -45,7 +42,6 @@ import { RegisterDto } from './dto/register.dto';
         }
       });
   
-      // Generate JWT token
       const token = await this.generateToken(user);
   
       return {
