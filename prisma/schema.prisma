@@ -30,16 +30,17 @@ enum FileType {
 // User Instance start=======================================================
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  phone     String   @unique
-  password  String
-  name      String
-  role      UserRole @default(PLANNER)
-  profile   Profile?
-  review    Review[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  email      String   @unique
+  phone      String   @unique
+  password   String
+  name       String
+  role       UserRole @default(PLANNER)
+  profile    Profile?
+  review     Review[]
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 // User Instance end=========================================================
@@ -80,10 +81,10 @@ enum Gender {
 
 //eventPreferences start================================================
 model EventPreference {
-  id        String        @id @default(uuid())
-  name      String        @unique
-  avatar    FileInstance?
-  Profile   Profile[]
+  id      String        @id @default(uuid())
+  name    String        @unique
+  avatar  FileInstance?
+  Profile Profile[]
 }
 
 //eventPreferences end================================================

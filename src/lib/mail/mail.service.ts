@@ -3,7 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { OnEvent } from '@nestjs/event-emitter';
 import { Transporter, createTransport } from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
-import { EmailSendEvent, EVENT_TYPES } from 'src/interfaces/event';
+import {
+  EmailSendEvent,
+  EVENT_TYPES,
+  VerificationEmailEvent,
+} from 'src/interfaces/event';
 
 @Injectable()
 export class MailService {
@@ -11,7 +15,7 @@ export class MailService {
   private readonly user: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.user = this.configService.getOrThrow<string>('USER');
+    this.user = this.configService.getOrThrow<string>('USER_EMAIL');
 
     this.transport = createTransport({
       service: 'gmail',
@@ -22,11 +26,7 @@ export class MailService {
     });
   }
 
-  async sendMail(
-    email: string,
-    subject: string,
-    text: string,
-  ): Promise<void> {
+  async sendMail(email: string, subject: string, text: string): Promise<void> {
     const mailOptions: Mail.Options = {
       from: this.user,
       to: email,
@@ -98,5 +98,94 @@ export class MailService {
     } else {
       await this.sendMail(to, subject, text || '');
     }
+  }
+
+  @OnEvent(EVENT_TYPES.VERIFICATION_EMAIL_SEND)
+  async handleVerificationEmailSend(payload: VerificationEmailEvent) {
+    const { to, code, subject, expiresInMinutes = 5, metadata = {} } = payload;
+
+    const emailSubject = subject || 'Your Verification Code';
+
+    const appName = metadata?.applicationName || 'Our Application';
+
+    const html = this.buildVerificationEmailTemplate(
+      code,
+      expiresInMinutes,
+      appName,
+      metadata,
+    );
+
+    const text = `Your verification code is: ${code}. This code will expire in ${expiresInMinutes} minutes.`;
+
+    try {
+      await this.sendHtmlMail(to, emailSubject, html);
+      Logger.log(`Verification email sent to ${to}`);
+    } catch (error) {
+      Logger.error(`Failed to send verification email to ${to}`, error.stack);
+      try {
+        await this.sendMail(to, emailSubject, text);
+        Logger.log(`Fallback plain text verification email sent to ${to}`);
+      } catch (fallbackError) {
+        Logger.error(
+          `Critical failure: Both HTML and plain text verification emails failed for ${to}`,
+          fallbackError.stack,
+        );
+      }
+    }
+  }
+
+  /**
+   * Builds a simple HTML template for verification emails
+   */
+  private buildVerificationEmailTemplate(
+    code: string,
+    expiresInMinutes: number,
+    appName: string,
+    metadata: Record<string, any> = {},
+  ): string {
+    const username = metadata.username ? ` ${metadata.username}` : '';
+
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Verification Code</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding-bottom: 20px; }
+        .code-container { background-color: #f9f9f9; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0; }
+        .code { font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #4a4a4a; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #999; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h2>Email Verification</h2>
+        </div>
+        
+        <p>Hello${username},</p>
+        
+        <p>Thank you for using ${appName}. To verify your email address, please use the following verification code:</p>
+        
+        <div class="code-container">
+          <div class="code">${code}</div>
+        </div>
+        
+        <p>This code will expire in <strong>${expiresInMinutes} minutes</strong>.</p>
+        
+        <p>If you didn't request this code, you can safely ignore this email.</p>
+        
+        <div class="footer">
+          <p>This is an automated message, please do not reply to this email.</p>
+          <p>&copy; ${new Date().getFullYear()} ${appName}. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
   }
 }
