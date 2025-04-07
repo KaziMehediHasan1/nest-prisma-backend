@@ -44,16 +44,8 @@ import * as redisStore from 'cache-manager-redis-store';
 
     EventEmitterModule.forRoot(),
     
-    CacheModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
+    CacheModule.register({
       isGlobal: true,
-      useFactory: (configService: ConfigService) => ({
-        store: redisStore,
-        host: configService.getOrThrow('REDIS_HOST', 'localhost'),
-        port: configService.getOrThrow('REDIS_PORT', 6379),
-        password: configService.getOrThrow('REDIS_PASSWORD', undefined),
-      }),
     }),
   ],
   exports: [JwtStrategy]
