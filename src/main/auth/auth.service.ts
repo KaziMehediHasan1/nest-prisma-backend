@@ -2,6 +2,8 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -11,9 +13,10 @@ import { UtilService } from 'src/lib/util/util.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ApiResponse } from 'src/interfaces/response';
-import { EventService } from 'src/lib/event/event.service';
 import { VerificationService } from 'src/lib/verification/verification.service';
 import { VerifyCodeDto } from './dto/verifyEmail.dto';
+import { ResetPasswordDto } from './dto/resetPassword.dto';
+import { SendResetCodeDto } from './dto/sendResetCode.dto';
 
 @Injectable()
 export class AuthService {
@@ -108,6 +111,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (!user.isVerified) {
+      throw new HttpException("Please verify your email", HttpStatus.UNAUTHORIZED)
+    }
+
     // Verify password
     const isPasswordValid = await this.utilService.comparePassword({
       password: dto.password,
@@ -175,6 +182,7 @@ export class AuthService {
     }
 
     const isCodeValid = await this.verifyService.verifyCode(identifier, code);
+    
 
     if (!isCodeValid) {
       throw new UnauthorizedException('Invalid verification code');
@@ -193,4 +201,72 @@ export class AuthService {
       message: 'Email verified successfully. You can now login.',
     };
   }
+
+  async sendPasswordResetCode({email}: SendResetCodeDto): Promise<ApiResponse<null>> {
+    // Check if user exists
+    const user = await this.db.user.findUnique({
+      where: { email },
+    });
+  
+    if (!user) {
+      throw new HttpException('No account found with this email address', HttpStatus.NOT_FOUND);
+    }
+  
+    // Generate and send password reset code
+    await this.verifyService.sendPasswordResetEmail(
+      email,
+      30, // 30 minutes expiration
+      {
+        username: user.name,
+        applicationName: 'Your Application',
+      }
+    );
+  
+    return {
+      statusCode: 200,
+      success: true,
+      message: 'Password reset code has been sent to your email',
+      data: null,
+    };
+  }
+  
+  async resetPassword(dto: ResetPasswordDto): Promise<ApiResponse<null>> {
+    const { email, code, newPassword } = dto;
+  
+    // Check if user exists
+    const user = await this.db.user.findUnique({
+      where: { email },
+    });
+  
+    if (!user) {
+      throw new HttpException('No account found with this email address', HttpStatus.NOT_FOUND);
+    }
+  
+    // Verify the reset code
+    const isCodeValid = await this.verifyService.verifyCode(email, code);
+  
+    if (!isCodeValid) {
+      throw new UnauthorizedException('Invalid or expired reset code');
+    }
+  
+    // Hash the new password
+    const hashedPassword = await this.utilService.hashPassword({
+      password: newPassword,
+      round: 10,
+    });
+  
+    // Update the user's password
+    await this.db.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    });
+  
+    return {
+      statusCode: 200,
+      success: true,
+      message: 'Password has been reset successfully. You can now login with your new password.',
+      data: null,
+    };
+  }
+
 }

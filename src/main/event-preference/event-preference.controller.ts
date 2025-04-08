@@ -8,12 +8,18 @@ import {
   Delete,
   UseInterceptors,
   UploadedFile,
+  UseGuards,
 } from '@nestjs/common';
 import { EventPreferenceService } from './event-preference.service';
 import { CreateEventPreferenceDto } from './dto/create-event-preference.dto';
 import { UpdateEventPreferenceDto } from './dto/update-event-preference.dto';
-import { ApiConsumes } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { JwtStrategy } from 'src/strategy/jwt.strategy';
+import { RolesGuard } from 'src/guard/role.guard';
+import { Roles } from 'src/decorator/roles.decorator';
+import { VerifiedGuard } from 'src/guard/verify.guard';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('event-preference')
 export class EventPreferenceController {
@@ -37,6 +43,9 @@ export class EventPreferenceController {
   }
 
   @Get('get')
+  @ApiBearerAuth()
+  @Roles('PLANNER')
+  @UseGuards(AuthGuard("jwt"), VerifiedGuard, RolesGuard)
   findAll() {
     return this.eventPreferenceService.findAll();
   }

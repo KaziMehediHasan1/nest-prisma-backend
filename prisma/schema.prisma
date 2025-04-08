@@ -37,7 +37,6 @@ model User {
   name       String
   role       UserRole @default(PLANNER)
   profile    Profile?
-  review     Review[]
   isVerified Boolean  @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -103,11 +102,90 @@ model Venue {
   amenities         Amenities[]
   arrangementsImage FileInstance?
   Reviews           Review[]
+  catering          String?
+  parking           String?
+  availability      String?
+  extraServices     String?
   price             Int
   bookingType       BookingType
+  Decoration        Decoration?   @relation(fields: [decorationId], references: [id], onDelete: Cascade)
+  decorationId      String?       @unique
 }
 
-// Venue edn===================================================
+// Venue end===================================================
+
+// Decoration start================================================
+
+model Decoration {
+  id            String          @id @default(uuid())
+  venue         Venue?
+  tableShapes   TableShape[]
+  seatingStyles SeatingStyle[]
+  lighting      LightingStyle[]
+  flowerColors  FlowerColor[]
+  flowerTypes   FlowerType[]
+  fragrances    Fragrance[]
+}
+
+enum TableShape {
+  ROUND
+  OVAL
+  HALF_MOON
+  BANQUET
+  SQUARE
+  HEXAGONAL
+}
+
+enum SeatingStyle {
+  BANQUET
+  THEATER
+  CLASSROOM
+  CABARET
+  U_SHAPED
+  COCKTAIL
+}
+
+enum LightingStyle {
+  AMBIENT
+  SPOTLIGHTING
+  FAIRY
+  CHANDELIERS
+  LED
+  NEON
+  GOBO
+}
+
+enum FlowerColor {
+  WHITE
+  RED
+  YELLOW
+  PINK
+  PURPLE
+  BLUE
+  GREEN
+  ORANGE
+}
+
+enum FlowerType {
+  ROSES
+  PEONIES
+  LILIES
+  ORCHIDS
+  TULIPS
+  SUNFLOWERS
+  HYDRANGEAS
+}
+
+enum Fragrance {
+  FLORAL_SCENTS
+  CITRUS_SCENTS
+  HERBAL_SCENTS
+  OCEANIC_SCENTS
+  WOODY_SCENTS
+  SPICY
+}
+
+//Decoration end================================================
 
 // Booking type stat===================================================
 
@@ -136,13 +214,10 @@ enum VenueType {
 model Review {
   id        String   @id @default(uuid())
   venueId   String
-  userId    String // Assuming a user can leave a review
   rating    Int // Rating (e.g., 1-5 stars)
   comment   String? // Optional comment
   createdAt DateTime @default(now())
   Venue     Venue    @relation(fields: [venueId], references: [id])
-
-  User      User     @relation(fields: [userId], references: [id])
   Profile   Profile? @relation(fields: [profileId], references: [id])
   profileId String?
 }
