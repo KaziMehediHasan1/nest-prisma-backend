@@ -22,8 +22,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     email: string, 
     role: string 
   }) {
-
-    console.log(payload);
     
     if (!payload) {
       throw new UnauthorizedException('Invalid token');

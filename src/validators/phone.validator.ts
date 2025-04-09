@@ -12,22 +12,16 @@ import {
   export class IsValidPhoneConstraint implements ValidatorConstraintInterface {
     validate(phoneNumber: string, args?: ValidationArguments): boolean {
       try {
-        // Early return for empty values
         if (!phoneNumber) return false;
   
-        // Parse the phone number
         const parsedPhone = parsePhoneNumber(phoneNumber);
   
-        // Ensure the number is valid
         if (!parsedPhone || !isValidPhoneNumber(phoneNumber)) return false;
   
-        // If no constraints, allow all countries
         if (!args?.constraints?.length) return true;
   
-        // Check if constraints include a special 'ANY' flag
         if (args.constraints.includes('ANY')) return true;
   
-        // Check if the phone number's country matches any specified countries
         return args.constraints.includes(parsedPhone.country || '');
       } catch (error) {
         return false;
@@ -39,12 +33,10 @@ import {
     }
   }
   
-  // Custom decorator for phone number validation
   export function IsValidPhone(
     countries?: string[] | 'ANY',
     validationOptions?: ValidationOptions
   ) {
-    // If 'ANY' is passed, convert to an array with 'ANY'
     const constraintCountries = countries === 'ANY' ? ['ANY'] : 
       (countries || []);
   

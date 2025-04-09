@@ -13,7 +13,6 @@ export class VerifiedGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
-    console.log(user);
 
     if (!user) {
       throw new ForbiddenException('User not authenticated');

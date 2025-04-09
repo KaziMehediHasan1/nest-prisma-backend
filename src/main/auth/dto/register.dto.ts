@@ -49,16 +49,6 @@ export class RegisterDto {
   phone: string;
 
   @ApiProperty({
-    description: 'User address',
-    example: '123 Main St, Anytown, CA 90210',
-    required: false
-  })
-  @IsOptional()
-  @IsString({ message: 'Address must be a string' })
-  @MaxLength(200, { message: 'Address cannot be longer than 200 characters' })
-  location: string;
-
-  @ApiProperty({
     description: 'User role',
     enum: $Enums.UserRole,
     required: false,
@@ -68,15 +58,4 @@ export class RegisterDto {
   @IsEnum($Enums.UserRole, { message: 'Invalid user role' })
   role?: $Enums.UserRole;
 
-  @ApiProperty({
-    description: 'User gender',
-    example: $Enums.Gender.MALE,
-    enum: $Enums.Gender,
-    required: false
-  })
-  @IsOptional()
-  @IsEnum($Enums.Gender, {
-    message: 'Gender must be one of: Male, Female, Other, Prefer not to say'
-  })
-  gender: $Enums.Gender;
 }

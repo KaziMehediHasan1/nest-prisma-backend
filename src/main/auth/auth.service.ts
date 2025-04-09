@@ -25,7 +25,7 @@ export class AuthService {
     private readonly utilService: UtilService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-   private readonly verifyService: VerificationService
+    private readonly verifyService: VerificationService,
   ) {}
 
   async register(dto: RegisterDto): Promise<
@@ -40,7 +40,7 @@ export class AuthService {
       };
     }>
   > {
-    const {gender, location, ...rest} = dto
+    const { ...rest } = dto;
     const existingUser = await this.db.user.findUnique({
       where: { email: dto.email },
     });
@@ -59,12 +59,6 @@ export class AuthService {
         ...rest,
         password: hashedPassword,
         role: dto.role || $Enums.UserRole.PLANNER,
-        profile:{
-          create:{
-            gender,
-            location
-          }
-        }
       },
       include: {
         profile: true,
@@ -79,7 +73,7 @@ export class AuthService {
       profileId: user.profile?.id,
     });
 
-    await this.verifyService.sendVerificationEmail(user.email)
+    await this.verifyService.sendVerificationEmail(user.email);
 
     return {
       data: {
@@ -94,11 +88,23 @@ export class AuthService {
       },
       statusCode: 201,
       success: true,
-      message: 'User registered successfully. A verification code has been sent, please verify your email.',
+      message:
+        'User registered successfully. A verification code has been sent, please verify your email.',
     };
   }
 
-  async login(dto: LoginDto) {
+  async login(dto: LoginDto): Promise<
+    ApiResponse<{
+      access_token: string;
+      user: {
+        id: string;
+        email: string;
+        role: $Enums.UserRole;
+        isVerified: boolean;
+        profileId?: string;
+      };
+    }>
+  > {
     // Find user by email
     const user = await this.db.user.findUnique({
       where: { email: dto.email },
@@ -112,7 +118,10 @@ export class AuthService {
     }
 
     if (!user.isVerified) {
-      throw new HttpException("Please verify your email", HttpStatus.UNAUTHORIZED)
+      throw new HttpException(
+        'Please verify your email',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     // Verify password
@@ -135,14 +144,18 @@ export class AuthService {
     });
 
     return {
-      access_token: token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        isVerified: user.isVerified,
+      data: {
+        access_token: token,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          isVerified: user.isVerified,
+        },
       },
+      statusCode: 200,
+      message: 'Login Successful',
+      success: true,
     };
   }
 
@@ -157,6 +170,8 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
+      isVerified: user.isVerified,
+      profileId: user.profileId,
     };
 
     return this.jwtService.signAsync(payload, {
@@ -165,10 +180,7 @@ export class AuthService {
     });
   }
 
-  async verifyEmail({
-    code,
-    identifier
-  }:VerifyCodeDto) {
+  async verifyEmail({ code, identifier }: VerifyCodeDto) {
     const user = await this.db.user.findUnique({
       where: { email: identifier },
     });
@@ -182,7 +194,6 @@ export class AuthService {
     }
 
     const isCodeValid = await this.verifyService.verifyCode(identifier, code);
-    
 
     if (!isCodeValid) {
       throw new UnauthorizedException('Invalid verification code');
@@ -202,16 +213,21 @@ export class AuthService {
     };
   }
 
-  async sendPasswordResetCode({email}: SendResetCodeDto): Promise<ApiResponse<null>> {
+  async sendPasswordResetCode({
+    email,
+  }: SendResetCodeDto): Promise<ApiResponse<null>> {
     // Check if user exists
     const user = await this.db.user.findUnique({
       where: { email },
     });
-  
+
     if (!user) {
-      throw new HttpException('No account found with this email address', HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        'No account found with this email address',
+        HttpStatus.NOT_FOUND,
+      );
     }
-  
+
     // Generate and send password reset code
     await this.verifyService.sendPasswordResetEmail(
       email,
@@ -219,9 +235,9 @@ export class AuthService {
       {
         username: user.name,
         applicationName: 'Your Application',
-      }
+      },
     );
-  
+
     return {
       statusCode: 200,
       success: true,
@@ -229,44 +245,47 @@ export class AuthService {
       data: null,
     };
   }
-  
+
   async resetPassword(dto: ResetPasswordDto): Promise<ApiResponse<null>> {
     const { email, code, newPassword } = dto;
-  
+
     // Check if user exists
     const user = await this.db.user.findUnique({
       where: { email },
     });
-  
+
     if (!user) {
-      throw new HttpException('No account found with this email address', HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        'No account found with this email address',
+        HttpStatus.NOT_FOUND,
+      );
     }
-  
+
     // Verify the reset code
     const isCodeValid = await this.verifyService.verifyCode(email, code);
-  
+
     if (!isCodeValid) {
       throw new UnauthorizedException('Invalid or expired reset code');
     }
-  
+
     // Hash the new password
     const hashedPassword = await this.utilService.hashPassword({
       password: newPassword,
       round: 10,
     });
-  
+
     // Update the user's password
     await this.db.user.update({
       where: { id: user.id },
       data: { password: hashedPassword },
     });
-  
+
     return {
       statusCode: 200,
       success: true,
-      message: 'Password has been reset successfully. You can now login with your new password.',
+      message:
+        'Password has been reset successfully. You can now login with your new password.',
       data: null,
     };
   }
-
 }

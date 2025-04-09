@@ -15,7 +15,6 @@ import { CreateEventPreferenceDto } from './dto/create-event-preference.dto';
 import { UpdateEventPreferenceDto } from './dto/update-event-preference.dto';
 import { ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { JwtStrategy } from 'src/strategy/jwt.strategy';
 import { RolesGuard } from 'src/guard/role.guard';
 import { Roles } from 'src/decorator/roles.decorator';
 import { VerifiedGuard } from 'src/guard/verify.guard';

@@ -56,18 +56,33 @@ enum UserRole {
 
 // User Type end=========================================================
 
+//
+
+enum ServiceProviderRole {
+  PHOTOGRAPHER
+  VIDEOGRAPHER
+  DJ_BAND
+  catering
+}
+
 //profile start===================================================
 model Profile {
-  id               String            @id @default(uuid())
-  userId           String            @unique
-  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  location         String
-  venue            Venue[]
-  gender           Gender
-  image            FileInstance?
-  reviews          Review[]
-  fileInstanceId   String?
-  eventPreferences EventPreference[]
+  id                  String               @id @default(uuid())
+  userId              String               @unique
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location            String
+  venue               Venue[]
+  gender              Gender
+  imageId             String?              @unique // FK for image
+  image               FileInstance?        @relation("ProfileImage", fields: [imageId], references: [id])
+  coverPhotoId        String?              @unique // FK for cover photo
+  coverPhoto          FileInstance?        @relation("ProfileCoverPhoto", fields: [coverPhotoId], references: [id])
+  reviews             Review[]
+  fileInstanceId      String?
+  eventPreferences    EventPreference[]
+  servicePRoviderRole ServiceProviderRole?
+  yearOfExperience    Int?
+  description         String?
 }
 
 enum Gender {
@@ -236,20 +251,20 @@ model Amenities {
 // File Instance start=======================================================
 
 model FileInstance {
-  id                String           @id @default(uuid())
-  name              String
-  fileId            String           @unique
-  path              String
-  createdAt         DateTime         @default(now())
-  expiresAt         DateTime
-  bucket            String
-  type              FileType
-  Venue             Venue?           @relation(fields: [venueId], references: [id])
-  venueId           String?          @unique
-  Profile           Profile?         @relation(fields: [profileId], references: [id])
-  profileId         String?          @unique
-  EventPreference   EventPreference? @relation(fields: [eventPreferenceId], references: [id])
-  eventPreferenceId String?          @unique
+  id                  String           @id @default(uuid())
+  name                String
+  fileId              String           @unique
+  path                String
+  createdAt           DateTime         @default(now())
+  expiresAt           DateTime
+  bucket              String
+  type                FileType
+  Venue               Venue?           @relation(fields: [venueId], references: [id])
+  venueId             String?          @unique
+  imageOfProfile      Profile?         @relation("ProfileImage")
+  coverPhotoOfProfile Profile?         @relation("ProfileCoverPhoto")
+  EventPreference     EventPreference? @relation(fields: [eventPreferenceId], references: [id])
+  eventPreferenceId   String?          @unique
 }
 
 // File Instance end=========================================================
