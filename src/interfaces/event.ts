@@ -2,6 +2,7 @@ export const EVENT_TYPES = {
   FILE_DELETE: 'FILE_DELETE',
   EMAIL_SEND: 'EMAIL_SEND',
   VERIFICATION_EMAIL_SEND: 'VERIFICATION_EMAIL_SEND',
+  PASSWORD_RESET_EMAIL_SEND: 'PASSWORD_RESET_EMAIL_SEND',
 } as const;
 
 export type EventType = typeof EVENT_TYPES[keyof typeof EVENT_TYPES];
@@ -31,8 +32,23 @@ export interface VerificationEmailEvent {
   };
 }
 
+export interface PasswordResetEmailEvent {
+  to: string;
+  code: string;
+  subject?: string;
+  expiresInMinutes?: number;
+  templateId?: string;
+  metadata?: {
+    username?: string;
+    applicationName?: string;
+    resetUrl?: string;
+    [key: string]: any;
+  };
+}
+
 export interface EventPayloadMap {
   [EVENT_TYPES.FILE_DELETE]: FileDeleteEvent;
   [EVENT_TYPES.EMAIL_SEND]: EmailSendEvent;
   [EVENT_TYPES.VERIFICATION_EMAIL_SEND]: VerificationEmailEvent;
+  [EVENT_TYPES.PASSWORD_RESET_EMAIL_SEND]: PasswordResetEmailEvent;
 }

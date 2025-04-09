@@ -55,7 +55,15 @@ export class EventPreferenceService {
   }
 
   findAll() {
-    return this.db.eventPreference.findMany();
+    return this.db.eventPreference.findMany({
+      include:{
+        avatar:{
+          select:{
+            path: true
+          }
+        }
+      }
+    });
   }
 
   findOne(id: number) {

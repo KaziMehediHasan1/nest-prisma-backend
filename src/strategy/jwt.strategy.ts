@@ -22,11 +22,14 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     email: string, 
     role: string 
   }) {
+    
     if (!payload) {
       throw new UnauthorizedException('Invalid token');
     }
 
-    const user = await this.db.user.findUnique({
+    
+
+    const isExist = await this.db.user.findUnique({
       where: { 
         id: payload.sub,
         email: payload.email 
@@ -36,13 +39,17 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         email: true,
         role: true,
         name: true,
+        profile:true
       }
     });
 
-    if (!user) {
+    if (!isExist) {
       throw new UnauthorizedException('User not found');
     }
 
+    const user = {
+      ...payload
+    }
     return user;
   }
 }
