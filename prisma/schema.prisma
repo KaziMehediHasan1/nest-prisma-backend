@@ -83,6 +83,7 @@ model Profile {
   servicePRoviderRole ServiceProviderRole?
   yearOfExperience    Int?
   description         String?
+  booking             Booking[]
 }
 
 enum Gender {
@@ -125,6 +126,7 @@ model Venue {
   bookingType       BookingType
   Decoration        Decoration?   @relation(fields: [decorationId], references: [id], onDelete: Cascade)
   decorationId      String?       @unique
+  booking           Booking[]
 }
 
 // Venue end===================================================
@@ -268,3 +270,34 @@ model FileInstance {
 }
 
 // File Instance end=========================================================
+
+//Booking start =============================================================
+
+model Booking {
+  id        String   @id @default(uuid())
+  eventName String
+  Profile   Profile? @relation(fields: [profileId], references: [id])
+  profileId String?
+  booking   DateTime
+  startTime String
+  endTime   String
+  Venue     Venue?   @relation(fields: [venueId], references: [id])
+  venueId   String?
+  guestNumber String
+  eventType EventType @default(OTHERS)
+}
+
+//Booking end =============================================================
+
+//Event Type start =============================================================
+
+enum EventType {
+  BIRTHDAY_PARTY
+  WEDDING
+  CORPORATE_EVENT
+  BACHELOR_PARTY
+  ANNIVERSARY
+  OTHERS
+}
+
+//Event Type end =============================================================
