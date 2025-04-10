@@ -13,10 +13,6 @@ services:
       - db
     env_file:
       - .env
-    volumes:
-      - .:/app
-      - ./dist:/app/dist
-      - /app/node_modules
 
   db:
     image: postgres:16
