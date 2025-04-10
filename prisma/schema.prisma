@@ -62,28 +62,41 @@ enum ServiceProviderRole {
   PHOTOGRAPHER
   VIDEOGRAPHER
   DJ_BAND
-  catering
+  CATERING
+  ENTERTAINER
 }
 
-//profile start===================================================
+
 model Profile {
-  id                  String               @id @default(uuid())
-  userId              String               @unique
-  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  location            String
-  venue               Venue[]
-  gender              Gender
-  imageId             String?              @unique // FK for image
-  image               FileInstance?        @relation("ProfileImage", fields: [imageId], references: [id])
-  coverPhotoId        String?              @unique // FK for cover photo
-  coverPhoto          FileInstance?        @relation("ProfileCoverPhoto", fields: [coverPhotoId], references: [id])
-  reviews             Review[]
-  fileInstanceId      String?
-  eventPreferences    EventPreference[]
-  servicePRoviderRole ServiceProviderRole?
-  yearOfExperience    Int?
-  description         String?
-  booking             Booking[]
+  id              String         @id @default(uuid())
+  userId          String         @unique
+  user            User           @relation(fields: [userId], references: [id])
+  name            String
+  gender          Gender
+  imageId         String?        @unique // FK for image
+  image           FileInstance?  @relation("ProfileImage", fields: [imageId], references: [id])
+  location        String?
+  eventPreference EventType[]
+  coverPhotoId    String?        @unique // FK for cover photo
+  coverPhoto      FileInstance?  @relation("ProfileCoverPhoto", fields: [coverPhotoId], references: [id])
+  profession      String?
+  description     String?
+  experience      Int?
+  assets          FileInstance[]
+  payerPayment         Payment[]  @relation("PlannerProfile")
+  receiverPayment  Payment[]  @relation("ReceiverProfile")
+
+  bookingByProfile Booking[] @relation("BookedByProfile")
+  bookedProfile Booking[] @relation("ServiceProviderProfile")
+
+  reviews  Review[] // 1-to-many relation
+  venues   Venue[] // 1-to-many relation
+
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+
+  
 }
 
 enum Gender {
@@ -95,39 +108,195 @@ enum Gender {
 //profile end===================================================
 
 //eventPreferences start================================================
-model EventPreference {
+model EventType {
   id      String        @id @default(uuid())
   name    String        @unique
   avatar  FileInstance?
-  Profile Profile[]
+  profile Profile[]
 }
-
 //eventPreferences end================================================
 
-// Venue stat=================================================== 
+// Venue start===================================================
+
 model Venue {
   id String @id @default(uuid())
 
   Profile           Profile?      @relation(fields: [profileId], references: [id])
   profileId         String?
-  name              String
-  city              String
-  area              String
-  capacity          Int
-  type              VenueType
-  amenities         Amenities[]
-  arrangementsImage FileInstance?
-  Reviews           Review[]
-  catering          String?
-  parking           String?
-  availability      String?
-  extraServices     String?
-  price             Int
-  bookingType       BookingType
-  Decoration        Decoration?   @relation(fields: [decorationId], references: [id], onDelete: Cascade)
-  decorationId      String?       @unique
-  booking           Booking[]
+  
+  name                String
+  city                String
+  area                String
+  description         String?
+  capacity            Int
+  bookedDates         DateTime[]       // all booked dates
+
+  type                VenueType
+  cateringDescription String?
+  parkingDescription  String?
+  availabilityDescription String?
+  extraServiceDescription String?
+
+  amenities           Amenities[]
+  arrangementsImage   FileInstance?    
+
+
+  shifts              Shift[]         // 1-to-many relation
+  
+
+  reviews             Review[]
+  price               Int
+  decoration          Decoration?     
+
+  bookingType         BookingType
+  verified            Boolean          @default(false)
+
+  employees           Employee[]
+  bookings            Booking[]        // 1-to-many relation
+
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 }
+
+//employee
+
+model Employee {
+  id         String   @id @default(uuid())
+  venueId    String
+  venue      Venue    @relation(fields: [venueId], references: [id])
+
+  firstName  String
+  lastName   String
+  email      String   @unique
+  phone      String   @unique
+  role       String
+  shifts     Shift[] 
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Shift {
+  id         String   @id @default(uuid())
+  venueId    String
+  venue      Venue    @relation(fields: [venueId], references: [id])
+  startTime  DateTime
+  endTime    DateTime
+  duration   Int      // Duration in minutes, can be auto-calculated
+  shiftName  String
+
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// Venue end===================================================
+
+
+//PAYMENT START
+
+model Payment {
+  id                String             @id @default(uuid())
+  payerId           String    
+  payer             Profile            @relation("PlannerProfile", fields: [payerId], references: [id])
+  
+  receiverId           String  
+  receiver             Profile              @relation("ReceiverProfile",fields: [receiverId], references: [id])
+  
+
+  paymentStatus     PaymentStatus      // Enum for payment status
+  paymentMethod     PaymentMethod      // Enum for payment method
+  
+  amount            Int                // The amount paid
+  transactionId     String?            // Optional transaction ID
+
+   Booking Booking[]
+
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  
+
+ 
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  PAYPAL
+  BANK_TRANSFER
+  CASH
+}
+
+model Booking {
+  id                String          @id @default(uuid())
+  bookedById        String
+  bookedBy          Profile         @relation("BookedByProfile", fields: [bookedById], references: [id])
+
+  venueId           String          
+  venue             Venue           @relation(fields: [venueId], references: [id])
+  venueName         String
+
+  serviceProviderId String        
+  serviceProvider   Profile @relation("ServiceProviderProfile",fields: [serviceProviderId], references: [id])
+
+  eventName         String
+  location          String
+  plannerName       String          
+
+  selectedDate      DateTime
+  startTime         DateTime
+  endTime           DateTime
+  duration          Int             // Duration in minutes, can be auto-calculated
+  eventType         String
+  bookingType       BookingType     // Enum: INSTANT_BOOKING, REQUEST_BASED_BOOKING
+
+  guestNumber       Int
+  decoration        String?   //an string object of decoration
+  
+  services          String[]        // Array of service names .  comes a string input from the client
+  totalCost         Int
+  bookingStatus     BookingStatus   // completed when isEventFinished is true
+  paid              Int             // Amount paid
+  due               Int             // Due amount
+
+  paymentId         String?          @unique
+  payment           Payment?         @relation(fields: [paymentId], references: [id])
+  paymentMethod     PaymentMethod    // Enum for payment method
+
+  
+  accept            AcceptanceStatus
+  isEventFinished   Boolean         @default(false)   
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+enum BookingStatus {
+  REQUESTED
+  PENDING
+  CONFIRMED
+  COMPLETED
+}
+
+enum AcceptanceStatus {
+  ACCEPTED
+  DENIED
+}
+
+//PAYMENT END
+
+
 
 // Venue end===================================================
 
@@ -135,7 +304,8 @@ model Venue {
 
 model Decoration {
   id            String          @id @default(uuid())
-  venue         Venue?
+  venueId       String @unique
+  venue         Venue?          @relation(fields: [venueId], references: [id])
   tableShapes   TableShape[]
   seatingStyles SeatingStyle[]
   lighting      LightingStyle[]
@@ -241,13 +411,25 @@ model Review {
 
 // Review end===================================================
 
+
+//AMENITIES START
+
 model Amenities {
   id      String  @id @default(uuid())
   name    String  @unique
-  Venue   Venue?  @relation(fields: [venueId], references: [id])
-  venueId String?
+  Venue   Venue[]
   default Boolean @default(false)
 }
+
+//AMINITIES END
+
+
+
+
+
+
+
+
 
 // User Instance end=========================================================
 
@@ -266,39 +448,21 @@ model FileInstance {
   venueId             String?          @unique
   imageOfProfile      Profile?         @relation("ProfileImage")
   coverPhotoOfProfile Profile?         @relation("ProfileCoverPhoto")
-  EventPreference     EventPreference? @relation(fields: [eventPreferenceId], references: [id])
+  EventPreference     EventType? @relation(fields: [eventPreferenceId], references: [id])
   eventPreferenceId   String?          @unique
+  Profile             Profile?         @relation(fields: [profileId], references: [id])
+  profileId           String?
 }
 
 // File Instance end=========================================================
 
 //Booking start =============================================================
 
-model Booking {
-  id        String   @id @default(uuid())
-  eventName String
-  Profile   Profile? @relation(fields: [profileId], references: [id])
-  profileId String?
-  booking   DateTime
-  startTime String
-  endTime   String
-  Venue     Venue?   @relation(fields: [venueId], references: [id])
-  venueId   String?
-  guestNumber String
-  eventType EventType @default(OTHERS)
-}
 
 //Booking end =============================================================
 
 //Event Type start =============================================================
 
-enum EventType {
-  BIRTHDAY_PARTY
-  WEDDING
-  CORPORATE_EVENT
-  BACHELOR_PARTY
-  ANNIVERSARY
-  OTHERS
-}
+
 
 //Event Type end =============================================================
