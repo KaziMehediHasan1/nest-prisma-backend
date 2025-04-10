@@ -170,4 +170,20 @@ export class SetupServiceProviderProfileDto {
       format: 'binary',
     })
     coverPhoto: Express.Multer.File;
+
+    @ApiProperty({
+      description: 'User Id',
+      example: '550e8400-e29b-41d4-a716-446655440000',
+    })
+    @IsString({ message: 'Address must be a string' })
+    @IsUUID('4', { message: 'User Id must be a valid uuid V4' })
+    userId: string;
+
+    @ApiProperty({
+      description: 'User address',
+      example: '123 Main St, Anytown, CA 90210',
+    })
+    @IsString({ message: 'Address must be a string' })
+    @MaxLength(200, { message: 'Address cannot be longer than 200 characters' })
+    location: string;
   }

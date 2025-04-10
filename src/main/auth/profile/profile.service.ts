@@ -86,7 +86,7 @@ export class ProfileService {
   public async setUpServiceProviderProfile(
     rawData: SetupServiceProviderProfileDto,
   ) {
-    const { coverPhoto, image } = rawData;
+    const { coverPhoto, image, userId, location } = rawData;
 
     const [profilePic, coverPhotoPic] = await Promise.all([
       await this.upload.uploadFile({
@@ -96,5 +96,29 @@ export class ProfileService {
         file: coverPhoto,
       }),
     ]);
+
+    const profile = await this.db.profile.create({
+      data: {
+        image: {
+          connect: {
+            id: profilePic.id,
+          },
+        },
+        coverPhoto: {
+          connect: {
+            id: coverPhotoPic.id,
+          },
+        },
+        user: {
+          connect: {
+            id: userId,
+          },
+        },
+        gender: 'OTHER',
+        location
+      },
+    });
+
+    return profile;
   }
 }

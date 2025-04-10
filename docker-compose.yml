@@ -11,6 +11,8 @@ services:
       DATABASE_URL: postgresql://myuser:mypassword@db:5432/mydatabase
     depends_on:
       - db
+    env_file:
+      - .env
     volumes:
       - .:/app
       - /app/node_modules
