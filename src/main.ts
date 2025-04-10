@@ -7,7 +7,6 @@ import { AmenitiesSeeder } from './seed/amenitiesSeeder.seed';
 import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.setGlobalPrefix("v2")
   const config = new DocumentBuilder()
     .setTitle('Cats example')
     .setDescription('The cats API description')
