@@ -18,36 +18,47 @@ export class AmenitiesSeeder implements OnModuleInit {
     const amenitiesData: Prisma.AmenitiesCreateInput[] = [
       { 
         name: 'Wifi', 
+        default: true
       },
       { 
-        name: 'Parking', 
+        name: 'Parking',
+        default: true 
       },
       { 
         name: 'AC', 
+        default: true
       },
       { 
-        name: 'Pool', 
+        name: 'Pool',
+        default: true 
       },
       { 
-        name: 'Stage_Lighting', 
+        name: 'Stage Lighting',
+        default: true 
       },
       { 
-        name: 'Sound_System', 
+        name: 'Sound System',
+        default: true 
       },
       { 
-        name: 'Bar_Service', 
+        name: 'Bar Service',
+        default: true 
       },
       { 
-        name: 'Elevator', 
+        name: 'Elevator',
+        default: true 
       },
       { 
-        name: 'Rest_room', 
+        name: 'Rest room',
+        default: true 
       },
       { 
-        name: 'Event_Staff', 
+        name: 'Event_Staff',
+        default: true 
       },
       { 
-        name: 'In_House_Catering', 
+        name: 'In House Catering',
+        default: true 
       }
     ];
 

@@ -21,6 +21,7 @@ async function bootstrap() {
   await app.get(AdminSeeder).seedAdmin()
   await app.get(AmenitiesSeeder).seedAmenities()
   app.useGlobalFilters(new GlobalErrorHandlerFilter());
+  app.enableCors()
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

@@ -246,6 +246,7 @@ model Amenities {
   name    String  @unique
   Venue   Venue?  @relation(fields: [venueId], references: [id])
   venueId String?
+  default Boolean @default(false)
 }
 
 // User Instance end=========================================================
