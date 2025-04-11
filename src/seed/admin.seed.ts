@@ -22,7 +22,7 @@ export class AdminSeeder implements OnModuleInit {
         role: $Enums.UserRole.ADMIN,
       },
     });
-
+    
     if (!adminExists) {
       const hashedPassword = await this.lib.hashPassword({
         password: this.config.getOrThrow('ADMIN_PASSWORD') as string,

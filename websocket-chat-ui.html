@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+        }
+        .indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .connected {
+            background-color: #4CAF50;
+        }
+        .disconnected {
+            background-color: #F44336;
+        }
+        .message-container {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #fafafa;
+        }
+        .message {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            position: relative;
+        }
+        .system {
+            background-color: #e1f5fe;
+            color: #01579b;
+            font-style: italic;
+        }
+        .sent {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            text-align: right;
+        }
+        .received {
+            background-color: #f3e5f5;
+            color: #4a148c;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #b71c1c;
+        }
+        .timestamp {
+            font-size: 0.7em;
+            color: #999;
+            display: block;
+            margin-top: 4px;
+        }
+        .control-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f8f8;
+            border-radius: 4px;
+        }
+        .control-row {
+            display: flex;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+        input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: #2196F3;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0b7dda;
+        }
+        .btn-disconnect {
+            background-color: #F44336;
+        }
+        .btn-disconnect:hover {
+            background-color: #d32f2f;
+        }
+        .btn-subscribe {
+            background-color: #4CAF50;
+        }
+        .btn-subscribe:hover {
+            background-color: #388e3c;
+        }
+        .btn-unsubscribe {
+            background-color: #FF9800;
+        }
+        .btn-unsubscribe:hover {
+            background-color: #f57c00;
+        }
+        .server-box {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .server-url {
+            font-family: monospace;
+            padding: 5px;
+            background-color: #f1f1f1;
+            border-radius: 4px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket Chat Test</h1>
+        
+        <div class="server-box">
+            <span class="server-url" id="server-url">ws://localhost:3000/chat</span>
+            <button id="edit-server-btn">Edit</button>
+        </div>
+        
+        <div class="status-bar">
+            <div class="status-indicator">
+                <div class="indicator disconnected" id="status-light"></div>
+                <span id="connection-status">Disconnected</span>
+            </div>
+            <div>
+                <button id="connect-btn">Connect</button>
+                <button id="disconnect-btn" class="btn-disconnect" disabled>Disconnect</button>
+            </div>
+        </div>
+        
+        <div class="message-container" id="message-log">
+            <div class="message system">Welcome to WebSocket Chat Test. Connect to start testing.</div>
+        </div>
+        
+        <div class="control-section">
+            <h3>Conversation Management</h3>
+            <div class="control-row">
+                <input type="text" id="conversation-id" placeholder="Conversation ID" value="test-conversation">
+                <button id="subscribe-btn" class="btn-subscribe" disabled>Subscribe</button>
+                <button id="unsubscribe-btn" class="btn-unsubscribe" disabled>Unsubscribe</button>
+            </div>
+            
+            <h3>Send Message</h3>
+            <div class="control-row">
+                <input type="text" id="message-input" placeholder="Enter raw message or JSON..." disabled>
+                <button id="send-btn" disabled>Send</button>
+            </div>
+        </div>
+        
+        <div class="control-section">
+            <h3>Quick Actions</h3>
+            <div class="control-row">
+                <button id="send-subscribe-btn" disabled>Send Subscribe</button>
+                <button id="send-unsubscribe-btn" disabled>Send Unsubscribe</button>
+                <button id="clear-log-btn">Clear Log</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const statusLight = document.getElementById('status-light');
+        const connectionStatus = document.getElementById('connection-status');
+        const messageLog = document.getElementById('message-log');
+        const serverUrlElement = document.getElementById('server-url');
+        const editServerBtn = document.getElementById('edit-server-btn');
+        const conversationIdInput = document.getElementById('conversation-id');
+        const messageInput = document.getElementById('message-input');
+        const connectBtn = document.getElementById('connect-btn');
+        const disconnectBtn = document.getElementById('disconnect-btn');
+        const subscribeBtn = document.getElementById('subscribe-btn');
+        const unsubscribeBtn = document.getElementById('unsubscribe-btn');
+        const sendBtn = document.getElementById('send-btn');
+        const sendSubscribeBtn = document.getElementById('send-subscribe-btn');
+        const sendUnsubscribeBtn = document.getElementById('send-unsubscribe-btn');
+        const clearLogBtn = document.getElementById('clear-log-btn');
+        
+        // WebSocket instance
+        let ws = null;
+        let serverUrl = 'ws://localhost:3000/chat';
+
+        // Helper function to add message to log
+        function addMessage(text, type = 'system') {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', type);
+            
+            const timestamp = new Date().toLocaleTimeString();
+            
+            messageElement.innerHTML = `
+                ${text}
+                <span class="timestamp">${timestamp}</span>
+            `;
+            
+            messageLog.appendChild(messageElement);
+            messageLog.scrollTop = messageLog.scrollHeight;
+        }
+        
+        // Update UI based on connection state
+        function updateUIConnectionState(isConnected) {
+            if (isConnected) {
+                statusLight.classList.remove('disconnected');
+                statusLight.classList.add('connected');
+                connectionStatus.textContent = 'Connected';
+                
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                subscribeBtn.disabled = false;
+                unsubscribeBtn.disabled = false;
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
+                sendSubscribeBtn.disabled = false;
+                sendUnsubscribeBtn.disabled = false;
+            } else {
+                statusLight.classList.remove('connected');
+                statusLight.classList.add('disconnected');
+                connectionStatus.textContent = 'Disconnected';
+                
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                subscribeBtn.disabled = true;
+                unsubscribeBtn.disabled = true;
+                messageInput.disabled = true;
+                sendBtn.disabled = true;
+                sendSubscribeBtn.disabled = true;
+                sendUnsubscribeBtn.disabled = true;
+            }
+        }
+        
+        // Connect to WebSocket server
+        function connectWebSocket() {
+            if (ws) {
+                ws.close();
+            }
+            
+            try {
+                addMessage(`Connecting to ${serverUrl}...`);
+                ws = new WebSocket(serverUrl);
+                
+                ws.onopen = function(event) {
+                    updateUIConnectionState(true);
+                    addMessage('Connected to WebSocket server!');
+                };
+                
+                ws.onmessage = function(event) {
+                    let displayData = event.data;
+                    
+                    try {
+                        // Try to format as JSON if possible
+                        const parsedData = JSON.parse(event.data);
+                        displayData = JSON.stringify(parsedData, null, 2);
+                    } catch (e) {
+                        // Not JSON, use as is
+                    }
+                    
+                    addMessage(`Received: ${displayData}`, 'received');
+                };
+                
+                ws.onerror = function(error) {
+                    addMessage(`Error: ${error.message || 'Unknown error'}`, 'error');
+                };
+                
+                ws.onclose = function(event) {
+                    updateUIConnectionState(false);
+                    
+                    if (event.wasClean) {
+                        addMessage(`Connection closed cleanly, code=${event.code}, reason=${event.reason}`);
+                    } else {
+                        addMessage('Connection died unexpectedly', 'error');
+                    }
+                };
+            } catch (error) {
+                addMessage(`Failed to connect: ${error.message}`, 'error');
+                updateUIConnectionState(false);
+            }
+        }
+        
+        // Function to subscribe to a conversation
+        function subscribeToConversation(conversationId) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                addMessage('Cannot subscribe: WebSocket is not connected', 'error');
+                return;
+            }
+            
+            const subscribeMessage = {
+                conversationId: conversationId,
+                type: 'subscribe'
+            };
+            
+            try {
+                ws.send(JSON.stringify(subscribeMessage));
+                addMessage(`Subscribed to conversation: ${conversationId}`, 'sent');
+            } catch (error) {
+                addMessage(`Failed to subscribe: ${error.message}`, 'error');
+            }
+        }
+        
+        // Function to unsubscribe from a conversation
+        function unsubscribeFromConversation(conversationId) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                addMessage('Cannot unsubscribe: WebSocket is not connected', 'error');
+                return;
+            }
+            
+            const unsubscribeMessage = {
+                conversationId: conversationId,
+                type: 'unsubscribe'
+            };
+            
+            try {
+                ws.send(JSON.stringify(unsubscribeMessage));
+                addMessage(`Unsubscribed from conversation: ${conversationId}`, 'sent');
+            } catch (error) {
+                addMessage(`Failed to unsubscribe: ${error.message}`, 'error');
+            }
+        }
+        
+        // Function to send a message
+        function sendMessage(message) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                addMessage('Cannot send message: WebSocket is not connected', 'error');
+                return;
+            }
+            
+            try {
+                ws.send(message);
+                addMessage(`Sent: ${message}`, 'sent');
+            } catch (error) {
+                addMessage(`Failed to send message: ${error.message}`, 'error');
+            }
+        }
+        
+        // Event Listeners
+        connectBtn.addEventListener('click', connectWebSocket);
+        
+        disconnectBtn.addEventListener('click', function() {
+            if (ws) {
+                ws.close(1000, "User disconnected");
+            }
+        });
+        
+        subscribeBtn.addEventListener('click', function() {
+            const conversationId = conversationIdInput.value.trim();
+            if (conversationId) {
+                subscribeToConversation(conversationId);
+            } else {
+                addMessage('Please enter a conversation ID', 'error');
+            }
+        });
+        
+        unsubscribeBtn.addEventListener('click', function() {
+            const conversationId = conversationIdInput.value.trim();
+            if (conversationId) {
+                unsubscribeFromConversation(conversationId);
+            } else {
+                addMessage('Please enter a conversation ID', 'error');
+            }
+        });
+        
+        sendBtn.addEventListener('click', function() {
+            const message = messageInput.value.trim();
+            if (message) {
+                sendMessage(message);
+                messageInput.value = '';
+            } else {
+                addMessage('Please enter a message to send', 'error');
+            }
+        });
+        
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendBtn.click();
+            }
+        });
+        
+        sendSubscribeBtn.addEventListener('click', function() {
+            const conversationId = conversationIdInput.value.trim();
+            if (conversationId) {
+                const subscribeMessage = {
+                    conversationId: conversationId,
+                    type: 'subscribe'
+                };
+                sendMessage(JSON.stringify(subscribeMessage));
+            } else {
+                addMessage('Please enter a conversation ID', 'error');
+            }
+        });
+        
+        sendUnsubscribeBtn.addEventListener('click', function() {
+            const conversationId = conversationIdInput.value.trim();
+            if (conversationId) {
+                const unsubscribeMessage = {
+                    conversationId: conversationId,
+                    type: 'unsubscribe'
+                };
+                sendMessage(JSON.stringify(unsubscribeMessage));
+            } else {
+                addMessage('Please enter a conversation ID', 'error');
+            }
+        });
+        
+        clearLogBtn.addEventListener('click', function() {
+            messageLog.innerHTML = '';
+            addMessage('Message log cleared');
+        });
+        
+        editServerBtn.addEventListener('click', function() {
+            const newUrl = prompt('Enter WebSocket server URL:', serverUrl);
+            if (newUrl !== null && newUrl.trim() !== '') {
+                serverUrl = newUrl.trim();
+                serverUrlElement.textContent = serverUrl;
+                addMessage(`Server URL changed to: ${serverUrl}`);
+                
+                // If we're connected, disconnect first
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    addMessage('Disconnecting from current server before changing URL...');
+                    ws.close(1000, "URL changed");
+                }
+            }
+        });
+    </script>
+</body>
+</html>
