@@ -66,7 +66,6 @@ enum ServiceProviderRole {
   ENTERTAINER
 }
 
-
 //profile start==========================================================
 
 model Profile {
@@ -85,19 +84,14 @@ model Profile {
   experience      Int?
   assets          FileInstance[]
 
-  bookingToVenue Booking[] @relation("BookedByProfile")
+  bookingToVenue           Booking[] @relation("BookedByProfile")
   bookingToServiceProvider Booking[] @relation("ServiceProviderProfile")
- 
 
-  reviews  Review[] // 1-to-many relation
-  venues   Venue[] // 1-to-many relation
+  reviews Review[] // 1-to-many relation
+  venues  Venue[] // 1-to-many relation
 
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-
-
-  
-
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum Gender {
@@ -115,6 +109,7 @@ model EventType {
   avatar  FileInstance?
   profile Profile[]
 }
+
 //eventPreferences end================================================
 
 // Venue start===================================================
@@ -122,134 +117,126 @@ model EventType {
 model Venue {
   id String @id @default(uuid())
 
-  Profile           Profile?      @relation(fields: [profileId], references: [id])
-  profileId         String?
-  
-  name                String
-  city                String
-  area                String
-  description         String?
-  capacity            Int
-  bookedDates         DateTime[]       // all booked dates
+  Profile   Profile? @relation(fields: [profileId], references: [id])
+  profileId String?
 
-  type                VenueType
-  cateringDescription String?
-  parkingDescription  String?
+  name        String
+  city        String
+  area        String
+  description String?
+  capacity    Int
+  bookedDates DateTime[] // all booked dates
+
+  type                    VenueType
+  cateringDescription     String?
+  parkingDescription      String?
   availabilityDescription String?
   extraServiceDescription String?
 
-  amenities           Amenities[]
-  arrangementsImage   FileInstance?    
+  amenities         Amenities[]
+  arrangementsImage FileInstance?
 
+  shifts Shift[] // 1-to-many relation
 
-  shifts              Shift[]         // 1-to-many relation
-  
+  reviews    Review[]
+  price      Int
+  decoration Decoration?
 
-  reviews             Review[]
-  price               Int
-  decoration          Decoration?     
+  bookingType BookingType
+  verified    Boolean     @default(false)
 
-  bookingType         BookingType
-  verified            Boolean          @default(false)
+  employees Employee[]
+  bookings  Booking[] // 1-to-many relation
 
-  employees           Employee[]
-  bookings            Booking[]        // 1-to-many relation
-
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 //employee
 
 model Employee {
-  id         String   @id @default(uuid())
-  venueId    String
-  venue      Venue    @relation(fields: [venueId], references: [id])
+  id      String @id @default(uuid())
+  venueId String
+  venue   Venue  @relation(fields: [venueId], references: [id])
 
-  firstName  String
-  lastName   String
-  email      String   @unique
-  phone      String   @unique
-  role       String
-  shifts     Shift[] 
+  firstName String
+  lastName  String
+  email     String  @unique
+  phone     String  @unique
+  role      String
+  shifts    Shift[]
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Shift {
-  id         String   @id @default(uuid())
-  venueId    String
-  venue      Venue    @relation(fields: [venueId], references: [id])
-  startTime  DateTime
-  endTime    DateTime
-  duration   Int      // Duration in minutes, can be auto-calculated
-  shiftName  String
+  id        String   @id @default(uuid())
+  venueId   String
+  venue     Venue    @relation(fields: [venueId], references: [id])
+  startTime DateTime
+  endTime   DateTime
+  duration  Int // Duration in minutes, can be auto-calculated
+  shiftName String
 
   employeeId String
   employee   Employee @relation(fields: [employeeId], references: [id])
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Venue end===================================================
 
-
 //PAYMENT START
 
-
-
 model Booking {
-  id                String          @id @default(uuid())
-  bookedById        String         
-  bookedBy          Profile         @relation("BookedByProfile", fields: [bookedById], references: [id])
-  
+  id         String  @id @default(uuid())
+  bookedById String
+  bookedBy   Profile @relation("BookedByProfile", fields: [bookedById], references: [id])
 
   //which  venue is booked
-  venueId           String?         
-  venue             Venue?           @relation(fields: [venueId], references: [id])
-  venueName         String
+  venueId   String?
+  venue     Venue?  @relation(fields: [venueId], references: [id])
+  venueName String
 
-//which service provider is booked
-  serviceProviderId String?        
-  serviceProvider   Profile? @relation("ServiceProviderProfile",fields: [serviceProviderId], references: [id])
+  //which service provider is booked
+  serviceProviderId String?
+  serviceProvider   Profile? @relation("ServiceProviderProfile", fields: [serviceProviderId], references: [id])
 
-  eventName         String
-  location          String
-  plannerName       String          
+  eventName   String
+  location    String
+  plannerName String
 
-  selectedDate      DateTime
-  startTime         DateTime
-  endTime           DateTime
-  duration          Int             // Duration in minutes, can be auto-calculated
-  eventType         String
-  bookingType       BookingType     // Enum: INSTANT_BOOKING, REQUEST_BASED_BOOKING
+  selectedDate DateTime
+  startTime    DateTime
+  endTime      DateTime
+  duration     Int // Duration in minutes, can be auto-calculated
+  eventType    String
+  bookingType  BookingType // Enum: INSTANT_BOOKING, REQUEST_BASED_BOOKING
 
-  guestNumber       Int
-  decoration        String?   //an string object of decoration
-  
-  services          String[]        // Array of service names .  comes a string input from the client
-  totalCost         Int
-  bookingStatus     BookingStatus   @default(REQUESTED)  // completed when isEventFinished is true
+  guestNumber Int
+  decoration  String? //an string object of decoration
 
-  totalAmount            Int? // Total amount for the booking
+  services      String[] // Array of service names .  comes a string input from the client
+  totalCost     Int
+  bookingStatus BookingStatus @default(REQUESTED) // completed when isEventFinished is true
 
-  paid              Int             // Amount paid  (when the booking is confirmed)
-  due               Int             // Due amount (remaining amount to be paid)
+  totalAmount Int? // Total amount for the booking
 
-  payment          Payment?        
- 
-  transactionId    String?        // Optional transaction ID
-  paymentDate      DateTime?      // Date of payment
+  paid Int // Amount paid  (when the booking is confirmed)
+  due  Int // Due amount (remaining amount to be paid)
 
+  payment Payment?
 
-  
-  accept            AcceptanceStatus
-  isEventFinished   Boolean         @default(false)   
+  transactionId String? // Optional transaction ID
+  paymentDate   DateTime? // Date of payment
 
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  accept          AcceptanceStatus
+  isEventFinished Boolean          @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum BookingStatus {
@@ -264,30 +251,20 @@ enum AcceptanceStatus {
   DENIED
 }
 
-
-
 model Payment {
-  id                String             @id @default(uuid())
- 
+  id String @id @default(uuid())
 
-  bookingId        String       @unique // FK for booking @unique
-  bookingInfo         Booking?           @relation(fields: [bookingId], references: [id])
-  
+  bookingId   String   @unique // FK for booking @unique
+  bookingInfo Booking? @relation(fields: [bookingId], references: [id])
 
-  paymentStatus     PaymentStatus      // Enum for payment status
-  paymentMethod     PaymentMethod      // Enum for payment method
-  
-  amount            Int                // The amount paid
-  transactionId     String?            // Optional transaction ID
+  paymentStatus PaymentStatus // Enum for payment status
+  paymentMethod PaymentMethod // Enum for payment method
 
- 
+  amount        Int // The amount paid
+  transactionId String? // Optional transaction ID
 
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-
- 
-
- 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum PaymentStatus {
@@ -308,15 +285,13 @@ enum PaymentMethod {
 
 //PAYMENT END
 
-
-
 // Venue end===================================================
 
 // Decoration start================================================
 
 model Decoration {
   id            String          @id @default(uuid())
-  venueId       String @unique
+  venueId       String          @unique
   venue         Venue?          @relation(fields: [venueId], references: [id])
   tableShapes   TableShape[]
   seatingStyles SeatingStyle[]
@@ -423,7 +398,6 @@ model Review {
 
 // Review end===================================================
 
-
 //AMENITIES START
 
 model Amenities {
@@ -435,34 +409,26 @@ model Amenities {
 
 //AMENITIES END
 
-
-
-
-
-
-
-
-
 // User Instance end=========================================================
 
 // File Instance start=======================================================
 
 model FileInstance {
-  id                  String           @id @default(uuid())
+  id                  String     @id @default(uuid())
   name                String
-  fileId              String           @unique
+  fileId              String     @unique
   path                String
-  createdAt           DateTime         @default(now())
+  createdAt           DateTime   @default(now())
   expiresAt           DateTime
   bucket              String
   type                FileType
-  Venue               Venue?           @relation(fields: [venueId], references: [id])
-  venueId             String?          @unique
-  imageOfProfile      Profile?         @relation("ProfileImage")
-  coverPhotoOfProfile Profile?         @relation("ProfileCoverPhoto")
+  Venue               Venue?     @relation(fields: [venueId], references: [id])
+  venueId             String?    @unique
+  imageOfProfile      Profile?   @relation("ProfileImage")
+  coverPhotoOfProfile Profile?   @relation("ProfileCoverPhoto")
   EventPreference     EventType? @relation(fields: [eventPreferenceId], references: [id])
-  eventPreferenceId   String?          @unique
-  Profile             Profile?         @relation(fields: [profileId], references: [id])
+  eventPreferenceId   String?    @unique
+  Profile             Profile?   @relation(fields: [profileId], references: [id])
   profileId           String?
 }
 
@@ -470,11 +436,8 @@ model FileInstance {
 
 //Booking start =============================================================
 
-
 //Booking end =============================================================
 
 //Event Type start =============================================================
-
-
 
 //Event Type end =============================================================
