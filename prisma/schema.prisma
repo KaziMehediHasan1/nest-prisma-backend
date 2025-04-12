@@ -84,11 +84,10 @@ model Profile {
   description     String?
   experience      Int?
   assets          FileInstance[]
-  payerPayment         Payment[]  @relation("PlannerProfile")
-  receiverPayment  Payment[]  @relation("ReceiverProfile")
 
-  bookingByProfile Booking[] @relation("BookedByProfile")
-  bookedProfile Booking[] @relation("ServiceProviderProfile")
+  bookingToVenue Booking[] @relation("BookedByProfile")
+  bookingToServiceProvider Booking[] @relation("ServiceProviderProfile")
+ 
 
   reviews  Review[] // 1-to-many relation
   venues   Venue[] // 1-to-many relation
@@ -98,6 +97,7 @@ model Profile {
 
 
   
+
 }
 
 enum Gender {
@@ -198,58 +198,22 @@ model Shift {
 
 //PAYMENT START
 
-model Payment {
-  id                String             @id @default(uuid())
-  payerId           String    
-  payer             Profile            @relation("PlannerProfile", fields: [payerId], references: [id])
-  
-  receiverId           String  
-  receiver             Profile              @relation("ReceiverProfile",fields: [receiverId], references: [id])
-  
 
-  paymentStatus     PaymentStatus      // Enum for payment status
-  paymentMethod     PaymentMethod      // Enum for payment method
-  
-  amount            Int                // The amount paid
-  transactionId     String?            // Optional transaction ID
-
-  Booking Booking[]
-
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-
-  
-
- 
-}
-
-enum PaymentStatus {
-  PENDING
-  COMPLETED
-  FAILED
-  REFUNDED
-  CANCELLED
-}
-
-enum PaymentMethod {
-  CREDIT_CARD
-  DEBIT_CARD
-  PAYPAL
-  BANK_TRANSFER
-  CASH
-}
 
 model Booking {
   id                String          @id @default(uuid())
-  bookedById        String
+  bookedById        String         
   bookedBy          Profile         @relation("BookedByProfile", fields: [bookedById], references: [id])
+  
 
-  venueId           String          
-  venue             Venue           @relation(fields: [venueId], references: [id])
+  //which  venue is booked
+  venueId           String?         
+  venue             Venue?           @relation(fields: [venueId], references: [id])
   venueName         String
 
-  serviceProviderId String        
-  serviceProvider   Profile @relation("ServiceProviderProfile",fields: [serviceProviderId], references: [id])
+//which service provider is booked
+  serviceProviderId String?        
+  serviceProvider   Profile? @relation("ServiceProviderProfile",fields: [serviceProviderId], references: [id])
 
   eventName         String
   location          String
@@ -267,13 +231,18 @@ model Booking {
   
   services          String[]        // Array of service names .  comes a string input from the client
   totalCost         Int
-  bookingStatus     BookingStatus   // completed when isEventFinished is true
-  paid              Int             // Amount paid
-  due               Int             // Due amount
+  bookingStatus     BookingStatus   @default(REQUESTED)  // completed when isEventFinished is true
 
-  paymentId         String?          @unique
-  payment           Payment?         @relation(fields: [paymentId], references: [id])
-  paymentMethod     PaymentMethod    // Enum for payment method
+  totalAmount            Int? // Total amount for the booking
+
+  paid              Int             // Amount paid  (when the booking is confirmed)
+  due               Int             // Due amount (remaining amount to be paid)
+
+  payment          Payment?        
+ 
+  transactionId    String?        // Optional transaction ID
+  paymentDate      DateTime?      // Date of payment
+
 
   
   accept            AcceptanceStatus
@@ -293,6 +262,48 @@ enum BookingStatus {
 enum AcceptanceStatus {
   ACCEPTED
   DENIED
+}
+
+
+
+model Payment {
+  id                String             @id @default(uuid())
+ 
+
+  bookingId        String       @unique // FK for booking @unique
+  bookingInfo         Booking?           @relation(fields: [bookingId], references: [id])
+  
+
+  paymentStatus     PaymentStatus      // Enum for payment status
+  paymentMethod     PaymentMethod      // Enum for payment method
+  
+  amount            Int                // The amount paid
+  transactionId     String?            // Optional transaction ID
+
+ 
+
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+ 
+
+ 
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  PAYPAL
+  BANK_TRANSFER
+  CASH
 }
 
 //PAYMENT END
