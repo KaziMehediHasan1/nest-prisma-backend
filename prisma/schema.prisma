@@ -213,7 +213,7 @@ model Payment {
   amount            Int                // The amount paid
   transactionId     String?            // Optional transaction ID
 
-   Booking Booking[]
+  Booking Booking[]
 
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
@@ -422,7 +422,7 @@ model Amenities {
   default Boolean @default(false)
 }
 
-//AMINITIES END
+//AMENITIES END
 
 
 
