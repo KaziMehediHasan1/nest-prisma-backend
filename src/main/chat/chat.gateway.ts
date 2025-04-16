@@ -5,7 +5,7 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { Server, WebSocket } from 'ws';
 import { ChatService } from './chat.service';
 import { IncomingMessage } from 'http';
@@ -14,12 +14,12 @@ import { ConfigService } from '@nestjs/config';
 
 interface ClientMessage {
   conversationId: string;
-  type: 'subscribe' | 'unsubscribe';
+  type: 'subscribe_to_message' | 'unsubscribe' | 'subscribe_to_messages';
   payload?: {
     type: 'create' | 'update' | 'delete';
     payload: any;
     take: number;
-    skip: number;
+    cursor: string;
   };
 }
 
@@ -40,6 +40,7 @@ export class ChatGateway
   private readonly logger = new Logger(ChatGateway.name);
 
   constructor(
+    @Inject(forwardRef(() => ChatService))
     private readonly chatService: ChatService,
     private readonly jwt: JwtService,
     private readonly configService: ConfigService,
@@ -87,7 +88,10 @@ export class ChatGateway
     this.logger.log('Client disconnected');
   }
 
-  private handleRawMessage(client: WebSocket, message: string): void {
+  private async handleRawMessage(
+    client: WebSocket,
+    message: string,
+  ): Promise<void> {
     try {
       const { conversationId, type, payload } = JSON.parse(
         message,
@@ -96,21 +100,37 @@ export class ChatGateway
       if (!conversationId || !type) return;
 
       switch (type) {
-        case 'subscribe':
-          this.subscribeClient(conversationId, client);
-          if (!payload) {
-            this.logger.error('Missing payload for subscribe message');
+        case 'subscribe_to_message':
+          const isExist =
+            await this.chatService.findConversationById(conversationId);
+          if (!isExist) {
+            this.logger.error(`Conversation ${conversationId} does not exist`);
             return;
           }
-          this.broadcastToConversation({
-            conversationId,
-            type: payload.type,
-            payload: payload.payload,
-          });
+          this.subscribeClient(conversationId, client);
           break;
+
         case 'unsubscribe':
           this.unsubscribeClient(conversationId, client);
           break;
+
+        case 'subscribe_to_messages':
+          if (!payload) {
+            this.logger.error('Payload is missing');
+            client.send(
+              JSON.stringify({
+                error: 'Payload is missing',
+              }),
+            );
+            return;
+          }
+          const messages = await this.chatService.findMessagesByConversationId({
+            id: conversationId,
+            cursor: payload?.cursor,
+            take: payload?.take,
+          });
+          client.send(JSON.stringify(messages));
+
         default:
           this.logger.warn(`Unknown message type received: ${type}`);
       }

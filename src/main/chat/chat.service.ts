@@ -5,6 +5,7 @@ import { UploadService } from 'src/lib/upload/upload.service';
 import { CreateDirectMessageDto } from './dto/createMessage.dto';
 import { FileInstance } from '@prisma/client';
 import { EventService } from 'src/lib/event/event.service';
+import { ChatGateway } from './chat.gateway';
 
 @Injectable()
 export class ChatService {
@@ -12,7 +13,55 @@ export class ChatService {
     private readonly db: DbService,
     private readonly uploadService: UploadService,
     private readonly eventEmitter: EventService,
+    private readonly chatGateway: ChatGateway,
   ) {}
+
+  public findConversationById(id: string) {
+    return this.db.conversation.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        memberOne: {
+          select: {
+            id: true,
+          },
+        },
+        memberTwo: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+  }
+
+  public findMessagesByConversationId({
+    id,
+    cursor,
+    take,
+  }: {
+    id: string;
+    take: number;
+    cursor: string | undefined;
+  }) {
+    return this.db.directMessage.findMany({
+      where: {
+        conversationId: id,
+      },
+      ...(cursor
+        ? {
+            cursor: { id: cursor },
+            skip: 1, 
+          }
+        : {}),
+      take,
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+  
 
   private async findConversation(memberOneId: string, memberTwoId: string) {
     return await this.db.conversation.findFirst({
@@ -58,8 +107,7 @@ export class ChatService {
   async createMessage(rawData: CreateDirectMessageDto) {
     const { file } = rawData;
 
-    const isConversionExist = await this.findConversation(
-      rawData.memberId,
+    const isConversionExist = await this.findConversationById(
       rawData.conversationId,
     );
 
@@ -76,28 +124,35 @@ export class ChatService {
     }
 
     try {
-      return await this.db.directMessage.create({
-        data: {
-          content: rawData.content,
-          conversation: {
-            connect: {
-              id: rawData.conversationId,
+      const data = await this.db.directMessage
+        .create({
+          data: {
+            content: rawData.content,
+            conversation: {
+              connect: {
+                id: rawData.conversationId,
+              },
+            },
+            file: {
+              connect: fileInstance
+                ? {
+                    id: fileInstance.id,
+                  }
+                : undefined,
+            },
+            member: {
+              connect: {
+                id: rawData.memberId,
+              },
             },
           },
-          file: {
-            connect: fileInstance
-              ? {
-                  id: fileInstance.id,
-                }
-              : undefined,
-          },
-          member: {
-            connect: {
-              id: rawData.memberId,
-            },
-          },
-        },
-      });
+        })
+        this.chatGateway.broadcastToConversation({
+          conversationId: rawData.conversationId,
+          type: 'create',
+          payload: data,
+        })
+        return data
     } catch (error) {
       if (fileInstance) {
         this.eventEmitter.emit('FILE_DELETE', { Key: fileInstance.fileId });
