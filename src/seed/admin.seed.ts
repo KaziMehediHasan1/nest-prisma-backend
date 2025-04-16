@@ -38,7 +38,7 @@ export class AdminSeeder implements OnModuleInit {
           profile:{
             create:{
               gender:"MALE",
-              location:"TEST"
+              location:"N/A"
             }
           }
         },

@@ -12,7 +12,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { CacheModule } from '@nestjs/cache-manager';
-import * as redisStore from 'cache-manager-redis-store';
 
 
 @Module({
@@ -22,6 +21,8 @@ import * as redisStore from 'cache-manager-redis-store';
     AdminSeeder,
     AmenitiesSeeder,
     JwtStrategy,
+    AdminSeeder,
+    AmenitiesSeeder
   ],
   
   imports: [
