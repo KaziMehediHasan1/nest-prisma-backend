@@ -56,7 +56,7 @@ export class VenueService {
           amenities: {
             connect: foundAmenities.map((a) => ({ id: a.id })),
           },
-          Decoration: {
+          decoration: {
             create: decoration,
           },
           ...(fileInstance?.id && {
@@ -67,7 +67,7 @@ export class VenueService {
         },
         include: {
           amenities: true,
-          Decoration: {
+          decoration: {
             select: {
               flowerColors: true,
               flowerTypes: true,
@@ -109,7 +109,7 @@ export class VenueService {
 
     const existingVenue = await this.db.venue.findUnique({
       where: { id },
-      include: { amenities: true, Decoration: true, arrangementsImage: true },
+      include: { amenities: true, decoration: true, arrangementsImage: true },
     });
 
     if (!existingVenue) {
@@ -141,7 +141,7 @@ export class VenueService {
           amenities: amenityIds
             ? { connect: foundAmenities.map((a) => ({ id: a.id })) }
             : undefined,
-          Decoration: decoration ? { update: decoration } : undefined,
+          decoration: decoration ? { update: decoration } : undefined,
           ...(fileInstance?.id && {
             arrangementsImage: {
               connect: { id: fileInstance.id },
@@ -150,7 +150,7 @@ export class VenueService {
         },
         include: {
           amenities: true,
-          Decoration: true,
+          decoration: true,
           arrangementsImage: { select: { path: true } },
         },
       });
@@ -198,7 +198,7 @@ export class VenueService {
       where: { id },
       include: {
         amenities: true,
-        Decoration: true,
+        decoration: true,
         arrangementsImage: { select: { path: true } },
       },
     });

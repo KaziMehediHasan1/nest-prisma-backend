@@ -5,8 +5,9 @@ import { EventPreferenceModule } from './event-preference/event-preference.modul
 import { VenueModule } from './venue/venue.module';
 import { ReviewModule } from './review/review.module';
 import { BookingModule } from './booking/booking.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
-  imports: [BillingModule, AuthModule, EventPreferenceModule, VenueModule, ReviewModule, BookingModule],
+  imports: [BillingModule, AuthModule, EventPreferenceModule, VenueModule, ReviewModule, BookingModule, ChatModule],
 })
 export class MainModule {}

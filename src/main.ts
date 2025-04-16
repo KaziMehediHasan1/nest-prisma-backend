@@ -5,6 +5,7 @@ import { GlobalErrorHandlerFilter } from './error/globalerror.filter';
 import { AdminSeeder } from './seed/admin.seed';
 import { AmenitiesSeeder } from './seed/amenitiesSeeder.seed';
 import { ValidationPipe } from '@nestjs/common';
+import { WsAdapter } from '@nestjs/platform-ws';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = new DocumentBuilder()
@@ -17,6 +18,7 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, documentFactory);
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useWebSocketAdapter(new WsAdapter(app))
   app.useGlobalFilters(new GlobalErrorHandlerFilter());
   app.enableCors()
   await app.listen(process.env.PORT ?? 3000);

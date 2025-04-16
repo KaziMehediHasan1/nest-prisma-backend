@@ -20,11 +20,11 @@ export class EventPreferenceService {
       file: createEventPreference.avatar,
     });
 
-    const data = await this.db.eventPreference
+    const data = await this.db.eventType
       .create({
         data: {
           name: createEventPreference.name,
-          Profile: {
+          profile: {
             connect: {
               id: createEventPreference.profileId,
             },
@@ -55,7 +55,7 @@ export class EventPreferenceService {
   }
 
   findAll() {
-    return this.db.eventPreference.findMany({
+    return this.db.eventType.findMany({
       include:{
         avatar:{
           select:{
@@ -72,7 +72,7 @@ export class EventPreferenceService {
 
   async update(id: string, updateEventPreferenceDto: UpdateEventPreferenceDto) {
     // First check if the event preference exists
-    const existingPreference = await this.db.eventPreference.findUnique({
+    const existingPreference = await this.db.eventType.findUnique({
       where: { id },
       include: {
         avatar: true,
@@ -111,7 +111,7 @@ export class EventPreferenceService {
     }
   
     try {
-      const updatedPreference = await this.db.eventPreference.update({
+      const updatedPreference = await this.db.eventType.update({
         where: { id },
         data: updateData,
         include: {
