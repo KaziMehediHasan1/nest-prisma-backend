@@ -34,13 +34,13 @@ export class AuthService {
       user: {
         id: string;
         email: string;
-        role: $Enums.UserRole;
+        role: $Enums.UserRole[];
         isVerified: boolean;
         profileId?: string;
       };
     }>
   > {
-    const { ...rest } = dto;
+    const {roles, ...rest} = dto;
     const existingUser = await this.db.user.findUnique({
       where: { email: dto.email },
     });
@@ -58,7 +58,7 @@ export class AuthService {
       data: {
         ...rest,
         password: hashedPassword,
-        role: dto.role || $Enums.UserRole.PLANNER,
+        role: roles
       },
       include: {
         profile: true,
@@ -68,7 +68,7 @@ export class AuthService {
     const token = await this.generateToken({
       id: user.id,
       email: user.email,
-      role: user.role,
+      roles: user.role,
       isVerified: user.isVerified,
       profileId: user.profile?.id,
     });
@@ -99,7 +99,7 @@ export class AuthService {
       user: {
         id: string;
         email: string;
-        role: $Enums.UserRole;
+        roles: $Enums.UserRole[];
         isVerified: boolean;
         profileId?: string;
       };
@@ -138,7 +138,7 @@ export class AuthService {
     const token = await this.generateToken({
       id: user.id,
       email: user.email,
-      role: user.role,
+      roles: user.role,
       isVerified: user.isVerified,
       profileId: user.profile?.id,
     });
@@ -149,7 +149,7 @@ export class AuthService {
         user: {
           id: user.id,
           email: user.email,
-          role: user.role,
+          roles: user.role,
           isVerified: user.isVerified,
         },
       },
@@ -162,14 +162,14 @@ export class AuthService {
   private async generateToken(user: {
     id: string;
     email: string;
-    role: $Enums.UserRole;
+    roles: $Enums.UserRole[];
     isVerified: boolean;
     profileId?: string;
   }) {
     const payload = {
       sub: user.id,
       email: user.email,
-      role: user.role,
+      role: user.roles,
       isVerified: user.isVerified,
       profileId: user.profileId,
     };

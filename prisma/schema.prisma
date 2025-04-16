@@ -30,16 +30,16 @@ enum FileType {
 // User Instance start=======================================================
 
 model User {
-  id         String   @id @default(uuid())
-  email      String   @unique
-  phone      String   @unique
+  id         String     @id @default(uuid())
+  email      String     @unique
+  phone      String     @unique
   password   String
   name       String
-  role       UserRole @default(PLANNER)
+  role       UserRole[]
   profile    Profile?
-  isVerified Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  isVerified Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 }
 
 // User Instance end=========================================================
@@ -402,7 +402,7 @@ model FileInstance {
   Profile             Profile?       @relation(fields: [profileId], references: [id])
   profileId           String?
   DirectMessage       DirectMessage? @relation(fields: [directMessageId], references: [id])
-  directMessageId     String? @unique
+  directMessageId     String?        @unique
 }
 
 // File Instance end=========================================================
@@ -426,16 +426,16 @@ model Conversation {
 // Direct Message start =====================================================
 
 model DirectMessage {
-  id             String         @id @default(uuid())
+  id             String        @id @default(uuid())
   content        String
   file           FileInstance?
   memberId       String
-  member         Profile        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  member         Profile       @relation(fields: [memberId], references: [id], onDelete: Cascade)
   conversationId String
-  conversation   Conversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  deleted        Boolean        @default(false)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  deleted        Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   @@index([memberId])
   @@index([conversationId])

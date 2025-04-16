@@ -5,8 +5,9 @@ import {
   IsString,
   MinLength,
   MaxLength,
-  IsOptional,
-  IsEnum
+  IsEnum,
+  IsArray,
+  ArrayNotEmpty
 } from 'class-validator';
 import { IsValidPhone } from 'src/validators/phone.validator';
 
@@ -49,13 +50,16 @@ export class RegisterDto {
   phone: string;
 
   @ApiProperty({
-    description: 'User role',
+    description: 'User roles',
     enum: $Enums.UserRole,
-    required: false,
-    example: $Enums.UserRole.PLANNER
+    isArray: true,
+    example: [$Enums.UserRole.PLANNER]
   })
-  @IsOptional()
-  @IsEnum($Enums.UserRole, { message: 'Invalid user role' })
-  role?: $Enums.UserRole;
-
+  @IsArray({ message: 'Roles must be an array' })
+  @ArrayNotEmpty({ message: 'At least one role must be specified' })
+  @IsEnum($Enums.UserRole, {
+    each: true,
+    message: 'Each role must be a valid UserRole'
+  })
+  roles: $Enums.UserRole[];
 }
