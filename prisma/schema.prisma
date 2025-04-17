@@ -71,14 +71,14 @@ enum ServiceProviderRole {
 model Profile {
   id                       String          @id @default(uuid())
   userId                   String          @unique
-  user                     User            @relation(fields: [userId], references: [id])
+  user                     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   gender                   Gender
   imageId                  String?         @unique // FK for image
-  image                    FileInstance?   @relation("ProfileImage", fields: [imageId], references: [id])
+  image                    FileInstance?   @relation("ProfileImage", fields: [imageId], references: [id], onDelete: Cascade)
   location                 String?
   eventPreference          EventType[]
   coverPhotoId             String?         @unique // FK for cover photo
-  coverPhoto               FileInstance?   @relation("ProfileCoverPhoto", fields: [coverPhotoId], references: [id])
+  coverPhoto               FileInstance?   @relation("ProfileCoverPhoto", fields: [coverPhotoId], references: [id], onDelete: Cascade)
   profession               String?
   description              String?
   experience               Int?
