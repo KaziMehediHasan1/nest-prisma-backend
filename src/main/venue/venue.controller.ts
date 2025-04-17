@@ -1,10 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { VenueService } from './venue.service';
 import { CreateVenueDto } from './dto/venueCreate.dto';
-import { ApiConsumes } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { IdDto } from 'src/common/dto/id.dto';
 import { UpdateVenueDto } from './dto/updateVenue.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { VerifiedGuard } from 'src/guard/verify.guard';
+import { RolesGuard } from 'src/guard/role.guard';
+import { Roles } from 'src/decorator/roles.decorator';
 
 @Controller('venue')
 export class VenueController {
@@ -13,6 +17,9 @@ export class VenueController {
   @Post('create')
   @ApiConsumes('multipart/form-data','application/json')
   @UseInterceptors(FileInterceptor('arrangementsImage'))
+  @ApiBearerAuth()
+  @Roles("VENUE_OWNER")
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   createVenue(
     @Body() createVenueDto: CreateVenueDto,
      @UploadedFile() arrangementsImage: Express.Multer.File,
@@ -28,6 +35,9 @@ export class VenueController {
   @Patch('update/:id')
   @ApiConsumes('multipart/form-data', 'application/json')
   @UseInterceptors(FileInterceptor('arrangementsImage'))
+  @ApiBearerAuth()
+  @Roles("VENUE_OWNER")
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   updateVenue(
     @Param() id:IdDto,
     @Body() updateVenueDto: UpdateVenueDto,
@@ -41,12 +51,18 @@ export class VenueController {
     return this.venueService.updateVenue(id ,data);
   }
 
-  @Get()
+  @Get(":id")
+  @ApiBearerAuth()
+  @Roles("VENUE_OWNER")
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   getByID(@Param() id:IdDto){
     return this.venueService.getVenueById(id)
   }
 
   @Delete('delete/:id')
+  @ApiBearerAuth()
+  @Roles("VENUE_OWNER")
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   deleteVenue(@Param() id:IdDto){
     return this.venueService.deleteVenue(id)
   }

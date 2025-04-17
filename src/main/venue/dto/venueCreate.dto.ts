@@ -110,22 +110,22 @@ import {
     @ApiProperty({ required: false })
     @IsOptional()
     @IsString()
-    catering?: string;
+    cateringDescription?: string;
   
     @ApiProperty({ required: false })
     @IsOptional()
     @IsString()
-    parking?: string;
+    parkingDescription?: string;
   
     @ApiProperty({ required: false })
     @IsOptional()
     @IsString()
-    availability?: string;
+    availabilityDescription?: string;
   
     @ApiProperty({ required: false })
     @IsOptional()
     @IsString()
-    extraServices?: string;
+    extraServiceDescription?: string;
   
     @ApiProperty()
     @IsInt()

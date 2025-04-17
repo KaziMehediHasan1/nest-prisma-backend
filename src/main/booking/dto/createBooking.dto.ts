@@ -95,13 +95,15 @@ export class CreateBookingDto {
   @IsNotEmpty()
   bookedById: string;
 
-  @ApiPropertyOptional({ description: 'Venue ID (optional)', format: 'uuid' })
+  @ApiPropertyOptional({ description: 'Venue ID (optional)', format: 'uuid' , required: false})
   @IsUUID()
-  venueId: string;
+  @IsOptional()
+  venueId?: string;
 
   @ApiPropertyOptional({
     description: 'Service provider ID (optional)',
     format: 'uuid',
+    required: false
   })
   @IsOptional()
   @IsUUID()

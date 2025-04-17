@@ -1,11 +1,35 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DbService } from 'src/lib/db/db.service';
 import { CreateBookingDto } from './dto/createBooking.dto';
 import { UpdateBookingDto } from './dto/updateBooking.dto';
+import { $Enums, Profile, Venue } from '@prisma/client';
+import { ApiResponse } from 'src/interfaces/response';
+import { IdDto } from 'src/common/dto/id.dto';
+import { EventService } from 'src/lib/event/event.service';
 
 @Injectable()
 export class BookingService {
-  constructor(private readonly db: DbService) {}
+  constructor(
+    private readonly db: DbService,
+    private readonly eventEmitter: EventService,
+  ) {}
+
+  //send enum service start============================
+  public async sendEnum() {
+    return {
+      TableShape: Object.values($Enums.TableShape),
+      SeatingStyle: Object.values($Enums.SeatingStyle),
+      LightingStyle: Object.values($Enums.LightingStyle),
+      FlowerColor: Object.values($Enums.FlowerColor),
+      FlowerType: Object.values($Enums.FlowerType),
+      Fragrance: Object.values($Enums.Fragrance),
+    };
+  }
+  //send enum service end==============================
 
   // create venue start================================
   async create(rawData: CreateBookingDto) {
@@ -21,79 +45,94 @@ export class BookingService {
       ...rest
     } = rawData;
 
-    // Check if the venue exists
-    const venue = await this.db.venue.findUnique({
-      where: { id: venueId },
-    });
-    if (!venue) {
-      throw new BadRequestException('Venue not found.');
+    if (!venueId?.trim() && !serviceProviderId?.trim()) {
+      throw new BadRequestException(
+        'Either venueId or serviceProviderId must be provided.',
+      );
     }
 
-    // Check if there is an overlapping booking for the same venue.
-    // Adjust this condition based on your actual business logic.
-    const conflictingBooking = await this.db.booking.findFirst({
-      where: {
-        venueId: venueId,
-        // Depending on how you handle dates you could add:
-        selectedDate: selectedDate,
-        AND: [
-          {
-            startTime: {
-              lt: new Date(endTime),
-            },
-          },
-          {
-            endTime: {
-              gt: new Date(startTime),
-            },
-          },
-        ],
-      },
-    });
+    let venue: Venue | null = null;
+    if (venueId?.trim()) {
+      venue = await this.db.venue.findUnique({
+        where: { id: venueId },
+      });
+      if (!venue) {
+        throw new BadRequestException('Venue not found.');
+      }
+    }
 
-    if (conflictingBooking) {
-      throw new BadRequestException(
-        'The venue is already booked for the selected date and time.'
-      );
+    let serviceProvider: Profile | null = null;
+    if (serviceProviderId?.trim()) {
+      serviceProvider = await this.db.profile.findUnique({
+        where: { id: serviceProviderId },
+      });
+      if (!serviceProvider) {
+        throw new BadRequestException('Service Provider not found.');
+      }
+    }
+
+    if (venueId?.trim()) {
+      if (new Date(startTime).getTime() >= new Date(endTime).getTime()) {
+        throw new BadRequestException('Start time must be before end time.');
+      }
+
+      const conflictingBooking = await this.db.booking.findFirst({
+        where: {
+          venueId,
+          selectedDate,
+          AND: [
+            { startTime: { lt: new Date(endTime) } },
+            { endTime: { gt: new Date(startTime) } },
+          ],
+        },
+      });
+
+      if (conflictingBooking) {
+        throw new BadRequestException(
+          'The venue is already booked for the selected date and time.',
+        );
+      }
     }
 
     const booking = await this.db.booking.create({
       data: {
         ...rest,
         bookedBy: {
-          connect: {
-            id: bookedById,
-          },
+          connect: { id: bookedById },
         },
-        eventType: {
-          connect: {
-            id: eventTypeId,
-          },
+        EventType: {
+          connect: { id: eventTypeId },
         },
         decoration: Decoration ? JSON.stringify(Decoration) : undefined,
-        venue: {
-          connect: {
-            id: venueId,
-          },
-        },
-        serviceProvider: {
-          connect: {
-            id: serviceProviderId,
-          },
-        },
+        ...(venue && { venue: { connect: { id: venue.id } } }),
+        ...(serviceProvider && {
+          serviceProvider: { connect: { id: serviceProvider.id } },
+        }),
         selectedDate: new Date(selectedDate),
         startTime: new Date(startTime),
         endTime: new Date(endTime),
       },
     });
 
+    const memberTwoId = venue?.profileId ?? serviceProvider?.id;
+
+    if (!memberTwoId) {
+      throw new BadRequestException('memberTwoId could not be resolved');
+    }
+    
+    this.eventEmitter.emit("CONVERSATION_CREATE", {
+      memberOneId: bookedById,
+      memberTwoId,
+    });
+
     return booking;
   }
+
   // create venue end================================
 
   // update venue start================================
 
-  async update(bookingId: string, updateData: UpdateBookingDto) {
+  async update({ id: bookingId }: IdDto, updateData: UpdateBookingDto) {
     const booking = await this.db.booking.findUnique({
       where: { id: bookingId },
     });
@@ -107,7 +146,7 @@ export class BookingService {
       });
       if (!venue) {
         throw new BadRequestException(
-          `Venue with id ${updateData.venueId} not found.`
+          `Venue with id ${updateData.venueId} not found.`,
         );
       }
     }
@@ -129,7 +168,7 @@ export class BookingService {
 
       const conflictingBooking = await this.db.booking.findFirst({
         where: {
-          id: { not: bookingId }, 
+          id: { not: bookingId },
           venueId: newVenueId,
           selectedDate: newSelectedDate,
           AND: [
@@ -141,39 +180,29 @@ export class BookingService {
 
       if (conflictingBooking) {
         throw new BadRequestException(
-          'The venue is already booked for the selected date and time.'
+          'The venue is already booked for the selected date and time.',
         );
       }
     }
 
-    const {
-      bookedById,
-      eventTypeId,
-      venueId,
-      serviceProviderId,
-      decoration,
-      ...rest
-    } = updateData;
+    const updatePayload: any = { ...updateData };
 
-    const updatePayload: any = {
-      ...rest,
-    };
-
-    if (bookedById) {
-      updatePayload.bookedBy = { connect: { id: bookedById } };
+    if (updateData.bookedById) {
+      updatePayload.bookedBy = { connect: { id: updateData.bookedById } };
     }
-    if (eventTypeId) {
-      updatePayload.eventType = { connect: { id: eventTypeId } };
+    if (updateData.eventTypeId) {
+      updatePayload.eventType = { connect: { id: updateData.eventTypeId } };
     }
-    if (venueId) {
-      updatePayload.venue = { connect: { id: venueId } };
+    if (updateData.venueId) {
+      updatePayload.venue = { connect: { id: updateData.venueId } };
     }
-    if (serviceProviderId) {
-      updatePayload.serviceProvider = { connect: { id: serviceProviderId } };
+    if (updateData.serviceProviderId) {
+      updatePayload.serviceProvider = {
+        connect: { id: updateData.serviceProviderId },
+      };
     }
-    // Convert decoration to a JSON string if updated.
-    if (decoration) {
-      updatePayload.decoration = JSON.stringify(decoration);
+    if (updateData.decoration) {
+      updatePayload.decoration = JSON.stringify(updateData.decoration);
     }
 
     if (updateData.selectedDate) {
@@ -192,6 +221,51 @@ export class BookingService {
     });
 
     return updatedBooking;
+  }
+
+  public async bookingList(venueOwnerId: string): Promise<
+    ApiResponse<{
+      requested: any[];
+      pending: any[];
+      confirmed: any[];
+      completed: any[];
+    }>
+  > {
+    const statuses = [
+      'REQUESTED',
+      'PENDING',
+      'CONFIRMED',
+      'COMPLETED',
+    ] as const;
+
+    const bookingPromises = statuses.map((status) =>
+      this.db.booking.findMany({
+        where: {
+          venue: { profileId: venueOwnerId },
+          bookingStatus: status,
+        },
+        take: 3,
+      }),
+    );
+
+    const [
+      requestedBookings,
+      pendingBookings,
+      confirmedBookings,
+      completedBookings,
+    ] = await Promise.all(bookingPromises);
+
+    return {
+      statusCode: 200,
+      success: true,
+      message: 'Bookings fetched successfully.',
+      data: {
+        requested: requestedBookings,
+        pending: pendingBookings,
+        confirmed: confirmedBookings,
+        completed: completedBookings,
+      },
+    };
   }
 
   // update venue end================================
