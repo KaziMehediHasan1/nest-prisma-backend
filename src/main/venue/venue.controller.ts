@@ -11,7 +11,7 @@ export class VenueController {
   constructor(private readonly venueService: VenueService) {}
 
   @Post('create')
-  @ApiConsumes('multipart/form-data')
+  @ApiConsumes('multipart/form-data','application/json')
   @UseInterceptors(FileInterceptor('arrangementsImage'))
   createVenue(
     @Body() createVenueDto: CreateVenueDto,
@@ -26,7 +26,7 @@ export class VenueController {
   }
 
   @Patch('update/:id')
-  @ApiConsumes('multipart/form-data')
+  @ApiConsumes('multipart/form-data', 'application/json')
   @UseInterceptors(FileInterceptor('arrangementsImage'))
   updateVenue(
     @Param() id:IdDto,

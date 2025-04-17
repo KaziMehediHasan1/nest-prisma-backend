@@ -20,7 +20,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   async validate(payload: { 
     sub: string, 
     email: string, 
-    role: string 
+    roles: string 
   }) {
     
     if (!payload) {
@@ -28,7 +28,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
 
     
-
+    
     const isExist = await this.db.user.findUnique({
       where: { 
         id: payload.sub,

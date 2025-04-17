@@ -19,10 +19,12 @@ export class AdminSeeder implements OnModuleInit {
   async seedAdmin() {
     const adminExists = await this.db.user.findFirst({
       where: {
-        role: $Enums.UserRole.ADMIN,
+        role:{
+          has:$Enums.UserRole.ADMIN
+        },
       },
     });
-
+    
     if (!adminExists) {
       const hashedPassword = await this.lib.hashPassword({
         password: this.config.getOrThrow('ADMIN_PASSWORD') as string,
@@ -33,12 +35,12 @@ export class AdminSeeder implements OnModuleInit {
           email: this.config.getOrThrow('ADMIN_EMAIL') as string,
           name: this.config.getOrThrow('ADMIN_NAME') as string,
           password: hashedPassword,
-          role: $Enums.UserRole.ADMIN,
+          role: [$Enums.UserRole.ADMIN],
           phone: this.config.getOrThrow('ADMIN_PHONE') as string,
           profile:{
             create:{
               gender:"MALE",
-              location:"TEST"
+              location:"N/A"
             }
           }
         },

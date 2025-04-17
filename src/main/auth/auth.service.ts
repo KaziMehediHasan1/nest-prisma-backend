@@ -17,6 +17,8 @@ import { VerificationService } from 'src/lib/verification/verification.service';
 import { VerifyCodeDto } from './dto/verifyEmail.dto';
 import { ResetPasswordDto } from './dto/resetPassword.dto';
 import { SendResetCodeDto } from './dto/sendResetCode.dto';
+import { IdDto } from 'src/common/dto/id.dto';
+import { EventService } from 'src/lib/event/event.service';
 
 @Injectable()
 export class AuthService {
@@ -26,6 +28,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly verifyService: VerificationService,
+    private readonly eventEmitter: EventService
   ) {}
 
   async register(dto: RegisterDto): Promise<
@@ -34,13 +37,13 @@ export class AuthService {
       user: {
         id: string;
         email: string;
-        role: $Enums.UserRole;
+        role: $Enums.UserRole[];
         isVerified: boolean;
         profileId?: string;
       };
     }>
   > {
-    const { ...rest } = dto;
+    const {roles, ...rest} = dto;
     const existingUser = await this.db.user.findUnique({
       where: { email: dto.email },
     });
@@ -58,7 +61,7 @@ export class AuthService {
       data: {
         ...rest,
         password: hashedPassword,
-        role: dto.role || $Enums.UserRole.PLANNER,
+        role: roles
       },
       include: {
         profile: true,
@@ -68,7 +71,7 @@ export class AuthService {
     const token = await this.generateToken({
       id: user.id,
       email: user.email,
-      role: user.role,
+      roles: user.role,
       isVerified: user.isVerified,
       profileId: user.profile?.id,
     });
@@ -99,7 +102,7 @@ export class AuthService {
       user: {
         id: string;
         email: string;
-        role: $Enums.UserRole;
+        roles: $Enums.UserRole[];
         isVerified: boolean;
         profileId?: string;
       };
@@ -114,7 +117,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException("User doesn't exist");
     }
 
     if (!user.isVerified) {
@@ -131,14 +134,14 @@ export class AuthService {
     });
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException("Invalid password");
     }
 
     // Generate JWT token
     const token = await this.generateToken({
       id: user.id,
       email: user.email,
-      role: user.role,
+      roles: user.role,
       isVerified: user.isVerified,
       profileId: user.profile?.id,
     });
@@ -149,7 +152,7 @@ export class AuthService {
         user: {
           id: user.id,
           email: user.email,
-          role: user.role,
+          roles: user.role,
           isVerified: user.isVerified,
         },
       },
@@ -162,14 +165,14 @@ export class AuthService {
   private async generateToken(user: {
     id: string;
     email: string;
-    role: $Enums.UserRole;
+    roles: $Enums.UserRole[];
     isVerified: boolean;
     profileId?: string;
   }) {
     const payload = {
       sub: user.id,
       email: user.email,
-      role: user.role,
+      role: user.roles,
       isVerified: user.isVerified,
       profileId: user.profileId,
     };
@@ -287,5 +290,46 @@ export class AuthService {
         'Password has been reset successfully. You can now login with your new password.',
       data: null,
     };
+  }
+
+  public async deleteUser(id: string):Promise<ApiResponse<null>> {
+    const user = await this.db.user.findUnique({
+      where: { id },
+      include: {
+        profile:{
+          select:{
+            image: true,
+            coverPhoto: true
+          }
+        }
+      }
+    });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (user.profile?.image) {
+      this.eventEmitter.emit('FILE_DELETE', {
+        Key: user.profile.image.fileId,
+      });
+    }
+
+    if (user.profile?.coverPhoto) {
+      this.eventEmitter.emit('FILE_DELETE', {
+        Key: user.profile.coverPhoto.fileId,
+      });
+    }
+
+    await this.db.user.deleteMany({
+      where: { id },
+    });
+
+    return {
+      statusCode: 200,
+      success: true,
+      message: 'User deleted successfully',
+      data: null,
+    }
   }
 }
