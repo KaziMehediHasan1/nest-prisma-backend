@@ -1,5 +1,19 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsEmail, IsNumber, IsPositive, IsString } from "class-validator";
+import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsEmail,
+  IsEnum,
+  IsNumber,
+  IsPositive,
+  IsString,
+  IsUUID,
+} from 'class-validator';
+
+export enum PaymentType {
+  BOOKING = 'booking',
+  FULL_PAYMENT = 'fullPayment',
+  SERVICE_BOOKING = 'serviceBooking',
+}
+
 
 export class CreatePaymentIntentDto {
   @ApiProperty({
@@ -19,9 +33,27 @@ export class CreatePaymentIntentDto {
 
   @ApiProperty({
     example: 5000,
-    description: 'Payment amount in smallest currency unit (e.g., cents for USD)',
+    description:
+      'Payment amount in smallest currency unit (e.g., cents for USD)',
   })
   @IsNumber()
   @IsPositive({ message: 'Amount must be a positive number' })
   amount: number;
+}
+
+export class CreatePaymentIntentDtoWithId extends CreatePaymentIntentDto {
+  @ApiProperty({
+    description: 'Unique identifier (UUID)',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @IsUUID('4', { message: 'ID must be a valid UUID (version 4).' })
+  id: string;
+
+  @ApiProperty({
+    description: 'Type of payment being made',
+    enum: PaymentType,
+    example: PaymentType.BOOKING,
+  })
+  @IsEnum(PaymentType, { message: 'paymentType must be a valid enum value' })
+  paymentType: PaymentType;
 }

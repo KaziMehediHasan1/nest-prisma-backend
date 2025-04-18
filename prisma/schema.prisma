@@ -92,6 +92,7 @@ model Profile {
   venues                   Venue[] // 1-to-many relation
   createdAt                DateTime        @default(now())
   updatedAt                DateTime        @updatedAt
+  isPro                    Boolean         @default(false)
 }
 
 enum Gender {
@@ -104,12 +105,11 @@ enum Gender {
 
 //eventPreferences start================================================
 model EventType {
-  id        String        @id @default(uuid())
-  name      String        @unique
-  avatar    FileInstance?
-  profile   Profile[]
-  Booking   Booking?      @relation(fields: [bookingId], references: [id])
-  bookingId String        @unique
+  id      String        @id @default(uuid())
+  name    String        @unique
+  avatar  FileInstance?
+  profile Profile[]
+  Booking Booking[]
 }
 
 //eventPreferences end================================================
@@ -195,7 +195,6 @@ model Booking {
   startTime         DateTime
   endTime           DateTime
   duration          Int // Duration in minutes, can be auto-calculated
-  eventType         EventType?
   bookingType       BookingType // Enum: INSTANT_BOOKING, REQUEST_BASED_BOOKING
   guestNumber       Int
   decoration        String? //an string object of decoration
@@ -210,6 +209,8 @@ model Booking {
   isEventFinished   Boolean          @default(false)
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
+  EventType         EventType?       @relation(fields: [eventTypeId], references: [id])
+  eventTypeId       String?
 }
 
 enum BookingStatus {
@@ -221,7 +222,7 @@ enum BookingStatus {
 
 enum AcceptanceStatus {
   ACCEPTED
-  DENIED
+  DENIEDx
 }
 
 //Booking end =============================================================

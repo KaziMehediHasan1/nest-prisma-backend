@@ -6,6 +6,8 @@ import { CreateDirectMessageDto } from './dto/createMessage.dto';
 import { FileInstance } from '@prisma/client';
 import { EventService } from 'src/lib/event/event.service';
 import { ChatGateway } from './chat.gateway';
+import { OnEvent } from '@nestjs/event-emitter';
+import { EVENT_TYPES } from 'src/interfaces/event';
 
 @Injectable()
 export class ChatService {
@@ -82,7 +84,8 @@ export class ChatService {
       },
     });
   }
-
+  
+  @OnEvent(EVENT_TYPES.CONVERSATION_CREATE)
   private async createConversation(memberOneId: string, memberTwoId: string) {
     return await this.db.conversation.create({
       data: {

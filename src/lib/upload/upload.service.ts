@@ -54,15 +54,20 @@ export class UploadService {
     const sanitizedFileName = this.sanitizeFileName(file.originalname);
 
     const fileId = `${sanitizedFileName}-${uuid4()}`;
-    await this.s3Client.send(
-      new PutObjectCommand({
-        Bucket: bucketName,
-        Key: fileId,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-        ACL: 'public-read',
-      }),
-    );
+    try {
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: bucketName,
+          Key: fileId,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+          ACL: 'public-read',
+        }),
+      );
+    } catch (error) {
+      console.log(error);
+      
+    }
 
     const fileType = this.getFileType(file.mimetype);
 
