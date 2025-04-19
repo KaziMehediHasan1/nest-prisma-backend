@@ -14,7 +14,7 @@ CREATE TYPE "Gender" AS ENUM ('MALE', 'FEMALE', 'OTHER');
 CREATE TYPE "BookingStatus" AS ENUM ('REQUESTED', 'PENDING', 'CONFIRMED', 'COMPLETED');
 
 -- CreateEnum
-CREATE TYPE "AcceptanceStatus" AS ENUM ('ACCEPTED', 'DENIED');
+CREATE TYPE "AcceptanceStatus" AS ENUM ('ACCEPTED', 'PENDING', 'DENIED');
 
 -- CreateEnum
 CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED', 'CANCELLED');
@@ -74,6 +74,7 @@ CREATE TABLE "Profile" (
     "experience" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "isPro" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "Profile_pkey" PRIMARY KEY ("id")
 );
@@ -82,7 +83,6 @@ CREATE TABLE "Profile" (
 CREATE TABLE "EventType" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "bookingId" TEXT NOT NULL,
 
     CONSTRAINT "EventType_pkey" PRIMARY KEY ("id")
 );
@@ -163,10 +163,11 @@ CREATE TABLE "Booking" (
     "totalAmount" INTEGER NOT NULL DEFAULT 0,
     "paid" INTEGER NOT NULL DEFAULT 0,
     "due" INTEGER NOT NULL DEFAULT 0,
-    "accept" "AcceptanceStatus" NOT NULL,
+    "accept" "AcceptanceStatus" NOT NULL DEFAULT 'PENDING',
     "isEventFinished" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "eventTypeId" TEXT,
 
     CONSTRAINT "Booking_pkey" PRIMARY KEY ("id")
 );
@@ -295,9 +296,6 @@ CREATE UNIQUE INDEX "Profile_coverPhotoId_key" ON "Profile"("coverPhotoId");
 CREATE UNIQUE INDEX "EventType_name_key" ON "EventType"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "EventType_bookingId_key" ON "EventType"("bookingId");
-
--- CreateIndex
 CREATE UNIQUE INDEX "Employee_email_key" ON "Employee"("email");
 
 -- CreateIndex
@@ -349,9 +347,6 @@ ALTER TABLE "Profile" ADD CONSTRAINT "Profile_imageId_fkey" FOREIGN KEY ("imageI
 ALTER TABLE "Profile" ADD CONSTRAINT "Profile_coverPhotoId_fkey" FOREIGN KEY ("coverPhotoId") REFERENCES "FileInstance"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "EventType" ADD CONSTRAINT "EventType_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "Booking"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "Venue" ADD CONSTRAINT "Venue_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "Profile"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -371,6 +366,9 @@ ALTER TABLE "Booking" ADD CONSTRAINT "Booking_venueId_fkey" FOREIGN KEY ("venueI
 
 -- AddForeignKey
 ALTER TABLE "Booking" ADD CONSTRAINT "Booking_serviceProviderId_fkey" FOREIGN KEY ("serviceProviderId") REFERENCES "Profile"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Booking" ADD CONSTRAINT "Booking_eventTypeId_fkey" FOREIGN KEY ("eventTypeId") REFERENCES "EventType"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Payment" ADD CONSTRAINT "Payment_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "Booking"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

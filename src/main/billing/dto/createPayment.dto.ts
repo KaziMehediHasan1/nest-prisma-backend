@@ -43,11 +43,18 @@ export class CreatePaymentIntentDto {
 
 export class CreatePaymentIntentDtoWithId extends CreatePaymentIntentDto {
   @ApiProperty({
-    description: 'Unique identifier (UUID)',
+    description: 'Unique identifier (UUID) of a venue or service provider',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
   @IsUUID('4', { message: 'ID must be a valid UUID (version 4).' })
   id: string;
+
+  @ApiProperty({
+    description: 'Unique identifier (UUID)',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @IsUUID('4', { message: 'ID must be a valid UUID (version 4).' })
+  userId: string;
 
   @ApiProperty({
     description: 'Type of payment being made',
@@ -56,4 +63,5 @@ export class CreatePaymentIntentDtoWithId extends CreatePaymentIntentDto {
   })
   @IsEnum(PaymentType, { message: 'paymentType must be a valid enum value' })
   paymentType: PaymentType;
+
 }

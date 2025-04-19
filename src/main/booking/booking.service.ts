@@ -31,7 +31,7 @@ export class BookingService {
   }
   //send enum service end==============================
 
-  // create venue start================================
+  // create booking start================================
   async create(rawData: CreateBookingDto) {
     const {
       bookedById,
@@ -114,13 +114,15 @@ export class BookingService {
       },
     });
 
+    booking.decoration = JSON.parse(booking.decoration ?? '{}');
+
     const memberTwoId = venue?.profileId ?? serviceProvider?.id;
 
     if (!memberTwoId) {
       throw new BadRequestException('memberTwoId could not be resolved');
     }
-    
-    this.eventEmitter.emit("CONVERSATION_CREATE", {
+
+    this.eventEmitter.emit('CONVERSATION_CREATE', {
       memberOneId: bookedById,
       memberTwoId,
     });
@@ -128,9 +130,9 @@ export class BookingService {
     return booking;
   }
 
-  // create venue end================================
+  // create booking end================================
 
-  // update venue start================================
+  // update booking start================================
 
   async update({ id: bookingId }: IdDto, updateData: UpdateBookingDto) {
     const booking = await this.db.booking.findUnique({
@@ -238,14 +240,15 @@ export class BookingService {
       'COMPLETED',
     ] as const;
 
-    const bookingPromises = statuses.map((status) =>
-      this.db.booking.findMany({
-        where: {
-          venue: { profileId: venueOwnerId },
-          bookingStatus: status,
-        },
-        take: 3,
-      }),
+    const bookingPromises = statuses.map(
+      async (status) =>
+        await this.db.booking.findMany({
+          where: {
+            venue: { profileId: venueOwnerId },
+            bookingStatus: status,
+          },
+          take: 3,
+        }),
     );
 
     const [
@@ -268,5 +271,26 @@ export class BookingService {
     };
   }
 
-  // update venue end================================
+  // update booking end================================
+
+  // getBookedDate start===============================
+
+  async getBookedDate({ id }: IdDto) {
+    const booking = await this.db.booking.findMany({
+      where: {
+        venueId: id,
+      },
+      select: { 
+        selectedDate: true,
+        startTime: true,
+        endTime: true
+       },
+    });
+    if (!booking) {
+      throw new NotFoundException(`Booking with id ${id} not found.`);
+    }
+    return booking;
+  }
+
+  // getBookedDate end================================
 }

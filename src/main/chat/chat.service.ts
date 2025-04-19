@@ -85,7 +85,7 @@ export class ChatService {
     });
   }
   
-  @OnEvent(EVENT_TYPES.CONVERSATION_CREATE)
+ 
   private async createConversation(memberOneId: string, memberTwoId: string) {
     return await this.db.conversation.create({
       data: {
@@ -93,6 +93,22 @@ export class ChatService {
         memberOneId,
       },
     });
+  }
+
+  @OnEvent(EVENT_TYPES.CONVERSATION_CREATE)
+  async getOrCreteConversationEventHandler({memberOneId, memberTwoId}:{
+    memberOneId:string,
+    memberTwoId:string
+  }) {
+  
+
+    const conversation = await this.findConversation(memberOneId, memberTwoId);
+
+    if (conversation) {
+      return conversation;
+    }
+
+    return await this.createConversation(memberOneId, memberTwoId);
   }
 
   async getOrCreateConversation(rawData: CreateDirectChatDto) {

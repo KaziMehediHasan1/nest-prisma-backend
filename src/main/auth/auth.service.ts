@@ -28,7 +28,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly verifyService: VerificationService,
-    private readonly eventEmitter: EventService
+    private readonly eventEmitter: EventService,
   ) {}
 
   async register(dto: RegisterDto): Promise<
@@ -39,11 +39,11 @@ export class AuthService {
         email: string;
         role: $Enums.UserRole[];
         isVerified: boolean;
-        profileId?: string;
+        profileId: string;
       };
     }>
   > {
-    const {roles, ...rest} = dto;
+    const { roles, ...rest } = dto;
     const existingUser = await this.db.user.findUnique({
       where: { email: dto.email },
     });
@@ -61,7 +61,7 @@ export class AuthService {
       data: {
         ...rest,
         password: hashedPassword,
-        role: roles
+        role: roles,
       },
       include: {
         profile: true,
@@ -73,7 +73,7 @@ export class AuthService {
       email: user.email,
       roles: user.role,
       isVerified: user.isVerified,
-      profileId: user.profile?.id,
+      profileId: user.profile ? user.profile.id : '',
     });
 
     await this.verifyService.sendVerificationEmail(user.email);
@@ -86,7 +86,7 @@ export class AuthService {
           email: user.email,
           role: user.role,
           isVerified: user.isVerified,
-          profileId: user.profile?.id,
+          profileId: user.profile? user.profile.id : '',
         },
       },
       statusCode: 201,
@@ -134,7 +134,7 @@ export class AuthService {
     });
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException("Invalid password");
+      throw new UnauthorizedException('Invalid password');
     }
 
     // Generate JWT token
@@ -143,7 +143,7 @@ export class AuthService {
       email: user.email,
       roles: user.role,
       isVerified: user.isVerified,
-      profileId: user.profile?.id,
+      profileId: user.profile ? user.profile.id : '',
     });
 
     return {
@@ -154,6 +154,7 @@ export class AuthService {
           email: user.email,
           roles: user.role,
           isVerified: user.isVerified,
+          profileId: user.profile ? user.profile.id : '',
         },
       },
       statusCode: 200,
@@ -167,7 +168,7 @@ export class AuthService {
     email: string;
     roles: $Enums.UserRole[];
     isVerified: boolean;
-    profileId?: string;
+    profileId: string;
   }) {
     const payload = {
       sub: user.id,
@@ -292,17 +293,17 @@ export class AuthService {
     };
   }
 
-  public async deleteUser(id: string):Promise<ApiResponse<null>> {
+  public async deleteUser(id: string): Promise<ApiResponse<null>> {
     const user = await this.db.user.findUnique({
       where: { id },
       include: {
-        profile:{
-          select:{
+        profile: {
+          select: {
             image: true,
-            coverPhoto: true
-          }
-        }
-      }
+            coverPhoto: true,
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -330,6 +331,6 @@ export class AuthService {
       success: true,
       message: 'User deleted successfully',
       data: null,
-    }
+    };
   }
 }
