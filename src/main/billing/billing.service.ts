@@ -1,8 +1,14 @@
-import { BadRequestException, HttpException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { CreatePaymentIntentDtoWithId } from './dto/createPayment.dto';
 import { DbService } from 'src/lib/db/db.service';
+import { $Enums, BookingStatus } from '@prisma/client';
 
 @Injectable()
 export class BillingService {
@@ -21,16 +27,26 @@ export class BillingService {
     );
   }
 
-  private verifyAmount({baseAmount, received}:{baseAmount: number, received: number}) {
-    switch(true){
-      case baseAmount > received && received !== 0:
-        return received
+  private verifyAmount({
+    baseAmount,
+    received,
+  }: {
+    baseAmount: number;
+    received: number;
+  }) {
+    switch (true) {
+      case baseAmount * 0.1 === received:
+        return received;
       case baseAmount === received:
-        return baseAmount
+        return baseAmount;
       case baseAmount < received:
-        return new BadRequestException("Invalid amount")
+        this.logger.error(
+          `Received more than expected. Expected: ${baseAmount}, Received: ${received}`,
+        );
       default:
-        throw new BadRequestException("Invalid amount")
+        this.logger.error(
+          `Received more than expected. Expected: ${baseAmount}, Received: ${received}`,
+        );
     }
   }
 
@@ -43,6 +59,7 @@ export class BillingService {
     amount,
     id,
     paymentType,
+    userId,
   }: CreatePaymentIntentDtoWithId): Promise<{ url: string | null }> {
     const session: Stripe.Checkout.Session =
       await this.stripe.checkout.sessions.create({
@@ -70,7 +87,8 @@ export class BillingService {
         payment_intent_data: {
           metadata: {
             type: paymentType,
-            id,
+            id: id,
+            userId: userId,
           },
         },
       });
@@ -106,12 +124,17 @@ export class BillingService {
     }
     console.log(paymentIntent.amount_received);
 
-    const { type, id } = metadata;
+    const { type, id, userId } = metadata;
+
     this.logger.log(`PaymentIntent succeeded. Type: ${type}, ID: ${id}`);
 
     switch (type) {
       case 'booking':
-        return this.handleBookingPayment(id);
+        return this.handleBookingPayment(
+          id,
+          paymentIntent.amount_received / 100,
+          userId,
+        );
       case 'fullPayment':
         return this.handleFullPayment(id);
       case 'serviceBooking':
@@ -123,7 +146,7 @@ export class BillingService {
 
   private async handleCheckoutSessionCompleted(event: Stripe.Event) {
     const session = event.data.object as Stripe.Checkout.Session;
-    
+
     const metadata = session.metadata;
     if (!metadata?.type || !metadata?.id) {
       this.logger.warn('Missing metadata in CheckoutSession: type or id');
@@ -146,23 +169,74 @@ export class BillingService {
     }
   }
 
-  private async handleBookingPayment(id: string, amount?:number) {
+  private async handleBookingPayment(
+    id: string,
+    amount?: number,
+    userId?: string,
+  ) {
     this.logger.log(`Handling booking payment for ID: ${id}`);
+    console.log(id, amount, userId);
 
-    if (!amount){ 
-      this.logger.warn('Amount not found')
-      return
+    if (!amount) {
+      this.logger.warn('Amount not found');
+      return;
     }
 
     const booking = await this.db.booking.findUnique({
       where: { id },
-    })
+    });
+
+    if (!userId) {
+      this.logger.error(`User not found for ID: ${id}`);
+      return;
+    }
 
     if (!booking) {
       this.logger.error(`Booking not found for ID: ${id}`);
+      return;
     }
 
-   
+    if (
+     ( booking.accept === $Enums.AcceptanceStatus.DENIED &&
+      booking.totalAmount === 0) ||
+      booking.bookingStatus === $Enums.BookingStatus.COMPLETED
+    ) {
+      this.logger.error(
+        `Booking is not accepted by the venue owner for ID: ${id}`,
+      );
+      return;
+    }
+
+    const totalAmount = this.verifyAmount({
+      baseAmount: booking.due,
+      received: amount,
+    });
+
+    if (!totalAmount) {
+      return;
+    }
+
+    try {
+      await this.db.booking.update({
+        where: { id: booking.id },
+        data: {
+          paid: booking.paid + totalAmount,
+          due: booking.due - totalAmount,
+          bookingStatus:
+            booking.due === totalAmount ? 'COMPLETED' : 'CONFIRMED',
+          payment: {
+            create: {
+              amount: totalAmount,
+              paymentMethod: 'CREDIT_CARD',
+              paymentStatus: 'COMPLETED',
+            },
+          },
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Error updating booking for ID: ${id}`, error);
+      return;
+    }
   }
 
   private async handleFullPayment(id: string) {

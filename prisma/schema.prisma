@@ -205,7 +205,7 @@ model Booking {
   paid              Int              @default(0) // Amount paid  (when the booking is confirmed)
   due               Int              @default(0) // Due amount (remaining amount to be paid)
   payment           Payment[] // 1-to-many relation
-  accept            AcceptanceStatus
+  accept            AcceptanceStatus @default(PENDING)
   isEventFinished   Boolean          @default(false)
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
@@ -222,7 +222,8 @@ enum BookingStatus {
 
 enum AcceptanceStatus {
   ACCEPTED
-  DENIEDx
+  PENDING
+  DENIED
 }
 
 //Booking end =============================================================
