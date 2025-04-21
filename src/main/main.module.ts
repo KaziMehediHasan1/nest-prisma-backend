@@ -6,8 +6,26 @@ import { VenueModule } from './venue/venue.module';
 import { ReviewModule } from './review/review.module';
 import { BookingModule } from './booking/booking.module';
 import { ChatModule } from './chat/chat.module';
+import { PdfModule } from './pdf/pdf.module';
+import { GuestModule } from './guest/guest.module';
+import { ShiftModule } from './shift/shift.module';
+import { EmployeesModule } from './employees/employees.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
-  imports: [BillingModule, AuthModule, EventPreferenceModule, VenueModule, ReviewModule, BookingModule, ChatModule],
+  imports: [
+    BillingModule,
+    AuthModule,
+    EventPreferenceModule,
+    VenueModule,
+    ReviewModule,
+    BookingModule,
+    ChatModule,
+    PdfModule,
+    GuestModule,
+    ShiftModule,
+    EmployeesModule,
+    PaymentModule
+  ],
 })
 export class MainModule {}

@@ -4,7 +4,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DbService } from '../db/db.service';
 import { FileInstance, FileType } from '@prisma/client';
@@ -105,5 +105,34 @@ export class UploadService {
         Key,
       }),
     );
+  }
+  async savePdfToS3(buffer: Buffer, name: string): Promise<FileInstance> {
+    const bucket = this.config.getOrThrow<string>('AWS_BUCKET_NAME');
+    const sanitized = this.sanitizeFileName(name);
+    const fileId = `${sanitized}-${uuid4()}.pdf`;
+
+    await this.s3Client.send(
+      new PutObjectCommand({
+        Bucket: bucket,
+        Key: fileId,
+        Body: buffer,
+        ContentType: 'application/pdf',
+        ACL: 'public-read',
+      }),
+    );
+
+    const expiresIn = 3600 * 24 * 7; // 7 days
+    const path = await this.getPresignedUrl(fileId, expiresIn);
+
+    return this.db.fileInstance.create({
+      data: {
+        fileId,
+        name: `${sanitized}.pdf`,
+        path,
+        bucket,
+        type: FileType.DOCUMENT,
+        expiresAt: new Date(Date.now() + expiresIn * 1000),
+      },
+    });
   }
 }
