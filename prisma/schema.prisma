@@ -169,8 +169,7 @@ model Shift {
   endTime    DateTime
   duration   Int // Duration in minutes, can be auto-calculated
   shiftName  String
-  employeeId String
-  employee   Employee @relation(fields: [employeeId], references: [id])
+  employee   Employee []
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }

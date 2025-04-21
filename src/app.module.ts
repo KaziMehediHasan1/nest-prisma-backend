@@ -48,6 +48,8 @@ import { CacheModule } from '@nestjs/cache-manager';
     CacheModule.register({
       isGlobal: true,
     }),
+    
+            
   ],
   exports: [JwtStrategy]
 })
