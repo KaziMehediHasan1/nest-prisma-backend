@@ -27,7 +27,7 @@ export class GuestController {
   @Get('magic-link/generate')
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
-  @Roles("PLANNER")
+  @Roles('PLANNER')
   async generateMagicLink(@Query() id: IdDto) {
     return this.guestService.generateMagicLink(id);
   }
@@ -41,22 +41,20 @@ export class GuestController {
   @UseInterceptors(FileInterceptor('image'))
   @ApiConsumes('multipart/form-data', 'application/json')
   async createGuest(
-    @Query()  id : IdDto,
+    @Query() id: IdDto,
     @UploadedFile() image: Express.Multer.File,
-    @Body() data: CreateGuestDto
+    @Body() data: CreateGuestDto,
   ) {
     const rawData = {
       ...data,
       image,
-    }
+    };
     return this.guestService.createGuest(id, rawData);
   }
 
-
   @Get('invites/:id')
-  @ApiOperation({summary: 'Get all invites for a specific booking'})
+  @ApiOperation({ summary: 'Get all invites for a specific booking' })
   async getAllInvites(@Param() id: IdDto, @Query() pagination: PaginationDto) {
     return this.guestService.getAllInvites(id, pagination);
   }
-  
 }
