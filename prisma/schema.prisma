@@ -93,6 +93,7 @@ model Profile {
   createdAt                DateTime        @default(now())
   updatedAt                DateTime        @updatedAt
   isPro                    Boolean         @default(false)
+  magicLink                MagicLink?
 }
 
 enum Gender {
@@ -102,6 +103,19 @@ enum Gender {
 }
 
 //profile end===================================================
+
+//Magic Link Start==============================================
+
+model MagicLink {
+  id          String   @id @default(uuid())
+  Profile     Profile? @relation(fields: [profileId], references: [id])
+  profileId   String?  @unique
+  magicLinkId String   @unique
+  Booking     Booking? @relation(fields: [bookingId], references: [id])
+  bookingId   String?
+}
+
+//Magic Link End==============================================
 
 //eventPreferences start================================================
 model EventType {
@@ -162,16 +176,16 @@ model Employee {
 }
 
 model Shift {
-  id         String   @id @default(uuid())
-  venueId    String
-  venue      Venue    @relation(fields: [venueId], references: [id])
-  startTime  DateTime
-  endTime    DateTime
-  duration   Int // Duration in minutes, can be auto-calculated
-  shiftName  String
-  employee   Employee []
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String     @id @default(uuid())
+  venueId   String
+  venue     Venue      @relation(fields: [venueId], references: [id])
+  startTime DateTime
+  endTime   DateTime
+  duration  Int // Duration in minutes, can be auto-calculated
+  shiftName String
+  employee  Employee[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 // Venue end===================================================
@@ -210,6 +224,7 @@ model Booking {
   updatedAt         DateTime         @updatedAt
   EventType         EventType?       @relation(fields: [eventTypeId], references: [id])
   eventTypeId       String?
+  magicLink         MagicLink[]
 }
 
 enum BookingStatus {
