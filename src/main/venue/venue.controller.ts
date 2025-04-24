@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { VenueService } from './venue.service';
 import { CreateVenueDto } from './dto/venueCreate.dto';
 import { ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
@@ -9,26 +21,31 @@ import { AuthGuard } from '@nestjs/passport';
 import { VerifiedGuard } from 'src/guard/verify.guard';
 import { RolesGuard } from 'src/guard/role.guard';
 import { Roles } from 'src/decorator/roles.decorator';
+import { FilterService } from './filter.service';
+import { FilterVenuesDto } from './dto/filterVenue.dto';
 
 @Controller('venue')
 export class VenueController {
-  constructor(private readonly venueService: VenueService) {}
+  constructor(
+    private readonly venueService: VenueService,
+    private readonly filterService: FilterService,
+  ) {}
 
   @Post('create')
-  @ApiConsumes('multipart/form-data','application/json')
+  @ApiConsumes('multipart/form-data', 'application/json')
   @UseInterceptors(FileInterceptor('arrangementsImage'))
   @ApiBearerAuth()
-  @Roles("VENUE_OWNER")
+  @Roles('VENUE_OWNER')
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   createVenue(
     @Body() createVenueDto: CreateVenueDto,
-     @UploadedFile() arrangementsImage: Express.Multer.File,
+    @UploadedFile() arrangementsImage: Express.Multer.File,
   ) {
     const data = {
-     ...createVenueDto,
+      ...createVenueDto,
       arrangementsImage,
     };
-    
+
     return this.venueService.createVenue(data);
   }
 
@@ -36,35 +53,41 @@ export class VenueController {
   @ApiConsumes('multipart/form-data', 'application/json')
   @UseInterceptors(FileInterceptor('arrangementsImage'))
   @ApiBearerAuth()
-  @Roles("VENUE_OWNER")
+  @Roles('VENUE_OWNER')
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   updateVenue(
-    @Param() id:IdDto,
+    @Param() id: IdDto,
     @Body() updateVenueDto: UpdateVenueDto,
     @UploadedFile() arrangementsImage?: Express.Multer.File,
   ) {
     const data = {
-     ...updateVenueDto,
+      ...updateVenueDto,
       arrangementsImage,
     };
-    
-    return this.venueService.updateVenue(id ,data);
+
+    return this.venueService.updateVenue(id, data);
   }
 
-  @Get(":id")
+  @Get('get/:id')
   @ApiBearerAuth()
-  @Roles("VENUE_OWNER")
+  @Roles('VENUE_OWNER')
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
-  getByID(@Param() id:IdDto){
-    return this.venueService.getVenueById(id)
+  getByID(@Param() id: IdDto) {
+    return this.venueService.getVenueById(id);
   }
 
   @Delete('delete/:id')
   @ApiBearerAuth()
-  @Roles("VENUE_OWNER")
+  @Roles('VENUE_OWNER')
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
-  deleteVenue(@Param() id:IdDto){
-    return this.venueService.deleteVenue(id)
+  deleteVenue(@Param() id: IdDto) {
+    return this.venueService.deleteVenue(id);
   }
 
+  @Get('filter')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard)
+  filter(@Query() filter: FilterVenuesDto) {
+    return this.filterService.FilterVenues(filter);
+  }
 }

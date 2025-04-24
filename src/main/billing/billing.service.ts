@@ -1,6 +1,4 @@
 import {
-  BadRequestException,
-  HttpException,
   Injectable,
   Logger,
 } from '@nestjs/common';
@@ -8,7 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { CreatePaymentIntentDtoWithId } from './dto/createPayment.dto';
 import { DbService } from 'src/lib/db/db.service';
-import { $Enums, BookingStatus } from '@prisma/client';
+import { $Enums } from '@prisma/client';
 
 @Injectable()
 export class BillingService {
@@ -25,29 +23,6 @@ export class BillingService {
         apiVersion: '2025-02-24.acacia',
       },
     );
-  }
-
-  private verifyAmount({
-    baseAmount,
-    received,
-  }: {
-    baseAmount: number;
-    received: number;
-  }) {
-    switch (true) {
-      case baseAmount * 0.1 === received:
-        return received;
-      case baseAmount === received:
-        return baseAmount;
-      case baseAmount < received:
-        this.logger.error(
-          `Received more than expected. Expected: ${baseAmount}, Received: ${received}`,
-        );
-      default:
-        this.logger.error(
-          `Received more than expected. Expected: ${baseAmount}, Received: ${received}`,
-        );
-    }
   }
 
   /**
@@ -136,7 +111,11 @@ export class BillingService {
           userId,
         );
       case 'fullPayment':
-        return this.handleFullPayment(id);
+        return this.handleFullPayment(
+          id,
+          paymentIntent.amount_received / 100,
+          userId,
+        );
       case 'serviceBooking':
         return this.handleServiceBooking(id);
       default:
@@ -175,7 +154,6 @@ export class BillingService {
     userId?: string,
   ) {
     this.logger.log(`Handling booking payment for ID: ${id}`);
-    console.log(id, amount, userId);
 
     if (!amount) {
       this.logger.warn('Amount not found');
@@ -197,9 +175,9 @@ export class BillingService {
     }
 
     if (
-     ( booking.accept === $Enums.AcceptanceStatus.DENIED &&
-      booking.totalAmount === 0) ||
-      booking.bookingStatus === $Enums.BookingStatus.COMPLETED
+      (booking.accept === $Enums.AcceptanceStatus.DENIED &&
+        booking.totalAmount === 0) ||
+      booking.bookingStatus === $Enums.BookingStatus.CONFIRMED
     ) {
       this.logger.error(
         `Booking is not accepted by the venue owner for ID: ${id}`,
@@ -207,26 +185,16 @@ export class BillingService {
       return;
     }
 
-    const totalAmount = this.verifyAmount({
-      baseAmount: booking.due,
-      received: amount,
-    });
-
-    if (!totalAmount) {
-      return;
-    }
-
     try {
       await this.db.booking.update({
         where: { id: booking.id },
         data: {
-          paid: booking.paid + totalAmount,
-          due: booking.due - totalAmount,
-          bookingStatus:
-            booking.due === totalAmount ? 'COMPLETED' : 'CONFIRMED',
+          paid: booking.paid + amount,
+          due: booking.due - amount,
+          bookingStatus: 'CONFIRMED',
           payment: {
             create: {
-              amount: totalAmount,
+              amount: amount,
               paymentMethod: 'CREDIT_CARD',
               paymentStatus: 'COMPLETED',
             },
@@ -239,9 +207,63 @@ export class BillingService {
     }
   }
 
-  private async handleFullPayment(id: string) {
+  private async handleFullPayment(
+    id: string,
+    amount?: number,
+    userId?: string,
+  ) {
     this.logger.log(`Handling full payment for ID: ${id}`);
-    // TODO: Implement logic
+
+    if (!amount) {
+      this.logger.warn('Amount not found');
+      return;
+    }
+
+    const booking = await this.db.booking.findUnique({
+      where: { id },
+    });
+
+    if (!userId) {
+      this.logger.error(`User not found for ID: ${id}`);
+      return;
+    }
+
+    if (!booking) {
+      this.logger.error(`Booking not found for ID: ${id}`);
+      return;
+    }
+
+    if (
+      (booking.accept === $Enums.AcceptanceStatus.DENIED &&
+        booking.totalAmount === 0) ||
+      booking.bookingStatus === $Enums.BookingStatus.COMPLETED
+    ) {
+      this.logger.error(
+        `Booking is not accepted by the venue owner for ID: ${id}`,
+      );
+      return;
+    }
+
+    try {
+      await this.db.booking.update({
+        where: { id: booking.id },
+        data: {
+          paid: booking.paid + amount,
+          due: 0,
+          bookingStatus: 'COMPLETED',
+          payment: {
+            create: {
+              amount: amount,
+              paymentMethod: 'CREDIT_CARD',
+              paymentStatus: 'COMPLETED',
+            },
+          },
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Error updating booking for ID: ${id}`, error);
+      return;
+    }
   }
 
   private async handleServiceBooking(id: string) {

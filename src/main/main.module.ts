@@ -11,6 +11,8 @@ import { GuestModule } from './guest/guest.module';
 import { ShiftModule } from './shift/shift.module';
 import { EmployeesModule } from './employees/employees.module';
 import { PaymentModule } from './payment/payment.module';
+import { NotificationModule } from './notification/notification.module';
+import { CheckListModule } from './check-list/check-list.module';
 
 @Module({
   imports: [
@@ -25,7 +27,9 @@ import { PaymentModule } from './payment/payment.module';
     GuestModule,
     ShiftModule,
     EmployeesModule,
-    PaymentModule
+    PaymentModule,
+    NotificationModule,
+    CheckListModule,
   ],
 })
 export class MainModule {}
