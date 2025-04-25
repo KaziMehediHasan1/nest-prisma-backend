@@ -2,7 +2,7 @@ import { Controller, FileTypeValidator, MaxFileSizeValidator, ParseFilePipe, Pos
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadService } from './upload.service';
 import { fileURLToPath } from 'url';
-import { ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
 
 @Controller('upload')
 export class UploadController {
@@ -39,6 +39,7 @@ export class UploadController {
     @Post('file')
     @UseInterceptors(FileInterceptor('image'))
     @ApiConsumes('multipart/form-data')
+    @ApiOperation({summary: 'Upload a file'})
     @ApiBody({
         schema: {
             type: 'object',
