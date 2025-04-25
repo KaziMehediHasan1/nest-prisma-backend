@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { DbService } from 'src/lib/db/db.service';
 import { UploadService } from 'src/lib/upload/upload.service';
 
 @Injectable()
 export class FileInstanceCronService {
+  private readonly logger = new Logger(FileInstanceCronService.name);
   constructor(
     private readonly db: DbService,
     private readonly uploadService: UploadService,
@@ -25,7 +26,7 @@ export class FileInstanceCronService {
         file.fileId,
         3600 * 24 * 7,
       ); // Expires in another week
-      console.log(newUrl);
+      this.logger.log(`Updating URL for file ${file.id}`);
       await this.db.fileInstance.update({
         where: { id: file.id },
         data: {
