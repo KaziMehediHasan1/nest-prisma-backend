@@ -11,6 +11,7 @@ export class UploadController {
     @Post('image')
     @UseInterceptors(FileInterceptor('image'))
     @ApiConsumes('multipart/form-data')
+    @ApiOperation({summary: 'Upload a Image'})
     @ApiBody({
         schema: {
             type: 'object',
