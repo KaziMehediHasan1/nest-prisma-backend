@@ -20,21 +20,6 @@ jobs:
           username: root
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
-            echo "🔐 Setting up Git credentials with PAT..."
-            git config --global credential.helper store
-            echo "https://${{ secrets.GH_PAT }}:x-oauth-basic@github.com" > ~/.git-credentials
-
-            echo "📁 Navigating to project directory..."
-            cd ~/onurtaskiner/onurtaskiner || (
-              echo "📦 Cloning repo for first-time setup..."
-              git clone https://github.com/your-username/your-repo.git ~/onurtaskiner/onurtaskiner
-              cd ~/onurtaskiner/onurtaskiner
-            )
-
-            echo "🔄 Pulling latest changes from main branch..."
+            cd ./onurtaskiner/onurtaskiner
             git pull origin main
-
-            echo "🐳 Running docker-compose build and up..."
             docker compose up -d --build
-
-            echo "✅ Deployment finished!"
