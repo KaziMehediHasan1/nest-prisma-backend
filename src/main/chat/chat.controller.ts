@@ -13,7 +13,7 @@ export class ChatController {
   @ApiConsumes('multipart/form-data', 'application/json')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({
-    summary: 'Create a new message',
+    summary: 'Create a new message with video or attachments',
   })
   create(
     @UploadedFile() file: Express.Multer.File,
