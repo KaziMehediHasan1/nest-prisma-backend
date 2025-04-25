@@ -11,7 +11,7 @@ export class UploadController {
     @Post('image')
     @UseInterceptors(FileInterceptor('image'))
     @ApiConsumes('multipart/form-data')
-    @ApiOperation({summary: 'Upload a Image'})
+    @ApiOperation({summary: 'Upload a Image, this is just for testing purpose.'})
     @ApiBody({
         schema: {
             type: 'object',
@@ -40,7 +40,7 @@ export class UploadController {
     @Post('file')
     @UseInterceptors(FileInterceptor('image'))
     @ApiConsumes('multipart/form-data')
-    @ApiOperation({summary: 'Upload a file'})
+    @ApiOperation({summary: 'Upload a file. this is just for testing purpose.'})
     @ApiBody({
         schema: {
             type: 'object',
