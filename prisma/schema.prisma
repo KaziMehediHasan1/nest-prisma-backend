@@ -69,34 +69,36 @@ enum ServiceProviderRole {
 //profile start==========================================================
 
 model Profile {
-  id                       String          @id @default(uuid())
-  userId                   String          @unique
-  user                     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                       String                  @id @default(uuid())
+  userId                   String                  @unique
+  user                     User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   gender                   Gender
-  imageId                  String?         @unique // FK for image
-  image                    FileInstance?   @relation("ProfileImage", fields: [imageId], references: [id], onDelete: Cascade)
+  imageId                  String?                 @unique // FK for image
+  image                    FileInstance?           @relation("ProfileImage", fields: [imageId], references: [id], onDelete: Cascade)
   location                 String?
   eventPreference          EventType[]
-  coverPhotoId             String?         @unique // FK for cover photo
-  coverPhoto               FileInstance?   @relation("ProfileCoverPhoto", fields: [coverPhotoId], references: [id], onDelete: Cascade)
+  coverPhotoId             String?                 @unique // FK for cover photo
+  coverPhoto               FileInstance?           @relation("ProfileCoverPhoto", fields: [coverPhotoId], references: [id], onDelete: Cascade)
   profession               String?
   description              String?
   experience               Int?
   assets                   FileInstance[]
   directMessages           DirectMessage[]
-  conversationsInitiated   Conversation[]  @relation("MemberOne")
-  conversationsReceived    Conversation[]  @relation("MemberTwo")
-  bookingToVenue           Booking[]       @relation("BookedByProfile")
-  bookingToServiceProvider Booking[]       @relation("ServiceProviderProfile")
+  conversationsInitiated   Conversation[]          @relation("MemberOne")
+  conversationsReceived    Conversation[]          @relation("MemberTwo")
+  bookingToVenue           Booking[]               @relation("BookedByProfile")
+  bookingToServiceProvider Booking[]               @relation("ServiceProviderProfile")
   reviews                  Review[] // 1-to-many relation
   venues                   Venue[] // 1-to-many relation
-  createdAt                DateTime        @default(now())
-  updatedAt                DateTime        @updatedAt
-  isPro                    Boolean         @default(false)
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  isPro                    Boolean                 @default(false)
   magicLink                MagicLink?
-  active                   Boolean         @default(false)
-  enableNotification       Boolean         @default(true)
+  active                   Boolean                 @default(false)
+  enableNotification       Boolean                 @default(true)
   task                     Task[]
+  VerificationSubmission   VerificationSubmission? @relation(fields: [verificationSubmissionId], references: [id])
+  verificationSubmissionId String?                 @unique
 }
 
 enum Gender {
@@ -176,6 +178,21 @@ model Venue {
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
 }
+
+// venue end
+
+// Verification Submission start ==================================
+
+model VerificationSubmission {
+  id           String        @id @default(uuid())
+  profile      Profile?
+  idCard       FileInstance? @relation("IdCard")
+  tradeLicense FileInstance? @relation("TradeLicense")
+  payment      Payment?
+  bio          String
+}
+
+// Verification Submission end ==================================
 
 //employee
 
@@ -261,15 +278,17 @@ enum AcceptanceStatus {
 //Booking end =============================================================
 
 model Payment {
-  id            String        @id @default(uuid())
-  bookingId     String // FK for booking @unique
-  bookingInfo   Booking?      @relation(fields: [bookingId], references: [id])
-  paymentStatus PaymentStatus // Enum for payment status
-  paymentMethod PaymentMethod // Enum for payment method
-  amount        Int // The amount paid
-  transactionId String? // Optional transaction ID
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id                       String                  @id @default(uuid())
+  bookingId                String // FK for booking @unique
+  bookingInfo              Booking?                @relation(fields: [bookingId], references: [id])
+  paymentStatus            PaymentStatus // Enum for payment status
+  paymentMethod            PaymentMethod // Enum for payment method
+  amount                   Int // The amount paid
+  transactionId            String? // Optional transaction ID
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  VerificationSubmission   VerificationSubmission? @relation(fields: [verificationSubmissionId], references: [id])
+  verificationSubmissionId String?                 @unique
 }
 
 enum PaymentStatus {
@@ -419,24 +438,28 @@ model Amenities {
 // File Instance start=======================================================
 
 model FileInstance {
-  id                  String         @id @default(uuid())
+  id                  String                  @id @default(uuid())
   name                String
-  fileId              String         @unique
+  fileId              String                  @unique
   path                String
-  createdAt           DateTime       @default(now())
+  createdAt           DateTime                @default(now())
   expiresAt           DateTime
   bucket              String
   type                FileType
-  Venue               Venue?         @relation(fields: [venueId], references: [id])
-  venueId             String?        @unique
-  imageOfProfile      Profile?       @relation("ProfileImage")
-  coverPhotoOfProfile Profile?       @relation("ProfileCoverPhoto")
-  EventPreference     EventType?     @relation(fields: [eventPreferenceId], references: [id])
-  eventPreferenceId   String?        @unique
-  Profile             Profile?       @relation(fields: [profileId], references: [id])
+  Venue               Venue?                  @relation(fields: [venueId], references: [id])
+  venueId             String?                 @unique
+  imageOfProfile      Profile?                @relation("ProfileImage")
+  coverPhotoOfProfile Profile?                @relation("ProfileCoverPhoto")
+  EventPreference     EventType?              @relation(fields: [eventPreferenceId], references: [id])
+  eventPreferenceId   String?                 @unique
+  Profile             Profile?                @relation(fields: [profileId], references: [id])
   profileId           String?
-  DirectMessage       DirectMessage? @relation(fields: [directMessageId], references: [id])
-  directMessageId     String?        @unique
+  DirectMessage       DirectMessage?          @relation(fields: [directMessageId], references: [id])
+  directMessageId     String?                 @unique
+  nationalIdCard      VerificationSubmission? @relation("IdCard", fields: [nationalIdCardId], references: [id])
+  nationalIdCardId    String?                 @unique
+  tradeLicense        VerificationSubmission? @relation("TradeLicense", fields: [tradeLicenseCardId], references: [id])
+  tradeLicenseCardId  String?                 @unique
 }
 
 // File Instance end=========================================================
