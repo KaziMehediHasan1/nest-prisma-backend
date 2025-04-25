@@ -177,6 +177,19 @@ model Venue {
   updatedAt               DateTime      @updatedAt
 }
 
+// venue end
+
+// Verification Submission start ==================================
+
+model VerificationSubmission {
+  id           String        @id @default(uuid())
+  idCard       FileInstance? @relation("IdCard")
+  tradeLicense FileInstance? @relation("TradeLicense")
+  payment      Payment?
+}
+
+// Verification Submission end ==================================
+
 //employee
 
 model Employee {
@@ -261,15 +274,17 @@ enum AcceptanceStatus {
 //Booking end =============================================================
 
 model Payment {
-  id            String        @id @default(uuid())
-  bookingId     String // FK for booking @unique
-  bookingInfo   Booking?      @relation(fields: [bookingId], references: [id])
-  paymentStatus PaymentStatus // Enum for payment status
-  paymentMethod PaymentMethod // Enum for payment method
-  amount        Int // The amount paid
-  transactionId String? // Optional transaction ID
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id                       String                  @id @default(uuid())
+  bookingId                String // FK for booking @unique
+  bookingInfo              Booking?                @relation(fields: [bookingId], references: [id])
+  paymentStatus            PaymentStatus // Enum for payment status
+  paymentMethod            PaymentMethod // Enum for payment method
+  amount                   Int // The amount paid
+  transactionId            String? // Optional transaction ID
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  VerificationSubmission   VerificationSubmission? @relation(fields: [verificationSubmissionId], references: [id])
+  verificationSubmissionId String?                 @unique
 }
 
 enum PaymentStatus {
@@ -419,24 +434,28 @@ model Amenities {
 // File Instance start=======================================================
 
 model FileInstance {
-  id                  String         @id @default(uuid())
+  id                  String                  @id @default(uuid())
   name                String
-  fileId              String         @unique
+  fileId              String                  @unique
   path                String
-  createdAt           DateTime       @default(now())
+  createdAt           DateTime                @default(now())
   expiresAt           DateTime
   bucket              String
   type                FileType
-  Venue               Venue?         @relation(fields: [venueId], references: [id])
-  venueId             String?        @unique
-  imageOfProfile      Profile?       @relation("ProfileImage")
-  coverPhotoOfProfile Profile?       @relation("ProfileCoverPhoto")
-  EventPreference     EventType?     @relation(fields: [eventPreferenceId], references: [id])
-  eventPreferenceId   String?        @unique
-  Profile             Profile?       @relation(fields: [profileId], references: [id])
+  Venue               Venue?                  @relation(fields: [venueId], references: [id])
+  venueId             String?                 @unique
+  imageOfProfile      Profile?                @relation("ProfileImage")
+  coverPhotoOfProfile Profile?                @relation("ProfileCoverPhoto")
+  EventPreference     EventType?              @relation(fields: [eventPreferenceId], references: [id])
+  eventPreferenceId   String?                 @unique
+  Profile             Profile?                @relation(fields: [profileId], references: [id])
   profileId           String?
-  DirectMessage       DirectMessage? @relation(fields: [directMessageId], references: [id])
-  directMessageId     String?        @unique
+  DirectMessage       DirectMessage?          @relation(fields: [directMessageId], references: [id])
+  directMessageId     String?                 @unique
+  nationalIdCard      VerificationSubmission? @relation("IdCard", fields: [nationalIdCardId], references: [id])
+  nationalIdCardId    String?                 @unique
+  tradeLicense        VerificationSubmission? @relation("TradeLicense", fields: [tradeLicenseCardId], references: [id])
+  tradeLicenseCardId  String?                 @unique
 }
 
 // File Instance end=========================================================
