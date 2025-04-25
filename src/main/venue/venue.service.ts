@@ -10,6 +10,8 @@ import { UploadService } from 'src/lib/upload/upload.service';
 import { EventService } from 'src/lib/event/event.service';
 import { UpdateVenueDto } from './dto/updateVenue.dto';
 import { IdDto } from 'src/common/dto/id.dto';
+import { ApiResponse } from 'src/interfaces/response';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class VenueService {
@@ -20,7 +22,7 @@ export class VenueService {
   ) {}
 
   // create venue start================================`
-  public async createVenue(dto: CreateVenueDto) {
+  public async createVenue(dto: CreateVenueDto):Promise<ApiResponse<any>> {
     const { arrangementsImage, decoration, profileId, amenityIds, ...rest } =
       dto;
 
@@ -81,7 +83,12 @@ export class VenueService {
         },
       });
 
-      return newVenue;
+      return {
+        data: newVenue,
+        message: 'Venue created successfully',
+        statusCode: 201,
+        success: true
+      };
     } catch (error) {
       if (fileInstance) {
         this.eventEmitter.emit('FILE_DELETE', {
@@ -95,7 +102,7 @@ export class VenueService {
 
   // update venue start==============================
 
-  public async updateVenue({ id }: IdDto, dto: UpdateVenueDto) {
+  public async updateVenue({ id }: IdDto, dto: UpdateVenueDto): Promise<ApiResponse<any>> {
     const { arrangementsImage, decoration, profileId, amenityIds, ...rest } =
       dto;
 
@@ -155,7 +162,12 @@ export class VenueService {
         },
       });
 
-      return updatedVenue;
+      return {
+        data: updatedVenue,
+        message: 'Venue updated successfully',
+        statusCode: 200,
+        success: true
+      };
     } catch (error) {
       if (fileInstance) {
         this.eventEmitter.emit('FILE_DELETE', { Key: fileInstance.fileId });
@@ -167,7 +179,7 @@ export class VenueService {
   // update venue end================================
 
   // delete venue start=============================
-  public async deleteVenue({ id }: IdDto) {
+  public async deleteVenue({ id }: IdDto): Promise<ApiResponse<null>> {
     const venue = await this.db.venue.findUnique({
       where: { id },
       include: { arrangementsImage: true },
@@ -187,13 +199,18 @@ export class VenueService {
       where: { id },
     });
 
-    return { message: 'Venue deleted successfully' };
+    return { 
+      data: null,
+      message: 'Venue deleted successfully',
+      statusCode: 200,
+      success: true
+    };
   }
   // delete venue end===============================
 
   // get venue by id start=========================
 
-  public async getVenueById({ id }: IdDto) {
+  public async getVenueById({ id }: IdDto):Promise<ApiResponse<any>> {
     const venue = await this.db.venue.findUnique({
       where: { id },
       include: {
@@ -207,12 +224,42 @@ export class VenueService {
       throw new NotFoundException(`Venue with ID ${id} not found`);
     }
 
-    return venue;
+    return {
+      data: venue,
+      message: 'Venue fetched successfully',
+      statusCode: 200,
+      success: true
+    };
   }
 
   // get venue by id end===========================
 
   // getAll venue start============================
+
+  public async getAllVenues({
+    take, skip
+  }:PaginationDto):Promise<ApiResponse<any>> {
+    const venues = await this.db.venue.findMany({
+      include: {
+        amenities: {
+          select: {
+            name: true,
+          }
+        },
+        decoration: true,
+        arrangementsImage: { select: { path: true } },
+      },
+      take,
+      skip
+    });
+
+    return{
+      data: venues,
+      message: "Venues fetched successfully",
+      statusCode: 200,
+      success: true,
+    }
+  }
 
   // getAll venue end==============================
 }

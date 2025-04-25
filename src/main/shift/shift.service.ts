@@ -9,6 +9,7 @@ import { Venue } from '@prisma/client';
 import { UpdateShiftDto } from './dto/updateShift.sto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { IdDto } from 'src/common/dto/id.dto';
+import { ApiResponse } from 'src/interfaces/response';
 
 @Injectable()
 export class ShiftService {
@@ -22,7 +23,7 @@ export class ShiftService {
     });
   }
 
-  async createShift(dto: CreateShiftDto) {
+  async createShift(dto: CreateShiftDto): Promise<ApiResponse<any>> {
     const { venueId, startTime, endTime } = dto;
 
     const isExist = await this.isVenueExist(venueId);
@@ -53,16 +54,26 @@ export class ShiftService {
     }
 
     // Create shift
-    return this.dbService.shift.create({
+    const shift = await this.dbService.shift.create({
       data: {
         ...dto,
         startTime: new Date(dto.startTime),
         endTime: new Date(dto.endTime),
       },
     });
+
+    return {
+      message: 'Shift created successfully',
+      data: shift,
+      statusCode: 201,
+      success: true,
+    };
   }
 
-  async updateShift(id: string, dto: UpdateShiftDto) {
+  async updateShift(
+    id: string,
+    dto: UpdateShiftDto,
+  ): Promise<ApiResponse<any>> {
     const existingShift = await this.dbService.shift.findUnique({
       where: { id },
     });
@@ -72,7 +83,9 @@ export class ShiftService {
     }
 
     // Use updated or existing values for conflict check
-    const startTime = dto.startTime ? new Date(dto.startTime) : existingShift.startTime;
+    const startTime = dto.startTime
+      ? new Date(dto.startTime)
+      : existingShift.startTime;
     const endTime = dto.endTime ? new Date(dto.endTime) : existingShift.endTime;
     const venueId = dto.venueId || existingShift.venueId;
 
@@ -90,7 +103,7 @@ export class ShiftService {
       throw new ConflictException('Updated shift conflicts with another shift');
     }
 
-    return this.dbService.shift.update({
+    const updatedShift = await this.dbService.shift.update({
       where: { id },
       data: {
         ...dto,
@@ -98,13 +111,17 @@ export class ShiftService {
         endTime: dto.endTime ? new Date(dto.endTime) : undefined,
       },
     });
+
+    return {
+      data: updatedShift,
+      message: 'Shift updated successfully',
+      statusCode: 200,
+      success: true,
+    };
   }
 
-  async getAllShifts({
-    skip,
-    take
-  }:PaginationDto) {
-    return this.dbService.shift.findMany({
+  async getAllShifts({ skip, take }: PaginationDto): Promise<ApiResponse<any>> {
+    const shifts = await this.dbService.shift.findMany({
       include: {
         venue: true,
         employee: true,
@@ -113,24 +130,48 @@ export class ShiftService {
       skip,
       orderBy: { startTime: 'asc' },
     });
+
+    return {
+      data: shifts,
+      message: 'Shifts fetched successfully',
+      statusCode: 200,
+      success: true,
+    };
   }
 
-  async getShiftById(id: IdDto) {
-    return this.dbService.shift.findUnique({
-      where:  id ,
+  async getShiftById(id: IdDto): Promise<ApiResponse<any>> {
+    const shift = await this.dbService.shift.findUnique({
+      where: id,
       include: {
         venue: true,
         employee: true,
       },
     });
+
+    if (!shift) {
+      throw new NotFoundException('Shift not found');
+    }
+
+    return {
+      data: shift,
+      message: 'Shift fetched successfully',
+      statusCode: 200,
+      success: true,
+    };
   }
-  async deleteShift(id: IdDto) {
+
+  async deleteShift(id: IdDto): Promise<ApiResponse<any>> {
     const shift = await this.dbService.shift.findUnique({ where: id });
     if (!shift) {
       throw new NotFoundException('Shift not found');
     }
 
     await this.dbService.shift.delete({ where: id });
-    return { message: 'Shift deleted successfully' };
+    return {
+      data: null,
+      message: 'Shift deleted successfully',
+      statusCode: 200,
+      success: true,
+    };
   }
 }

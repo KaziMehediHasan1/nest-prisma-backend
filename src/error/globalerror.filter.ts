@@ -38,9 +38,7 @@ export class GlobalErrorHandlerFilter implements ExceptionFilter {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
-      if (exception instanceof NotFoundException) {
-        message = 'API Not Found';
-      } else if (exception instanceof BadRequestException) {
+      if (exception instanceof BadRequestException) {
         const res = exceptionResponse as
           | { message: string | string[]; error?: string }
           | string;

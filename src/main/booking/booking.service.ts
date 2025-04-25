@@ -44,13 +44,13 @@ export class BookingService {
       endTime,
       ...rest
     } = rawData;
-
+  
     if (!venueId?.trim() && !serviceProviderId?.trim()) {
       throw new BadRequestException(
         'Either venueId or serviceProviderId must be provided.',
       );
     }
-
+  
     let venue: Venue | null = null;
     if (venueId?.trim()) {
       venue = await this.db.venue.findUnique({
@@ -60,7 +60,7 @@ export class BookingService {
         throw new BadRequestException('Venue not found.');
       }
     }
-
+  
     let serviceProvider: Profile | null = null;
     if (serviceProviderId?.trim()) {
       serviceProvider = await this.db.profile.findUnique({
@@ -70,30 +70,54 @@ export class BookingService {
         throw new BadRequestException('Service Provider not found.');
       }
     }
-
+  
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+  
+    if (start.getTime() >= end.getTime()) {
+      throw new BadRequestException('Start time must be before end time.');
+    }
+  
+    // Check for venue double booking
     if (venueId?.trim()) {
-      if (new Date(startTime).getTime() >= new Date(endTime).getTime()) {
-        throw new BadRequestException('Start time must be before end time.');
-      }
-
-      const conflictingBooking = await this.db.booking.findFirst({
+      const conflictingVenueBooking = await this.db.booking.findFirst({
         where: {
           venueId,
           selectedDate,
           AND: [
-            { startTime: { lt: new Date(endTime) } },
-            { endTime: { gt: new Date(startTime) } },
+            { startTime: { lt: end } },
+            { endTime: { gt: start } },
           ],
         },
       });
-
-      if (conflictingBooking) {
+  
+      if (conflictingVenueBooking) {
         throw new BadRequestException(
           'The venue is already booked for the selected date and time.',
         );
       }
     }
-
+  
+    // Check for service provider double booking
+    if (serviceProviderId?.trim()) {
+      const conflictingServiceBooking = await this.db.booking.findFirst({
+        where: {
+          serviceProviderId,
+          selectedDate,
+          AND: [
+            { startTime: { lt: end } },
+            { endTime: { gt: start } },
+          ],
+        },
+      });
+  
+      if (conflictingServiceBooking) {
+        throw new BadRequestException(
+          'The service provider is already booked for the selected date and time.',
+        );
+      }
+    }
+  
     const booking = await this.db.booking.create({
       data: {
         ...rest,
@@ -109,26 +133,27 @@ export class BookingService {
           serviceProvider: { connect: { id: serviceProvider.id } },
         }),
         selectedDate: new Date(selectedDate),
-        startTime: new Date(startTime),
-        endTime: new Date(endTime),
+        startTime: start,
+        endTime: end,
       },
     });
-
+  
     booking.decoration = JSON.parse(booking.decoration ?? '{}');
-
+  
     const memberTwoId = venue?.profileId ?? serviceProvider?.id;
-
+  
     if (!memberTwoId) {
       throw new BadRequestException('memberTwoId could not be resolved');
     }
-
+  
     this.eventEmitter.emit('CONVERSATION_CREATE', {
       memberOneId: bookedById,
       memberTwoId,
     });
-
+  
     return booking;
   }
+  
 
   // create booking end================================
 
@@ -275,7 +300,7 @@ export class BookingService {
 
   // getBookedDate start===============================
 
-  async getBookedDate({ id }: IdDto) {
+  async getBookedDate({ id }: IdDto):Promise<ApiResponse<any>> {
     const booking = await this.db.booking.findMany({
       where: {
         venueId: id,
@@ -289,7 +314,12 @@ export class BookingService {
     if (!booking) {
       throw new NotFoundException(`Booking with id ${id} not found.`);
     }
-    return booking;
+    return {
+      data: booking,
+      message: 'Bookings fetched successfully',
+      statusCode: 200,
+      success: true
+    };
   }
 
   // getBookedDate end================================

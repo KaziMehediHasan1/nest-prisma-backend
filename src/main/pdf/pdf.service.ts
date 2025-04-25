@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import * as puppeteer from 'puppeteer';
 import { CreateInviteDto } from './dto/create-invite.dto';
 import { UploadService } from 'src/lib/upload/upload.service';
+import { ApiResponse } from 'src/interfaces/response';
 
 @Injectable()
 export class PdfService {
@@ -87,7 +88,7 @@ export class PdfService {
     `;
   }
 
-  async generateInvitePdf(dto: CreateInviteDto) {
+  async generateInvitePdf(dto: CreateInviteDto):Promise<ApiResponse<any>> {
     const html = this.generateHtml(dto);
     const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
@@ -104,7 +105,12 @@ export class PdfService {
     await browser.close();
     const fileInstance = await this.upload.savePdfToS3(pdfBuffer, 'invite');
     return {
-      url: fileInstance.path,
+      success: true,
+      data: {
+        pdfUrl: fileInstance.path,
+      },
+      statusCode: 200,
+      message: 'PDF generated successfully',
     };
   }
 }

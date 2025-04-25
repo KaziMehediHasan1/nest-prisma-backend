@@ -163,7 +163,7 @@ export class AuthService {
     };
   }
 
-  private async generateToken(user: {
+  public async generateToken(user: {
     id: string;
     email: string;
     roles: $Enums.UserRole[];

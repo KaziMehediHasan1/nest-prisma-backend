@@ -113,7 +113,6 @@ export class ChatGateway
         case 'unsubscribe':
           this.unsubscribeClient(conversationId, client);
           break;
-
         case 'subscribe_to_messages':
           if (!payload) {
             this.logger.error('Payload is missing');
@@ -130,7 +129,7 @@ export class ChatGateway
             take: payload?.take,
           });
           client.send(JSON.stringify(messages));
-
+        
         default:
           this.logger.warn(`Unknown message type received: ${type}`);
       }
@@ -160,6 +159,7 @@ export class ChatGateway
       clients.delete(client);
     }
   }
+
 
   broadcastToConversation<T>({
     conversationId,

@@ -179,4 +179,18 @@ export class ChatService {
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  public async getUserStatusForConversation( conversationId: string) {
+    return this.db.user.findMany({
+      where:{
+        profile:{
+          directMessages:{
+            every:{
+              conversationId
+            }
+          }
+        }
+      }
+    })
+  }
 }
