@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/createBooking.dto';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { VerifiedGuard } from 'src/guard/verify.guard';
 import { RolesGuard } from 'src/guard/role.guard';
@@ -23,6 +23,7 @@ export class BookingController {
 
   @Get('decoration_enum')
   @Roles('PLANNER')
+  @ApiOperation({ summary: 'Get decoration enum to create booking' })
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   @ApiBearerAuth()
   getDecorationEnum() {
