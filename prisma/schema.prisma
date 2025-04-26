@@ -72,6 +72,7 @@ model Profile {
   id                       String                  @id @default(uuid())
   userId                   String                  @unique
   user                     User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                     String?                  @unique
   gender                   Gender
   imageId                  String?                 @unique // FK for image
   image                    FileInstance?           @relation("ProfileImage", fields: [imageId], references: [id], onDelete: Cascade)
@@ -487,10 +488,10 @@ model Conversation {
 //Group Message Start =======================================================
 
 model GroupMessage {
-  id      String          @id @default(uuid())
-  name    String
-  image   FileInstance?
-  message DirectMessage[]
+  id       String          @id @default(uuid())
+  name     String
+  image    FileInstance?
+  message  DirectMessage[]
   profiles Profile[]
 }
 

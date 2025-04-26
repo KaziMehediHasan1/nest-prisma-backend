@@ -20,7 +20,7 @@ export class ProfileService {
   public async setupPlannerProfile(
     rawData: SetupPlannerProfileDto,
   ): Promise<ApiResponse<any>> {
-    const { userId, image, ...rest } = rawData;
+    const { userId, image,eventPreferenceIds, ...rest } = rawData;
 
     const fileInstance = await this.upload.uploadFile({
       file: image,
@@ -34,6 +34,9 @@ export class ProfileService {
             connect: {
               id: fileInstance.id,
             },
+          },
+          eventPreference:{
+            connect: eventPreferenceIds.map(id => ({id}))
           },
           user: {
             connect: {
@@ -62,7 +65,7 @@ export class ProfileService {
   public async setUpVenueOwnerProfile(
     rawData: SetupVenueOwnerProfileDto,
   ): Promise<ApiResponse<any>> {
-    const { userId, image, ...rest } = rawData;
+    const { userId, image , ...rest } = rawData;
     const fileInstance = await this.upload.uploadFile({
       file: image,
     });
@@ -103,7 +106,7 @@ export class ProfileService {
   public async setUpServiceProviderProfile(
     rawData: SetupServiceProviderProfileDto,
   ): Promise<ApiResponse<any>> {
-    const { coverPhoto, image, userId, location } = rawData;
+    const { coverPhoto, image, userId, location, eventPreferenceIds } = rawData;
 
     const [profilePic, coverPhotoPic] = await Promise.all([
       await this.upload.uploadFile({
@@ -121,6 +124,9 @@ export class ProfileService {
             connect: {
               id: profilePic.id,
             },
+          },
+          eventPreference:{
+            connect: eventPreferenceIds.map(id => ({id}))
           },
           coverPhoto: {
             connect: {

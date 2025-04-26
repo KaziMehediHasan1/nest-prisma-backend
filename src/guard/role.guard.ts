@@ -29,8 +29,6 @@ export class RolesGuard implements CanActivate {
     if (!user) {
       throw new ForbiddenException('User not authenticated');
     }
-
-    console.log(user.role);
     
     const hasRole = user.role?.some((userRole: $Enums.UserRole) =>
       requiredRoles.includes(userRole)

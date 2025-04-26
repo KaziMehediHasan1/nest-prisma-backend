@@ -78,6 +78,14 @@ export class SetupPlannerProfileDto {
   @IsString({ message: 'Address must be a string' })
   @IsUUID('4', { message: 'User Id must be a valid uuid V4' })
   userId: string;
+
+  @ApiProperty({
+    description: 'User address',
+    example: 'Jayed Bin Nazir',
+  })
+  @IsString({ message: 'Name must be a string' })
+  @MaxLength(200, { message: 'Name cannot be longer than 200 characters' })
+  name: string;
 }
 
 export class SetupVenueOwnerProfileDto {
@@ -103,6 +111,14 @@ export class SetupVenueOwnerProfileDto {
   @IsString({ message: 'Address must be a string' })
   @IsUUID('4', { message: 'User Id must be a valid uuid V4' })
   userId: string;
+
+  @ApiProperty({
+    description: 'User address',
+    example: 'Jayed Bin Nazir',
+  })
+  @IsString({ message: 'Name must be a string' })
+  @MaxLength(200, { message: 'Name cannot be longer than 200 characters' })
+  name: string;
 }
 
 export class SetupServiceProviderProfileDto {
@@ -186,4 +202,12 @@ export class SetupServiceProviderProfileDto {
     @IsString({ message: 'Address must be a string' })
     @MaxLength(200, { message: 'Address cannot be longer than 200 characters' })
     location: string;
+
+    @ApiProperty({
+      description: 'User address',
+      example: 'Jayed Bin Nazir',
+    })
+    @IsString({ message: 'Name must be a string' })
+    @MaxLength(200, { message: 'Name cannot be longer than 200 characters' })
+    name: string;
   }
