@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { CreatePaymentIntentDtoWithId } from './dto/createPayment.dto';
@@ -269,30 +266,46 @@ export class BillingService {
   private async handleVerificationFee(id: string, amount?: number) {
     this.logger.log(`Handling service booking for ID: ${id}`);
     // TODO: Implement logic
-    if(!amount){
+    if (!amount) {
       this.logger.warn('Amount not found');
       return;
     }
 
     const user = await this.db.profile.findUnique({
       where: {
-       id,
-       user:{
-        role:{
-          hasSome:["VENUE_OWNER","SERVICE_PROVIDER"]
-        }
-       }
+        id,
+        user: {
+          role: {
+            hasSome: ['VENUE_OWNER', 'SERVICE_PROVIDER'],
+          },
+        },
       },
-      include:{
-        user: true
-      }
+      include: {
+        user: true,
+      },
     });
 
-    if(!user){
+    if (!user) {
       this.logger.error(`User not found for ID: ${id}`);
       return;
     }
 
+    await this.db.user.update({
+      where: { id: user.user.id },
+      data: {
+        isVerified: true,
+        profile: {
+          update: {
+            venues: {
+              updateMany: {
+                where: { profileId: user.id },
+                data: { verified: true },
+              },
+            },
+          },
+        },
+      },
+    });
   }
 
   /**
