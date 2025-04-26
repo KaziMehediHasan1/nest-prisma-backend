@@ -37,6 +37,7 @@ export class AdminSeeder implements OnModuleInit {
           password: hashedPassword,
           role: [$Enums.UserRole.ADMIN],
           phone: this.config.getOrThrow('ADMIN_PHONE') as string,
+          isVerified: true,
           profile:{
             create:{
               gender:"MALE",
