@@ -117,7 +117,7 @@ export class BillingService {
           userId,
         );
       case 'serviceBooking':
-        return this.handleServiceBooking(id);
+        return this.handleVerificationFee(id);
       default:
         this.logger.warn(`Unknown PaymentIntent type: ${type}`);
     }
@@ -141,8 +141,8 @@ export class BillingService {
         return this.handleBookingPayment(id);
       case 'fullPayment':
         return this.handleFullPayment(id);
-      case 'serviceBooking':
-        return this.handleServiceBooking(id);
+      case 'verificationFee':
+        return this.handleVerificationFee(id);
       default:
         this.logger.warn(`Unknown CheckoutSession type: ${type}`);
     }
@@ -266,9 +266,33 @@ export class BillingService {
     }
   }
 
-  private async handleServiceBooking(id: string) {
+  private async handleVerificationFee(id: string, amount?: number) {
     this.logger.log(`Handling service booking for ID: ${id}`);
     // TODO: Implement logic
+    if(!amount){
+      this.logger.warn('Amount not found');
+      return;
+    }
+
+    const user = await this.db.profile.findUnique({
+      where: {
+       id,
+       user:{
+        role:{
+          hasSome:["VENUE_OWNER","SERVICE_PROVIDER"]
+        }
+       }
+      },
+      include:{
+        user: true
+      }
+    });
+
+    if(!user){
+      this.logger.error(`User not found for ID: ${id}`);
+      return;
+    }
+
   }
 
   /**

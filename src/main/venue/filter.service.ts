@@ -2,12 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { DbService } from 'src/lib/db/db.service';
 import { FilterVenuesDto } from './dto/filterVenue.dto';
 import { Prisma } from '@prisma/client';
+import { ApiResponse } from 'src/interfaces/response';
 
 @Injectable()
 export class FilterService {
   constructor(private readonly db: DbService) {}
 
-  public async FilterVenues(filter: FilterVenuesDto) {
+  public async FilterVenues(filter: FilterVenuesDto):Promise<ApiResponse<any>> {
     const {
       city,
       area,
@@ -68,7 +69,7 @@ export class FilterService {
         } : {}),
       };
   
-      return this.db.venue.findMany({
+      const data = await this.db.venue.findMany({
         where,
         include: {
           reviews: true,
@@ -77,5 +78,12 @@ export class FilterService {
           shifts: true,
         },
       });
+
+      return {
+        data,
+        message: 'Venues fetched successfully',
+        statusCode: 200,
+        success: true
+      }
   }
 }

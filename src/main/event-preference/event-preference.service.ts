@@ -27,11 +27,6 @@ export class EventPreferenceService {
       .create({
         data: {
           name: createEventPreference.name,
-          profile: {
-            connect: {
-              id: createEventPreference.profileId,
-            },
-          },
           avatar: {
             connect: {
               id: fileInstance.id,

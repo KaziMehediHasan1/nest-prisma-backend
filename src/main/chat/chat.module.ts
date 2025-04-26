@@ -3,10 +3,12 @@ import { ChatService } from './chat.service';
 import { ChatGateway } from './chat.gateway';
 import { JwtService } from '@nestjs/jwt';
 import { ChatController } from './chat.controller';
+import { GroupModule } from './group/group.module';
 
 @Module({
   providers: [ChatGateway, ChatService, JwtService],
   controllers: [ChatController],
   exports: [ChatService],
+  imports: [GroupModule],
 })
 export class ChatModule {}

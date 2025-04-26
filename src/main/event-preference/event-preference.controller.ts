@@ -29,6 +29,9 @@ export class EventPreferenceController {
   @Post('create')
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('avatar'))
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard("jwt"), VerifiedGuard, RolesGuard)
+  @Roles("ADMIN")
   create(
     @Body() createEventPreferenceDto: CreateEventPreferenceDto,
     @UploadedFile() avatar: Express.Multer.File,
@@ -44,7 +47,7 @@ export class EventPreferenceController {
   @Get('get')
   @ApiBearerAuth()
   @Roles('PLANNER')
-  @UseGuards(AuthGuard("jwt"), VerifiedGuard, RolesGuard)
+  @UseGuards(AuthGuard("jwt"), VerifiedGuard)
   findAll() {
     return this.eventPreferenceService.findAll();
   }

@@ -99,6 +99,8 @@ model Profile {
   task                     Task[]
   VerificationSubmission   VerificationSubmission? @relation(fields: [verificationSubmissionId], references: [id])
   verificationSubmissionId String?                 @unique
+  GroupMessage             GroupMessage?           @relation(fields: [groupMessageId], references: [id])
+  groupMessageId           String?
 }
 
 enum Gender {
@@ -460,6 +462,8 @@ model FileInstance {
   nationalIdCardId    String?                 @unique
   tradeLicense        VerificationSubmission? @relation("TradeLicense", fields: [tradeLicenseCardId], references: [id])
   tradeLicenseCardId  String?                 @unique
+  GroupMessage        GroupMessage?           @relation(fields: [groupMessageId], references: [id])
+  groupMessageId      String?                 @unique
 }
 
 // File Instance end=========================================================
@@ -480,6 +484,18 @@ model Conversation {
 
 // conversation start =======================================================
 
+//Group Message Start =======================================================
+
+model GroupMessage {
+  id      String          @id @default(uuid())
+  name    String
+  image   FileInstance?
+  message DirectMessage[]
+  profiles Profile[]
+}
+
+//Group Message End =======================================================
+
 // Direct Message start =====================================================
 
 model DirectMessage {
@@ -493,6 +509,8 @@ model DirectMessage {
   deleted        Boolean       @default(false)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+  GroupMessage   GroupMessage? @relation(fields: [groupMessageId], references: [id])
+  groupMessageId String?
 
   @@index([memberId])
   @@index([conversationId])
