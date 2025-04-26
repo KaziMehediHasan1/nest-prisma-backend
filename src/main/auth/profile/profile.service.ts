@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { DbService } from 'src/lib/db/db.service';
 import {
   SetupPlannerProfileDto,
@@ -17,15 +17,17 @@ export class ProfileService {
     private readonly event: EventService,
   ) {}
 
-  public async setupPlannerProfile(rawData: SetupPlannerProfileDto):Promise<ApiResponse<any>> {
+  public async setupPlannerProfile(
+    rawData: SetupPlannerProfileDto,
+  ): Promise<ApiResponse<any>> {
     const { userId, image, ...rest } = rawData;
 
     const fileInstance = await this.upload.uploadFile({
       file: image,
     });
 
-    const profile = await this.db.profile
-      .create({
+    try {
+      const profile = await this.db.profile.create({
         data: {
           ...rest,
           image: {
@@ -39,30 +41,33 @@ export class ProfileService {
             },
           },
         },
-      })
-      .catch(() => {
-        if (fileInstance) {
-          this.event.emit('FILE_DELETE', {
-            Key: fileInstance.fileId,
-          });
-        }
       });
 
-    return {
-      data: profile,
-      message: 'Profile created successfully',
-      statusCode: 200,
-      success: true
-    };
+      return {
+        data: profile,
+        message: 'Profile created successfully',
+        statusCode: 200,
+        success: true,
+      };
+    } catch (error) {
+      if (fileInstance) {
+        this.event.emit('FILE_DELETE', {
+          Key: fileInstance.fileId,
+        });
+      }
+      throw new BadRequestException(error.message);
+    }
   }
 
-  public async setUpVenueOwnerProfile(rawData: SetupVenueOwnerProfileDto):Promise<ApiResponse<any>> {
+  public async setUpVenueOwnerProfile(
+    rawData: SetupVenueOwnerProfileDto,
+  ): Promise<ApiResponse<any>> {
     const { userId, image, ...rest } = rawData;
     const fileInstance = await this.upload.uploadFile({
       file: image,
     });
-    const profile = await this.db.profile
-      .create({
+    try {
+      const profile = await this.db.profile.create({
         data: {
           gender: 'OTHER',
           user: {
@@ -77,26 +82,27 @@ export class ProfileService {
           },
           ...rest,
         },
-      })
-      .catch(() => {
-        if (fileInstance) {
-          this.event.emit('FILE_DELETE', {
-            Key: fileInstance.fileId,
-          });
-        }
       });
 
-    return {
-      data: profile,
-      message: 'Profile created successfully',
-      statusCode: 200,
-      success: true
-    };
+      return {
+        data: profile,
+        message: 'Profile created successfully',
+        statusCode: 200,
+        success: true,
+      };
+    } catch (error) {
+      if (fileInstance) {
+        this.event.emit('FILE_DELETE', {
+          Key: fileInstance.fileId,
+        });
+      }
+      throw new BadRequestException(error.message);
+    }
   }
 
   public async setUpServiceProviderProfile(
     rawData: SetupServiceProviderProfileDto,
-  ):Promise<ApiResponse<any>> {
+  ): Promise<ApiResponse<any>> {
     const { coverPhoto, image, userId, location } = rawData;
 
     const [profilePic, coverPhotoPic] = await Promise.all([
@@ -108,33 +114,47 @@ export class ProfileService {
       }),
     ]);
 
-    const profile = await this.db.profile.create({
-      data: {
-        image: {
-          connect: {
-            id: profilePic.id,
+    try {
+      const profile = await this.db.profile.create({
+        data: {
+          image: {
+            connect: {
+              id: profilePic.id,
+            },
           },
-        },
-        coverPhoto: {
-          connect: {
-            id: coverPhotoPic.id,
+          coverPhoto: {
+            connect: {
+              id: coverPhotoPic.id,
+            },
           },
-        },
-        user: {
-          connect: {
-            id: userId,
+          user: {
+            connect: {
+              id: userId,
+            },
           },
+          gender: 'OTHER',
+          location,
         },
-        gender: 'OTHER',
-        location
-      },
-    });
+      });
 
-    return {
-      data: profile,
-      message: 'Profile created successfully',
-      statusCode: 200,
-      success: true
-    };
+      return {
+        data: profile,
+        message: 'Profile created successfully',
+        statusCode: 200,
+        success: true,
+      };
+    } catch (error) {
+      if (profilePic) {
+        this.event.emit('FILE_DELETE', {
+          Key: profilePic.fileId,
+        });
+      }
+      if (coverPhotoPic) {
+        this.event.emit('FILE_DELETE', {
+          Key: coverPhotoPic.fileId,
+        });
+      }
+      throw new BadRequestException(error.message);
+    }
   }
 }
