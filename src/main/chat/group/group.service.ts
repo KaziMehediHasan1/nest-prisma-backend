@@ -46,4 +46,37 @@ export class GroupService {
             throw new BadRequestException(error)
         }
     }
+
+    public async findGroupById(id:string){
+        return this.db.groupMessage.findUnique({
+            where: {
+                id
+            },
+            include:{
+                profiles: {
+                    select: {
+                      id: true,
+                    }
+                  }
+            }
+        })
+    }
+
+    public async findMessagesByGroupId({id, cursor, take}: {id: string, cursor: string | undefined, take: number}){
+        return this.db.directMessage.findMany({
+            where: {
+                groupMessageId: id
+            },
+            ...(cursor
+                ? {
+                    cursor: { id: cursor },
+                    skip: 1, 
+                  }
+                : {}),
+            take,
+            orderBy: {
+                createdAt: 'desc',
+            },
+        })
+    }
 }
