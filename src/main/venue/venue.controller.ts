@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -23,6 +24,7 @@ import { RolesGuard } from 'src/guard/role.guard';
 import { Roles } from 'src/decorator/roles.decorator';
 import { FilterService } from './filter.service';
 import { FilterVenuesDto } from './dto/filterVenue.dto';
+import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
 
 @Controller('venue')
 export class VenueController {
@@ -40,13 +42,14 @@ export class VenueController {
   createVenue(
     @Body() createVenueDto: CreateVenueDto,
     @UploadedFile() arrangementsImage: Express.Multer.File,
+    @Req() req: AuthenticatedRequest,
   ) {
     const data = {
       ...createVenueDto,
       arrangementsImage,
     };
 
-    return this.venueService.createVenue(data);
+    return this.venueService.createVenue({ id: req.user.sub }, data);
   }
 
   @Patch('update/:id')

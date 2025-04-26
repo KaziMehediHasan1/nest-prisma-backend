@@ -22,10 +22,13 @@ export class VenueService {
   ) {}
 
   // create venue start================================`
-  public async createVenue(dto: CreateVenueDto):Promise<ApiResponse<any>> {
+  public async createVenue(id:IdDto,dto: CreateVenueDto):Promise<ApiResponse<any>> {
     const { arrangementsImage, decoration, profileId, amenityIds, ...rest } =
       dto;
 
+      const user = await this.db.user.findUnique({
+        where: { id: profileId },
+      })
     let fileInstance: FileInstance | null = null;
 
     if (arrangementsImage) {
@@ -66,6 +69,7 @@ export class VenueService {
               connect: { id: fileInstance.id },
             },
           }),
+          verified: user?.isVerified? true : false
         },
         include: {
           amenities: true,
