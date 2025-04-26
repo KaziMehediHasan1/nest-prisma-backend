@@ -7,6 +7,7 @@ import {
 } from './dto/setupProflie.dto';
 import { UploadService } from 'src/lib/upload/upload.service';
 import { EventService } from 'src/lib/event/event.service';
+import { ApiResponse } from 'src/interfaces/response';
 
 @Injectable()
 export class ProfileService {
@@ -16,7 +17,7 @@ export class ProfileService {
     private readonly event: EventService,
   ) {}
 
-  public async setupPlannerProfile(rawData: SetupPlannerProfileDto) {
+  public async setupPlannerProfile(rawData: SetupPlannerProfileDto):Promise<ApiResponse<any>> {
     const { userId, image, ...rest } = rawData;
 
     const fileInstance = await this.upload.uploadFile({
@@ -47,10 +48,15 @@ export class ProfileService {
         }
       });
 
-    return profile;
+    return {
+      data: profile,
+      message: 'Profile created successfully',
+      statusCode: 200,
+      success: true
+    };
   }
 
-  public async setUpVenueOwnerProfile(rawData: SetupVenueOwnerProfileDto) {
+  public async setUpVenueOwnerProfile(rawData: SetupVenueOwnerProfileDto):Promise<ApiResponse<any>> {
     const { userId, image, ...rest } = rawData;
     const fileInstance = await this.upload.uploadFile({
       file: image,
@@ -80,12 +86,17 @@ export class ProfileService {
         }
       });
 
-    return profile;
+    return {
+      data: profile,
+      message: 'Profile created successfully',
+      statusCode: 200,
+      success: true
+    };
   }
 
   public async setUpServiceProviderProfile(
     rawData: SetupServiceProviderProfileDto,
-  ) {
+  ):Promise<ApiResponse<any>> {
     const { coverPhoto, image, userId, location } = rawData;
 
     const [profilePic, coverPhotoPic] = await Promise.all([
@@ -119,6 +130,11 @@ export class ProfileService {
       },
     });
 
-    return profile;
+    return {
+      data: profile,
+      message: 'Profile created successfully',
+      statusCode: 200,
+      success: true
+    };
   }
 }
