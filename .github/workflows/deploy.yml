@@ -10,10 +10,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo (for local use only)
+      - name: Checkout repo
         uses: actions/checkout@v2
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Compose services (local test)
+        run: |
+          docker-compose -f ./onurtaskiner/onurtaskiner/docker-compose.yml config
+          docker-compose -f ./onurtaskiner/onurtaskiner/docker-compose.yml build
+
       - name: Deploy to VPS via SSH
+        if: success() # deploy only if local docker build succeeds
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -22,10 +31,9 @@ jobs:
           script: |
             echo "💥 Cleaning up unused Docker resources..."
             docker system prune -a --volumes -f
-          
+
             cd ./onurtaskiner/onurtaskiner
             git pull origin main
             docker-compose down
             docker-compose build
             docker-compose up -d
-
