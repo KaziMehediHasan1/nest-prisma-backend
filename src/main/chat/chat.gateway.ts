@@ -4,25 +4,32 @@ import {
   OnGatewayInit,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  SubscribeMessage,
+  MessageBody,
+  ConnectedSocket,
+  WsException,
 } from '@nestjs/websockets';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, Catch, ArgumentsHost, UseFilters } from '@nestjs/common';
 import { Server, WebSocket } from 'ws';
 import { ChatService } from './chat.service';
 import { IncomingMessage } from 'http';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { WebSocketExceptionsFilter } from 'src/error/wsError.filter';
 
-interface ClientMessage {
+interface SubscriptionData {
   conversationId: string;
-  type: 'subscribe_to_message' | 'unsubscribe' | 'subscribe_to_messages';
-  payload?: {
-    type: 'create' | 'update' | 'delete';
-    payload: any;
+}
+
+interface MessagesSubscriptionData extends SubscriptionData {
+  payload: {
     take: number;
-    cursor: string;
+    cursor?: string;
   };
 }
 
+
+@UseFilters(new WebSocketExceptionsFilter())
 @WebSocketGateway({
   path: '/chat',
   cors: {
@@ -70,10 +77,6 @@ export class ChatGateway
 
       this.logger.log(`Client connected: ${decoded.sub || 'unknown user'}`);
 
-      client.on('message', (message: string) => {
-        this.handleRawMessage(client, message);
-      });
-
       client.on('close', () => {
         this.handleDisconnect(client);
       });
@@ -88,54 +91,56 @@ export class ChatGateway
     this.logger.log('Client disconnected');
   }
 
-  private async handleRawMessage(
-    client: WebSocket,
-    message: string,
+  // NestJS SubscribeMessage decorators
+  @SubscribeMessage('subscribe_to_message')
+  async handleSubscribe(
+    @ConnectedSocket() client: WebSocket,
+    @MessageBody() data: SubscriptionData,
   ): Promise<void> {
-    try {
-      const { conversationId, type, payload } = JSON.parse(
-        message,
-      ) as ClientMessage;
-
-      if (!conversationId || !type) return;
-
-      switch (type) {
-        case 'subscribe_to_message':
-          const isExist =
-            await this.chatService.findConversationById(conversationId);
-          if (!isExist) {
-            this.logger.error(`Conversation ${conversationId} does not exist`);
-            return;
-          }
-          this.subscribeClient(conversationId, client);
-          break;
-
-        case 'unsubscribe':
-          this.unsubscribeClient(conversationId, client);
-          break;
-        case 'subscribe_to_messages':
-          if (!payload) {
-            this.logger.error('Payload is missing');
-            client.send(
-              JSON.stringify({
-                error: 'Payload is missing',
-              }),
-            );
-            return;
-          }
-          const messages = await this.chatService.findMessagesByConversationId({
-            id: conversationId,
-            cursor: payload?.cursor,
-            take: payload?.take,
-          });
-          client.send(JSON.stringify(messages));
-        
-        default:
-          this.logger.warn(`Unknown message type received: ${type}`);
-      }
-    } catch (error) {
-      this.logger.error('Invalid message format', error);
+    const { conversationId } = data;
+    if (!conversationId) {
+      throw new WsException('Conversation ID is missing');
     }
+    const isExist = await this.chatService.findConversationById(conversationId);
+    
+    if (!isExist) {
+      throw new WsException(`Conversation ${conversationId} does not exist`);
+    }
+    
+    this.subscribeClient(conversationId, client);
+    client.send(JSON.stringify({ status: 'subscribed', conversationId }));
+  }
+
+  @SubscribeMessage('unsubscribe')
+  handleUnsubscribe(
+    @ConnectedSocket() client: WebSocket,
+    @MessageBody() data: SubscriptionData,
+  ): void {
+    const { conversationId } = data;
+    this.unsubscribeClient(conversationId, client);
+    client.send(JSON.stringify({ status: 'unsubscribed', conversationId }));
+  }
+
+  @SubscribeMessage('subscribe_to_messages')
+  async handleGetMessages(
+    @ConnectedSocket() client: WebSocket,
+    @MessageBody() data: MessagesSubscriptionData,
+  ): Promise<void> {
+    const { conversationId, payload } = data;
+    if(!conversationId) {
+      throw new WsException('Conversation ID is missing');
+    }
+    if (!payload) {
+      throw new WsException('Payload is missing');
+    }
+    
+    const messages = await this.chatService.findMessagesByConversationId({
+      id: conversationId,
+      cursor: payload?.cursor,
+      take: payload?.take,
+    });
+    
+    client.send(JSON.stringify(messages));
   }
 
   private subscribeClient(conversationId: string, client: WebSocket): void {
@@ -155,11 +160,13 @@ export class ChatGateway
   }
 
   private removeClientFromAllConversations(client: WebSocket): void {
-    for (const clients of this.clients.values()) {
-      clients.delete(client);
+    for (const [conversationId, clients] of this.clients.entries()) {
+      if (clients.has(client)) {
+        clients.delete(client);
+        this.logger.log(`Client removed from conversation ${conversationId} due to disconnect`);
+      }
     }
   }
-
 
   broadcastToConversation<T>({
     conversationId,
@@ -171,7 +178,7 @@ export class ChatGateway
     payload: T;
   }): void {
     const clients = this.clients.get(conversationId);
-    if (!clients) return;
+    if (!clients || clients.size === 0) return;
 
     const message = JSON.stringify({ type, payload });
 
@@ -180,5 +187,7 @@ export class ChatGateway
         client.send(message);
       }
     });
+    
+    this.logger.log(`Broadcasted ${type} event to ${clients.size} clients in conversation ${conversationId}`);
   }
 }

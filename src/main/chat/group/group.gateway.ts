@@ -97,6 +97,11 @@ export class GroupGateway
     @MessageBody() data: SubscriptionData,
   ): Promise<void> {
     const { conversationId } = data;
+    if (!conversationId) {
+      this.logger.error('Conversation ID is missing');
+      throw new WsException('Conversation ID is missing');
+      return;
+    }
     const isExist = await this.groupService.findGroupById(conversationId);
     
     if (!isExist) {
@@ -125,7 +130,11 @@ export class GroupGateway
     @MessageBody() data: MessagesSubscriptionData,
   ): Promise<void> {
     const { conversationId, payload } = data;
-    
+    if(!conversationId) {
+      this.logger.error('Conversation ID is missing');
+      throw new WsException('Conversation ID is missing');
+      return;
+    }
     if (!payload) {
       this.logger.error('Payload is missing');
       throw new WsException('Payload is missing');
