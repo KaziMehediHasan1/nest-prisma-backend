@@ -4,25 +4,31 @@ import {
   OnGatewayInit,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  SubscribeMessage,
+  MessageBody,
+  ConnectedSocket,
+  WsException,
 } from '@nestjs/websockets';
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, UseFilters } from '@nestjs/common';
 import { Server, WebSocket } from 'ws';
 import { IncomingMessage } from 'http';
 import { GroupService } from './group.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { WebSocketExceptionsFilter } from 'src/error/wsError.filter';
 
-interface ClientMessage {
+interface SubscriptionData {
   conversationId: string;
-  type: 'subscribe_to_message' | 'unsubscribe' | 'subscribe_to_messages';
-  payload?: {
-    type: 'create' | 'update' | 'delete';
-    payload: any;
+}
+
+interface MessagesSubscriptionData extends SubscriptionData {
+  payload: {
     take: number;
-    cursor: string;
+    cursor?: string;
   };
 }
 
+@UseFilters(new WebSocketExceptionsFilter())
 @WebSocketGateway({
   path: '/group-chat',
   cors: {
@@ -40,6 +46,7 @@ export class GroupGateway
   private readonly logger = new Logger(GroupGateway.name);
 
   constructor(
+    @Inject(forwardRef(() => GroupService))
     private readonly groupService: GroupService,
     private readonly jwt: JwtService,
     private readonly configService: ConfigService,
@@ -79,72 +86,107 @@ export class GroupGateway
   }
 
   handleDisconnect(client: WebSocket): void {
+    this.removeClientFromAllGroups(client);
     this.logger.log('Client disconnected');
   }
 
-  private async handleRawMessage(
-      client: WebSocket,
-      message: string,
-    ): Promise<void> {
-      try {
-        const { conversationId, type, payload } = JSON.parse(
-          message,
-        ) as ClientMessage;
-  
-        if (!conversationId || !type) return;
-  
-        switch (type) {
-          case 'subscribe_to_message':
-            const isExist =
-              await this.groupService.findGroupById(conversationId);
-            if (!isExist) {
-              this.logger.error(`Conversation ${conversationId} does not exist`);
-              return;
-            }
-            this.subscribeClient(conversationId, client);
-            break;
-  
-          case 'unsubscribe':
-            this.unsubscribeClient(conversationId, client);
-            break;
-          case 'subscribe_to_messages':
-            if (!payload) {
-              this.logger.error('Payload is missing');
-              client.send(
-                JSON.stringify({
-                  error: 'Payload is missing',
-                }),
-              );
-              return;
-            }
-            const messages = await this.groupService.findMessagesByGroupId({
-              id: conversationId,
-              cursor: payload?.cursor,
-              take: payload?.take,
-            });
-            client.send(JSON.stringify(messages));
-          
-          default:
-            this.logger.warn(`Unknown message type received: ${type}`);
-        }
-      } catch (error) {
-        this.logger.error('Invalid message format', error);
-      }
+  // NestJS SubscribeMessage decorators for more structured event handling
+  @SubscribeMessage('subscribe_to_message')
+  async handleSubscribe(
+    @ConnectedSocket() client: WebSocket,
+    @MessageBody() data: SubscriptionData,
+  ): Promise<void> {
+    const { conversationId } = data;
+    const isExist = await this.groupService.findGroupById(conversationId);
+    
+    if (!isExist) {
+      this.logger.error(`Group ${conversationId} does not exist`);
+      throw new WsException(`Group ${conversationId} does not exist`);
+      return;
     }
+    
+    this.subscribeClient(conversationId, client);
+    client.send(JSON.stringify({ status: 'subscribed', groupId: conversationId }));
+  }
 
-    private subscribeClient(conversationId: string, client: WebSocket): void {
-      if (!this.clients.has(conversationId)) {
-        this.clients.set(conversationId, new Set());
-      }
-      this.clients.get(conversationId)!.add(client);
-      this.logger.log(`Client subscribed to ${conversationId}`);
+  @SubscribeMessage('unsubscribe')
+  handleUnsubscribe(
+    @ConnectedSocket() client: WebSocket,
+    @MessageBody() data: SubscriptionData,
+  ): void {
+    const { conversationId } = data;
+    this.unsubscribeClient(conversationId, client);
+    client.send(JSON.stringify({ status: 'unsubscribed', groupId: conversationId }));
+  }
+
+  @SubscribeMessage('subscribe_to_messages')
+  async handleGetMessages(
+    @ConnectedSocket() client: WebSocket,
+    @MessageBody() data: MessagesSubscriptionData,
+  ): Promise<void> {
+    const { conversationId, payload } = data;
+    
+    if (!payload) {
+      this.logger.error('Payload is missing');
+      throw new WsException('Payload is missing');
+      return;
     }
+    
+    const messages = await this.groupService.findMessagesByGroupId({
+      id: conversationId,
+      cursor: payload?.cursor,
+      take: payload?.take,
+    });
+    
+    client.send(JSON.stringify(messages));
+  }
+
+  private subscribeClient(conversationId: string, client: WebSocket): void {
+    if (!this.clients.has(conversationId)) {
+      this.clients.set(conversationId, new Set());
+    }
+    this.clients.get(conversationId)!.add(client);
+    this.logger.log(`Client subscribed to group ${conversationId}`);
+  }
+
+  private unsubscribeClient(conversationId: string, client: WebSocket): void {
+    const clients = this.clients.get(conversationId);
+    if (clients?.has(client)) {
+      clients.delete(client);
+      this.logger.log(`Client unsubscribed from group ${conversationId}`);
+    }
+  }
   
-    private unsubscribeClient(conversationId: string, client: WebSocket): void {
-      const clients = this.clients.get(conversationId);
-      if (clients?.has(client)) {
+  private removeClientFromAllGroups(client: WebSocket): void {
+    for (const [groupId, clients] of this.clients.entries()) {
+      if (clients.has(client)) {
         clients.delete(client);
-        this.logger.log(`Client unsubscribed from ${conversationId}`);
+        this.logger.log(`Client removed from group ${groupId} due to disconnect`);
       }
     }
+  }
+  
+  // Method to broadcast messages to all clients subscribed to a group
+  broadcastToGroup<T>({
+    groupId,
+    type,
+    payload,
+  }: {
+    groupId: string;
+    type: 'create' | 'update' | 'delete';
+    payload: T;
+  }): void {
+    const clients = this.clients.get(groupId);
+    if (!clients || clients.size === 0) return;
+
+    const message = JSON.stringify({ type, payload });
+
+    clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+    
+    this.logger.log(`Broadcasted ${type} event to ${clients.size} clients in group ${groupId}`);
+  }
 }

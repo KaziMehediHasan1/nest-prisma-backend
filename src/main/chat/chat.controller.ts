@@ -9,7 +9,7 @@ import { CreateDirectChatDto } from './dto/createChat.dto';
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
-  @Post('create')
+  @Post('create-message')
   @ApiConsumes('multipart/form-data', 'application/json')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({

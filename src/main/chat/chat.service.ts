@@ -180,17 +180,5 @@ export class ChatService {
     }
   }
 
-  public async getUserStatusForConversation( conversationId: string) {
-    return this.db.user.findMany({
-      where:{
-        profile:{
-          directMessages:{
-            every:{
-              conversationId
-            }
-          }
-        }
-      }
-    })
-  }
+  
 }

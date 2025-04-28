@@ -5,6 +5,7 @@ import { ApiBearerAuth, ApiConsumes, ApiOperation } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { VerifiedGuard } from 'src/guard/verify.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { CreateGroupMessageDto } from './dto/CreateGroupMessage.dto';
 
 @Controller('group')
 @ApiBearerAuth()
@@ -30,4 +31,21 @@ export class GroupController {
 
     return this.groupService.createGroup(data);
   }
+
+    @Post('create-message')
+    @ApiConsumes('multipart/form-data', 'application/json')
+    @UseInterceptors(FileInterceptor('file'))
+    @ApiOperation({
+      summary: 'Create a new message with video or attachments',
+    })
+    create(
+      @UploadedFile() file: Express.Multer.File,
+      @Body() data: CreateGroupMessageDto
+  ) {
+      const rawData = {
+          ...data,
+          file,
+      }
+      return this.groupService.createMessage(rawData);
+    }
 }
