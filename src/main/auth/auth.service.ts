@@ -121,8 +121,9 @@ export class AuthService {
     }
 
     if (!user.isVerified) {
+      await this.verifyService.sendVerificationEmail(user.email, 5);
       throw new HttpException(
-        'Please verify your email',
+        'A verification code has been sent to your email. Please verify your email',
         HttpStatus.UNAUTHORIZED,
       );
     }

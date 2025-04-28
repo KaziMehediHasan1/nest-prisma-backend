@@ -69,6 +69,7 @@ export class VenueController {
     };
 
     return this.venueService.updateVenue(id, data);
+    
   }
 
   @Get('get/:id')
