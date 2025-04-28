@@ -13,6 +13,9 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v2
 
+      - name: List files
+        run: ls -R
+
       - name: Install Docker Compose
         run: |
           sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
@@ -24,8 +27,8 @@ jobs:
 
       - name: Build Docker Compose services (local test)
         run: |
-          docker-compose -f ./onurtaskiner/onurtaskiner/docker-compose.yml config
-          docker-compose -f ./onurtaskiner/onurtaskiner/docker-compose.yml build
+          docker-compose -f ./onurtaskiner/docker-compose.yml config
+          docker-compose -f ./onurtaskiner/docker-compose.yml build
 
       - name: Deploy to VPS via SSH
         if: success()
@@ -38,7 +41,7 @@ jobs:
             echo "💥 Cleaning up unused Docker resources..."
             docker system prune -a --volumes -f
 
-            cd ./onurtaskiner/onurtaskiner
+            cd ./onurtaskiner
             git pull origin main
             docker-compose down
             docker-compose build
