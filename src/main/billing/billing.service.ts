@@ -105,16 +105,14 @@ export class BillingService {
         return this.handleBookingPayment(
           id,
           paymentIntent.amount_received / 100,
-          userId,
         );
       case 'fullPayment':
         return this.handleFullPayment(
           id,
           paymentIntent.amount_received / 100,
-          userId,
         );
       case 'serviceBooking':
-        return this.handleVerificationFee(id);
+        return this.handleVerificationFee(userId);
       default:
         this.logger.warn(`Unknown PaymentIntent type: ${type}`);
     }
@@ -148,7 +146,6 @@ export class BillingService {
   private async handleBookingPayment(
     id: string,
     amount?: number,
-    userId?: string,
   ) {
     this.logger.log(`Handling booking payment for ID: ${id}`);
 
@@ -161,10 +158,6 @@ export class BillingService {
       where: { id },
     });
 
-    if (!userId) {
-      this.logger.error(`User not found for ID: ${id}`);
-      return;
-    }
 
     if (!booking) {
       this.logger.error(`Booking not found for ID: ${id}`);
@@ -207,7 +200,6 @@ export class BillingService {
   private async handleFullPayment(
     id: string,
     amount?: number,
-    userId?: string,
   ) {
     this.logger.log(`Handling full payment for ID: ${id}`);
 
@@ -219,11 +211,6 @@ export class BillingService {
     const booking = await this.db.booking.findUnique({
       where: { id },
     });
-
-    if (!userId) {
-      this.logger.error(`User not found for ID: ${id}`);
-      return;
-    }
 
     if (!booking) {
       this.logger.error(`Booking not found for ID: ${id}`);

@@ -129,12 +129,14 @@ export class GroupGateway
     @ConnectedSocket() client: WebSocket,
     @MessageBody() data: MessagesSubscriptionData,
   ): Promise<void> {
+
     const { conversationId, payload } = data;
     if(!conversationId) {
       this.logger.error('Conversation ID is missing');
       throw new WsException('Conversation ID is missing');
       return;
     }
+
     if (!payload) {
       this.logger.error('Payload is missing');
       throw new WsException('Payload is missing');
@@ -148,14 +150,17 @@ export class GroupGateway
     });
     
     client.send(JSON.stringify(messages));
+
   }
 
   private subscribeClient(conversationId: string, client: WebSocket): void {
+
     if (!this.clients.has(conversationId)) {
       this.clients.set(conversationId, new Set());
     }
     this.clients.get(conversationId)!.add(client);
     this.logger.log(`Client subscribed to group ${conversationId}`);
+    
   }
 
   private unsubscribeClient(conversationId: string, client: WebSocket): void {
