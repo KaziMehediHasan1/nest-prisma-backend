@@ -7,6 +7,7 @@ import { CreateDirectMessageDto } from '../dto/createMessage.dto';
 import { FileInstance } from '@prisma/client';
 import { GroupGateway } from './group.gateway';
 import { CreateGroupMessageDto } from './dto/CreateGroupMessage.dto';
+import { EventService } from 'src/lib/event/event.service';
 
 @Injectable()
 export class GroupService {
@@ -14,6 +15,7 @@ export class GroupService {
     private readonly db: DbService,
     private readonly uploadService: UploadService,
     private readonly GroupGateway: GroupGateway,
+    private readonly eventEmitter: EventService,
   ) {}
 
   public async createGroup(
@@ -136,7 +138,7 @@ export class GroupService {
                   },
                 });
 
-                await tx.groupMessage.update({
+                const group = await tx.groupMessage.update({
                   where: {
                     id: rawData.groupId,
                   },
@@ -147,22 +149,45 @@ export class GroupService {
                       },
                     },
                   },
+                  include:{
+                    profiles:{
+                      select:{
+                        id: true,
+                        name: true,
+                        image:{
+                          select:{
+                            path: true
+                          }
+                        }
+                      }
+                    }
+                  }
                 });
 
-                return message
+                return {message, group}
               })
+              
                 this.GroupGateway.broadcastToGroup({
                   groupId: rawData.groupId,
                   type: 'create',
                   payload: data,
                 })
-                return data
+
+                data.group.profiles.map((profile) => {
+                  this.eventEmitter.emit("CHAT_LIST_UPDATE", {
+                    userId: profile.id
+                  })
+                })
+
+                return data.message
             } catch (error) {
+
               if (fileInstance) {
                 this.uploadService.deleteFile({
                   Key: fileInstance.fileId,
                 });
               }
+
               throw new InternalServerErrorException(error);
             }
   }

@@ -106,19 +106,18 @@ export class ChatListGateway
     }
   }
 
-  // client manually asks for their chat list
   @SubscribeMessage('get_chat_list')
   async handleGetChatList(
     @ConnectedSocket() client: WebSocket,
-    @MessageBody() payload: any, // no need for special payload yet
+    @MessageBody() payload: { take?: number; cursor?: string },
   ): Promise<void> {
     const userId = (client as any).userId;
+    if (!userId) throw new WsException('User ID not found in client');
 
-    if (!userId) {
-      throw new WsException('User ID not found in client');
-    }
+    const take = payload?.take ?? 20;
+    const cursor = payload?.cursor ? new Date(payload.cursor) : undefined;
 
-    const chatList = await this.chatListService.getChatsList(userId);
+    const chatList = await this.chatListService.getChatsList(userId, take, cursor);
 
     client.send(
       JSON.stringify({
@@ -128,12 +127,11 @@ export class ChatListGateway
     );
   }
 
-  // server pushes an update to all connected clients of a user
   async broadcastChatListUpdate(userId: string): Promise<void> {
     const clients = this.clients.get(userId);
     if (!clients || clients.size === 0) return;
 
-    const chatList = await this.chatListService.getChatsList(userId);
+    const chatList = await this.chatListService.getChatsList(userId, 20); // send latest 20 only
 
     const message = JSON.stringify({
       type: 'chat_list_update',
@@ -153,6 +151,6 @@ export class ChatListGateway
 
   @OnEvent(EVENT_TYPES.CHAT_LIST_UPDATE)
   async handleChatListUpdate(event: ChatListUpdateEvent): Promise<void> {
-    await this.broadcastChatListUpdate(event.userId); 
+    await this.broadcastChatListUpdate(event.userId);
   }
 }
