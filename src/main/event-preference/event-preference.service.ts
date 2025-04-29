@@ -5,6 +5,7 @@ import { DbService } from 'src/lib/db/db.service';
 import { UploadService } from 'src/lib/upload/upload.service';
 import { EventService } from 'src/lib/event/event.service';
 import { ApiResponse } from 'src/interfaces/response';
+import { IdDto } from 'src/common/dto/id.dto';
 
 @Injectable()
 export class EventPreferenceService {
@@ -76,8 +77,17 @@ export class EventPreferenceService {
     };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} eventPreference`;
+  findOne(id: IdDto) {
+    return this.db.eventType.findUnique({
+      where:  id ,
+      include: {
+        avatar: {
+          select: {
+            path: true,
+          },
+        },
+      },
+    });
   }
 
   async update(id: string, updateEventPreferenceDto: UpdateEventPreferenceDto): Promise<ApiResponse<any>> {

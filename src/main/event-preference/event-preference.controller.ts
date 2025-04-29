@@ -19,6 +19,7 @@ import { RolesGuard } from 'src/guard/role.guard';
 import { Roles } from 'src/decorator/roles.decorator';
 import { VerifiedGuard } from 'src/guard/verify.guard';
 import { AuthGuard } from '@nestjs/passport';
+import { IdDto } from 'src/common/dto/id.dto';
 
 @Controller('event-preference')
 export class EventPreferenceController {
@@ -53,8 +54,8 @@ export class EventPreferenceController {
   }
 
   @Get('get/:id')
-  findOne(@Param('id') id: string) {
-    return this.eventPreferenceService.findOne(+id);
+  findOne(@Param() id: IdDto) {
+    return this.eventPreferenceService.findOne(id);
   }
 
   @Patch('update/:id')

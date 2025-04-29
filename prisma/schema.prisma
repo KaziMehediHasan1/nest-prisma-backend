@@ -478,6 +478,7 @@ model Conversation {
   memberTwoId    String
   memberTwo      Profile         @relation("MemberTwo", fields: [memberTwoId], references: [id], onDelete: Cascade)
   directMessages DirectMessage[]
+  lasMessage DirectMessage? @relation("LastConversationMessage")
 
   @@unique([memberOneId, memberTwoId])
   @@index([memberTwoId])
@@ -493,6 +494,7 @@ model GroupMessage {
   image    FileInstance?
   message  DirectMessage[]
   profiles Profile[]
+  lastMessage DirectMessage? @relation("LastGroupMessage")
 }
 
 //Group Message End =======================================================
@@ -505,13 +507,18 @@ model DirectMessage {
   file           FileInstance?
   memberId       String
   member         Profile       @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  conversationId String
-  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String?
+  conversation   Conversation?  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   deleted        Boolean       @default(false)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   GroupMessage   GroupMessage? @relation(fields: [groupMessageId], references: [id])
   groupMessageId String?
+  lastGroupMessage   GroupMessage? @relation("LastGroupMessage", fields: [lastGroupMessageId], references: [id])
+  lastGroupMessageId String? @unique
+  lastConversationMessage   Conversation? @relation("LastConversationMessage", fields: [lastConversationMessageId], references: [id])
+  lastConversationMessageId String? @unique
+
 
   @@index([memberId])
   @@index([conversationId])

@@ -4,10 +4,11 @@ import { AuthController } from './auth.controller';
 import { JwtService } from '@nestjs/jwt';
 import { ProfileModule } from './profile/profile.module';
 import { AuthGateway } from './auth.gateway';
+import { ProfileUpgradeService } from './profile-upgrade.service';
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, JwtService, AuthGateway],
+  providers: [AuthService, JwtService, AuthGateway, ProfileUpgradeService],
   imports: [ProfileModule],
 })
 export class AuthModule {}

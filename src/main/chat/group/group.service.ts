@@ -112,8 +112,8 @@ export class GroupService {
         }
 
         try {
-              const data = await this.db.directMessage
-                .create({
+              const data = await this.db.$transaction(async (tx) => {
+                const message = await tx.directMessage.create({
                   data: {
                     content: rawData.content,
                     conversation: {
@@ -134,7 +134,23 @@ export class GroupService {
                       },
                     },
                   },
-                })
+                });
+
+                await tx.groupMessage.update({
+                  where: {
+                    id: rawData.groupId,
+                  },
+                  data: {
+                    lastMessage: {
+                      connect: {
+                        id: message.id,
+                      },
+                    },
+                  },
+                });
+
+                return message
+              })
                 this.GroupGateway.broadcastToGroup({
                   groupId: rawData.groupId,
                   type: 'create',
