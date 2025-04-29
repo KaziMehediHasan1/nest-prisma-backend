@@ -171,7 +171,7 @@ export class SetupServiceProviderProfileDto {
       example: 5,
     })
     @IsInt({ message: 'Year of experience must be an integer' })
-    yearOfExperience: number;
+    experience: number;
   
     @ApiProperty({
       description: 'Avatar image for the event preference',

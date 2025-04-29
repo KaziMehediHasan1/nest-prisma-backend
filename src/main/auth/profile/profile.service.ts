@@ -106,8 +106,9 @@ export class ProfileService {
   public async setUpServiceProviderProfile(
     rawData: SetupServiceProviderProfileDto,
   ): Promise<ApiResponse<any>> {
-    const { coverPhoto, image, userId, location, eventPreferenceIds } = rawData;
+    const { coverPhoto, image, userId, location, eventPreferenceIds, ...rest } = rawData;
 
+    
     const [profilePic, coverPhotoPic] = await Promise.all([
       await this.upload.uploadFile({
         file: image,
@@ -125,6 +126,7 @@ export class ProfileService {
               id: profilePic.id,
             },
           },
+          ...rest,
           eventPreference:{
             connect: eventPreferenceIds.map(id => ({id}))
           },

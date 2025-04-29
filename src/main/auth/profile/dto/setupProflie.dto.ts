@@ -153,7 +153,7 @@ export class SetupServiceProviderProfileDto {
     enum: $Enums.ServiceProviderRole,
   })
   @IsEnum($Enums.ServiceProviderRole)
-  servicePRoviderRole: $Enums.ServiceProviderRole;
+  serviceProviderRole: $Enums.ServiceProviderRole;
 
   @ApiProperty({
     description: 'User DDescription',
@@ -170,7 +170,7 @@ export class SetupServiceProviderProfileDto {
     typeof value === 'string' ? parseInt(value, 10) : value,
   )
   @IsInt({ message: 'Year of experience must be an integer' })
-  yearOfExperience: number;
+  experience: number;
 
   @ApiProperty({
     description: 'Avatar image for the event preference',

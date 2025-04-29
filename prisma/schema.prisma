@@ -102,6 +102,7 @@ model Profile {
   verificationSubmissionId String?                 @unique
   GroupMessage             GroupMessage?           @relation(fields: [groupMessageId], references: [id])
   groupMessageId           String?
+  serviceProviderRole ServiceProviderRole?
 }
 
 enum Gender {
@@ -234,11 +235,11 @@ model Shift {
 model Booking {
   id                String           @id @default(uuid())
   bookedById        String
-  bookedBy          Profile          @relation("BookedByProfile", fields: [bookedById], references: [id])
+  bookedBy          Profile          @relation("BookedByProfile", fields: [bookedById], references: [id], onDelete: Cascade)
   venueId           String?
-  venue             Venue?           @relation(fields: [venueId], references: [id])
+  venue             Venue?           @relation(fields: [venueId], references: [id], onDelete: Cascade)
   serviceProviderId String?
-  serviceProvider   Profile?         @relation("ServiceProviderProfile", fields: [serviceProviderId], references: [id])
+  serviceProvider   Profile?         @relation("ServiceProviderProfile", fields: [serviceProviderId], references: [id], onDelete: Cascade)
   eventName         String
   location          String
   plannerName       String
@@ -283,14 +284,14 @@ enum AcceptanceStatus {
 model Payment {
   id                       String                  @id @default(uuid())
   bookingId                String // FK for booking @unique
-  bookingInfo              Booking?                @relation(fields: [bookingId], references: [id])
+  bookingInfo              Booking?                @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   paymentStatus            PaymentStatus // Enum for payment status
   paymentMethod            PaymentMethod // Enum for payment method
   amount                   Int // The amount paid
   transactionId            String? // Optional transaction ID
   createdAt                DateTime                @default(now())
   updatedAt                DateTime                @updatedAt
-  VerificationSubmission   VerificationSubmission? @relation(fields: [verificationSubmissionId], references: [id])
+  VerificationSubmission   VerificationSubmission? @relation(fields: [verificationSubmissionId], references: [id], onDelete: Cascade)
   verificationSubmissionId String?                 @unique
 }
 
