@@ -32,7 +32,7 @@ export class BookingService {
   //send enum service end==============================
 
   // create booking start================================
-  async create(rawData: CreateBookingDto) {
+  async create(rawData: CreateBookingDto): Promise<ApiResponse<any>> {
     const {
       bookedById,
       eventTypeId,
@@ -115,42 +115,51 @@ export class BookingService {
       }
     }
 
-    const booking = await this.db.booking.create({
-      data: {
-        ...rest,
-        bookingStatus: 'REQUESTED',
-        duration: durationMinutes,
-        bookedBy: {
-          connect: { id: bookedById },
+    try {
+      const booking = await this.db.booking.create({
+        data: {
+          ...rest,
+          bookingStatus: 'REQUESTED',
+          duration: durationMinutes,
+          bookedBy: {
+            connect: { id: bookedById },
+          },
+          EventType: {
+            connect: { id: eventTypeId },
+          },
+          decoration: Decoration ? JSON.stringify(Decoration) : undefined,
+          ...(venue && { venue: { connect: { id: venue.id } } }),
+          ...(serviceProvider && {
+            serviceProvider: { connect: { id: serviceProvider.id } },
+          }),
+          selectedDate: new Date(selectedDate),
+          startTime: start,
+          endTime: end,
         },
-        EventType: {
-          connect: { id: eventTypeId },
-        },
-        decoration: Decoration ? JSON.stringify(Decoration) : undefined,
-        ...(venue && { venue: { connect: { id: venue.id } } }),
-        ...(serviceProvider && {
-          serviceProvider: { connect: { id: serviceProvider.id } },
-        }),
-        selectedDate: new Date(selectedDate),
-        startTime: start,
-        endTime: end,
-      },
-    });
-
-    booking.decoration = JSON.parse(booking.decoration ?? '{}');
-
-    const memberTwoId = venue?.profileId ?? serviceProvider?.id;
-
-    if (!memberTwoId) {
-      throw new BadRequestException('memberTwoId could not be resolved');
+      });
+  
+      booking.decoration = JSON.parse(booking.decoration ?? '{}');
+  
+      const memberTwoId = venue?.profileId ?? serviceProvider?.id;
+  
+      if (!memberTwoId) {
+        throw new BadRequestException('memberTwoId could not be resolved');
+      }
+  
+      this.eventEmitter.emit('CONVERSATION_CREATE', {
+        memberOneId: bookedById,
+        memberTwoId,
+      });
+  
+      return {
+        success: true,
+        data: booking,
+        message: 'Booking created successfully',
+        statusCode: 200,
+      };
+    } catch (error) {
+      throw new BadRequestException(error);
     }
-
-    this.eventEmitter.emit('CONVERSATION_CREATE', {
-      memberOneId: bookedById,
-      memberTwoId,
-    });
-
-    return booking;
   }
 
   // create booking end================================
