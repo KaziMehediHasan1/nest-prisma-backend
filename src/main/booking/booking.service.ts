@@ -11,6 +11,7 @@ import { $Enums, Profile, Venue } from '@prisma/client';
 import { ApiResponse } from 'src/interfaces/response';
 import { IdDto } from 'src/common/dto/id.dto';
 import { EventService } from 'src/lib/event/event.service';
+import { SetPriceDto } from './dto/setPrice.dto';
 
 @Injectable()
 export class BookingService {
@@ -350,4 +351,27 @@ export class BookingService {
   }
 
   // getBookedDate end================================
+
+  // Set price start ================================
+
+  async setPrice({ id, totalAmount }: SetPriceDto): Promise<ApiResponse<any>> {
+    const booking = await this.db.booking.findUnique({
+      where: { id },
+    });
+    if (!booking) {
+      throw new NotFoundException(`Booking with id ${id} not found.`);
+    }
+    const updatedBooking = await this.db.booking.update({
+      where: { id:booking.id, bookingStatus: $Enums.BookingStatus.REQUESTED },
+      data: { totalAmount,due:totalAmount,paid:0 },
+    });
+    return {
+      data: updatedBooking,
+      message: 'Price updated successfully',
+      statusCode: 200,
+      success: true,
+    };
+  }
+
+  // Set price end ================================
 }
