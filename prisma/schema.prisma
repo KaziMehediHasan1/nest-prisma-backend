@@ -251,7 +251,6 @@ model Booking {
   guestNumber       Int
   decoration        String? //an string object of decoration
   services          String[] // Array of service names .  comes a string input from the client
-  totalCost         Int
   bookingStatus     BookingStatus    @default(REQUESTED) // completed when isEventFinished is true
   totalAmount       Int              @default(0) // Total amount for the booking
   paid              Int              @default(0) // Amount paid  (when the booking is confirmed)

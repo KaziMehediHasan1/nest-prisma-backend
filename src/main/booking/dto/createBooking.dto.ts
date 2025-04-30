@@ -89,6 +89,7 @@ class DecorationDto {
   }
   
 
+// Modified CreateBookingDto
 export class CreateBookingDto {
   @ApiProperty({ description: 'ID of the user who booked', format: 'uuid' })
   @IsUUID('4', { message: 'bookedById must be a valid UUID (version 4).' })
@@ -148,10 +149,7 @@ export class CreateBookingDto {
   @IsDateString()
   endTime: Date;
 
-  @ApiProperty({ description: 'Duration of the event in minutes' })
-  @IsInt()
-  @Min(0)
-  duration: number;
+  // Duration removed as it will be calculated automatically
 
   @ApiPropertyOptional({ description: 'Event type ID (UUID)', format: 'uuid' })
   @IsOptional()
@@ -185,36 +183,24 @@ export class CreateBookingDto {
   @IsString({ each: true })
   services: string[];
 
-  @ApiProperty({ description: 'Total cost of booking' })
-  @IsInt()
-  @Min(0)
-  totalCost: number;
-
   @ApiProperty({ enum: BookingStatus, description: 'Booking status' })
   @IsEnum(BookingStatus)
   bookingStatus: BookingStatus;
 
-  @ApiProperty({ description: 'Total amount for the booking', default: 0 })
-  @IsInt()
-  @Min(0)
-  totalAmount: number;
+  // @ApiProperty({ description: 'Total amount for the booking', default: 0 })
+  // @IsInt()
+  // @Min(0)
+  // totalAmount: number;
 
-  @ApiProperty({ description: 'Amount paid', default: 0 })
-  @IsInt()
-  @Min(0)
-  paid: number;
+  // @ApiProperty({ description: 'Amount paid', default: 0 })
+  // @IsInt()
+  // @Min(0)
+  // paid: number;
 
-  @ApiProperty({ description: 'Due amount', default: 0 })
-  @IsInt()
-  @Min(0)
-  due: number;
-
-  @ApiProperty({
-    enum: AcceptanceStatus,
-    description: 'Booking acceptance status',
-  })
-  @IsEnum(AcceptanceStatus)
-  accept: AcceptanceStatus;
+  // @ApiProperty({ description: 'Due amount', default: 0 })
+  // @IsInt()
+  // @Min(0)
+  // due: number;
 
   @ApiPropertyOptional({ description: 'Is the event finished?' })
   @IsOptional()
