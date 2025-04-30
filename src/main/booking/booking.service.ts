@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { DbService } from 'src/lib/db/db.service';
 import { CreateBookingDto } from './dto/createBooking.dto';
@@ -13,6 +14,7 @@ import { EventService } from 'src/lib/event/event.service';
 
 @Injectable()
 export class BookingService {
+  private readonly logger = new Logger(BookingService.name);
   constructor(
     private readonly db: DbService,
     private readonly eventEmitter: EventService,
@@ -258,50 +260,68 @@ export class BookingService {
   }
 
   public async bookingList(venueOwnerId: string): Promise<
-    ApiResponse<{
-      requested: any[];
-      pending: any[];
-      confirmed: any[];
-      completed: any[];
-    }>
-  > {
-    const statuses = [
-      'REQUESTED',
-      'PENDING',
-      'CONFIRMED',
-      'COMPLETED',
-    ] as const;
+  ApiResponse<{
+    requested: any[];
+    pending: any[];
+    confirmed: any[];
+    completed: any[];
+  }>
+> {
+  const statuses = [
+    'REQUESTED',
+    'PENDING',
+    'CONFIRMED',
+    'COMPLETED',
+  ] as const;
 
-    const bookingPromises = statuses.map(
-      async (status) =>
-        await this.db.booking.findMany({
-          where: {
-            venue: { profileId: venueOwnerId },
-            bookingStatus: status,
-          },
-          take: 3,
-        }),
-    );
+  const bookingPromises = statuses.map(
+    async (status) =>
+      await this.db.booking.findMany({
+        where: {
+          venue: { profileId: venueOwnerId },
+          bookingStatus: status,
+        },
+        take: 3,
+      }),
+  );
 
-    const [
-      requestedBookings,
-      pendingBookings,
-      confirmedBookings,
-      completedBookings,
-    ] = await Promise.all(bookingPromises);
+  const [
+    requestedBookings,
+    pendingBookings,
+    confirmedBookings,
+    completedBookings,
+  ] = await Promise.all(bookingPromises);
 
-    return {
-      statusCode: 200,
-      success: true,
-      message: 'Bookings fetched successfully.',
-      data: {
-        requested: requestedBookings,
-        pending: pendingBookings,
-        confirmed: confirmedBookings,
-        completed: completedBookings,
-      },
-    };
-  }
+  // Process each booking array to parse decoration strings into JSON objects
+  const processBookings = (bookings: any[]) => {
+    return bookings.map(booking => {
+      const processedBooking = { ...booking };
+      
+      if (processedBooking.decoration && typeof processedBooking.decoration === 'string') {
+        try {
+          processedBooking.decoration = JSON.parse(processedBooking.decoration);
+        } catch (error) {
+          processedBooking.decoration = {};
+          this.logger.error(`Failed to parse decoration for booking ${processedBooking.id}:`, error);
+        }
+      }
+      
+      return processedBooking;
+    });
+  };
+
+  return {
+    statusCode: 200,
+    success: true,
+    message: 'Bookings fetched successfully.',
+    data: {
+      requested: processBookings(requestedBookings),
+      pending: processBookings(pendingBookings),
+      confirmed: processBookings(confirmedBookings),
+      completed: processBookings(completedBookings),
+    },
+  };
+}
 
   // update booking end================================
 
