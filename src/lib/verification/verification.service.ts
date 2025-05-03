@@ -134,7 +134,7 @@ export class VerificationService {
   async isCodeValid({
     code,
     email: identifier
-  }:VerifyCodeOnlyDto): Promise<ApiResponse<Boolean>> {
+  }:VerifyCodeOnlyDto): Promise<ApiResponse<any>> {
     const cacheKey = this.createCacheKey(identifier);
     const storedCode = await this.cacheManager.get<string>(cacheKey);
   
@@ -142,7 +142,10 @@ export class VerificationService {
       statusCode: 200,
       success: true,
       message: 'Verification code is valid',
-      data: storedCode === code
+      data: {
+        isValid: storedCode === code,
+        email: identifier
+      }
     }
   }
 }
