@@ -8,10 +8,15 @@ import { SendResetCodeDto } from './dto/sendResetCode.dto';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
+import { VerifyCodeOnlyDto } from './dto/verifyCode.dto';
+import { VerificationService } from 'src/lib/verification/verification.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly VerificationService: VerificationService
+  ) {}
 
   @Post('register')
   async register(@Body() dto: RegisterDto) {
@@ -36,6 +41,11 @@ export class AuthController {
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
+  }
+
+  @Post('verify-reset-code')
+  verifyResetCode(@Body() dto: VerifyCodeOnlyDto) {
+    return this.VerificationService.isCodeValid(dto);
   }
 
   @Delete('delete-account')
