@@ -252,7 +252,7 @@ export class AuthService {
   }
 
   async resetPassword(dto: ResetPasswordDto): Promise<ApiResponse<null>> {
-    const { email, code, newPassword } = dto;
+    const { email, newPassword } = dto;
 
     // Check if user exists
     const user = await this.db.user.findUnique({
@@ -264,13 +264,6 @@ export class AuthService {
         'No account found with this email address',
         HttpStatus.NOT_FOUND,
       );
-    }
-
-    // Verify the reset code
-    const isCodeValid = await this.verifyService.verifyCode(email, code);
-
-    if (!isCodeValid) {
-      throw new UnauthorizedException('Invalid or expired reset code');
     }
 
     // Hash the new password
