@@ -10,6 +10,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
 import { VerifyCodeOnlyDto } from './dto/verifyCode.dto';
 import { VerificationService } from 'src/lib/verification/verification.service';
+import { ResendVerifyCodeDto } from './dto/resendCode.dto';
+
 
 
 @Controller('auth')
@@ -24,6 +26,11 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
+  
+  @Post('resend-verification-code')
+  async resendVerificationCode(@Body() dto: ResendVerifyCodeDto) {
+    await this.VerificationService.sendVerificationEmail(dto.email);
+  }
 
   @Post('login')
   async login(@Body() dto: LoginDto) {
