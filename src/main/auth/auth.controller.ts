@@ -23,6 +23,11 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
+  @Post('resend-verification-code')
+  async resendVerificationCode(@Body() dto: ResendVerifyCodeDto) {
+    await this.VerificationService.generateVerificationCode(dto.email);
+  }
+
   @Post('login')
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
