@@ -9,7 +9,6 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
 import { VerifyCodeOnlyDto } from './dto/verifyCode.dto';
-import { ResendVerifyCodeDto } from './dto/resendVerify.dto.ts';
 import { VerificationService } from 'src/lib/verification/verification.service';
 
 
