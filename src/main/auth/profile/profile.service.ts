@@ -36,6 +36,17 @@ export class ProfileService {
       throw new BadRequestException('Profile already exists');
     }
 
+    const isNameExists = await this.db.profile.findFirst({
+      where: {
+        name: rest.name
+      },
+    });
+
+    if (isNameExists) {
+      throw new BadRequestException('Profile name already exists');
+    }
+    
+
     const fileInstance = await this.upload.uploadFile({
       file: image,
     });
@@ -93,6 +104,17 @@ export class ProfileService {
       throw new BadRequestException('Profile already exists');
     }
 
+    const isNameExists = await this.db.profile.findFirst({
+      where: {
+        name: rest.name
+      },
+    });
+
+    if (isNameExists) {
+      throw new BadRequestException('Profile name already exists');
+    }
+    
+
 
     const fileInstance = await this.upload.uploadFile({
       file: image,
@@ -149,6 +171,15 @@ export class ProfileService {
       throw new BadRequestException('Profile already exists');
     }
 
+    const isNameExists = await this.db.profile.findFirst({
+      where: {
+        name: rest.name
+      },
+    });
+
+    if (isNameExists) {
+      throw new BadRequestException('Profile name already exists');
+    }
     
     const [profilePic, coverPhotoPic] = await Promise.all([
       await this.upload.uploadFile({
