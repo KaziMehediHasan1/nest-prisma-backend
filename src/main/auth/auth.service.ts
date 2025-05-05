@@ -342,4 +342,34 @@ export class AuthService {
       data: null,
     };
   }
+
+  public async GetUserInfo(id: IdDto): Promise<ApiResponse<any>> {
+    const user = await this.db.user.findUnique({
+      where:  id ,
+      include:{
+        profile: {
+          include:{
+            image:{
+              select:{
+                path:true
+              },
+            }
+          }
+        },
+      },
+    });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    const {password, ...rest} = user
+
+    return {
+      statusCode: 200,
+      success: true,
+      message: 'User found successfully',
+      data: rest,
+    };
+  }
 }

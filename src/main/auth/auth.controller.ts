@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Req, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Req, Delete, UseGuards, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -62,5 +62,14 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   deleteAccount(@Req() req: AuthenticatedRequest) {    
     return this.authService.deleteUser(req.user.sub);
+  }
+
+  @Get('user-info')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  GetUserInfo(@Req() req: AuthenticatedRequest) {
+    return this.authService.GetUserInfo({
+      id: req.user.sub
+    });
   }
 }
