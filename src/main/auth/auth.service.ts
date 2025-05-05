@@ -105,6 +105,7 @@ export class AuthService {
         roles: $Enums.UserRole[];
         isVerified: boolean;
         profileId?: string;
+        isProfileCreated: boolean;
       };
     }>
   > {
@@ -156,6 +157,7 @@ export class AuthService {
           roles: user.role,
           isVerified: user.isVerified,
           profileId: user.profile ? user.profile.id : '',
+          isProfileCreated: !!user.profile,
         },
       },
       statusCode: 200,
