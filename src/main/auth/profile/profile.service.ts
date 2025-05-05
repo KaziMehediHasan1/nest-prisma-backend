@@ -24,6 +24,18 @@ export class ProfileService {
   ): Promise<ApiResponse<any>> {
     const { userId, image,eventPreferenceIds, ...rest } = rawData;
 
+    const isProfileExists = await this.db.profile.findFirst({
+      where: {
+        user: {
+          id: userId,
+        },
+      },
+    });
+
+    if (isProfileExists) {
+      throw new BadRequestException('Profile already exists');
+    }
+
     const fileInstance = await this.upload.uploadFile({
       file: image,
     });
@@ -68,6 +80,20 @@ export class ProfileService {
     rawData: SetupVenueOwnerProfileDto,
   ): Promise<ApiResponse<any>> {
     const { userId, image , ...rest } = rawData;
+
+    const isProfileExists = await this.db.profile.findFirst({
+      where: {
+        user: {
+          id: userId,
+        },
+      },
+    });
+
+    if (isProfileExists) {
+      throw new BadRequestException('Profile already exists');
+    }
+
+
     const fileInstance = await this.upload.uploadFile({
       file: image,
     });
@@ -109,6 +135,19 @@ export class ProfileService {
     rawData: SetupServiceProviderProfileDto,
   ): Promise<ApiResponse<any>> {
     const { coverPhoto, image, userId, location, eventPreferenceIds, ...rest } = rawData;
+
+
+    const isProfileExists = await this.db.profile.findFirst({
+      where: {
+        user: {
+          id: userId,
+        },
+      },
+    });
+
+    if (isProfileExists) {
+      throw new BadRequestException('Profile already exists');
+    }
 
     
     const [profilePic, coverPhotoPic] = await Promise.all([
