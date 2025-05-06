@@ -106,6 +106,13 @@ import {
       required: false,
     })
     arrangementsImage: Express.Multer.File;
+
+    @ApiProperty({
+      type: 'string',
+      format: 'binary',
+      required: false,
+    })
+    venueImage: Express.Multer.File;
   
     @ApiProperty({ required: false })
     @IsOptional()

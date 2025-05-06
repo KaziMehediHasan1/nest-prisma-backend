@@ -23,17 +23,24 @@ export class VenueService {
 
   // create venue start================================`
   public async createVenue(id:IdDto,dto: CreateVenueDto):Promise<ApiResponse<any>> {
-    const { arrangementsImage, decoration, profileId, amenityIds, ...rest } =
+    const { arrangementsImage, venueImage, decoration, profileId, amenityIds, ...rest } =
       dto;
 
       const user = await this.db.user.findUnique({
         where: { id: profileId },
       })
     let fileInstance: FileInstance | null = null;
+    let fileInstanceTwo: FileInstance | null = null;
 
     if (arrangementsImage) {
       fileInstance = await this.uploadService.uploadFile({
         file: arrangementsImage,
+      });
+    }
+
+    if(venueImage) {
+      fileInstanceTwo = await this.uploadService.uploadFile({
+        file: venueImage,
       });
     }
 
@@ -69,6 +76,11 @@ export class VenueService {
               connect: { id: fileInstance.id },
             },
           }),
+          ...(fileInstanceTwo?.id && {
+            venueImage: {
+              connect: { id: fileInstanceTwo.id },
+            },
+          }),
           verified: user?.isVerified? true : false
         },
         include: {
@@ -84,6 +96,7 @@ export class VenueService {
             },
           },
           arrangementsImage: { select: { path: true } },
+          venueImage: { select: { path: true } },
         },
       });
 
@@ -99,6 +112,12 @@ export class VenueService {
           Key: fileInstance.fileId,
         });
       }
+      if (fileInstanceTwo) {
+        this.eventEmitter.emit('FILE_DELETE', {
+          Key: fileInstanceTwo.fileId,
+        });
+        
+      }
       throw error;
     }
   }
@@ -107,14 +126,21 @@ export class VenueService {
   // update venue start==============================
 
   public async updateVenue({ id }: IdDto, dto: UpdateVenueDto): Promise<ApiResponse<any>> {
-    const { arrangementsImage, decoration, profileId, amenityIds, ...rest } =
+    const { arrangementsImage, venueImage, decoration, profileId, amenityIds, ...rest } =
       dto;
 
     let fileInstance: FileInstance | null = null;
+    let fileInstanceTwo: FileInstance | null = null;
 
     if (arrangementsImage) {
       fileInstance = await this.uploadService.uploadFile({
         file: arrangementsImage,
+      });
+    }
+
+    if(venueImage) {
+      fileInstanceTwo = await this.uploadService.uploadFile({
+        file: venueImage,
       });
     }
 
@@ -158,11 +184,17 @@ export class VenueService {
               connect: { id: fileInstance.id },
             },
           }),
+          ...(fileInstanceTwo?.id && {
+            venueImage: {
+              connect: { id: fileInstanceTwo.id },
+            },
+          }),
         },
         include: {
           amenities: true,
           decoration: true,
           arrangementsImage: { select: { path: true } },
+          venueImage: { select: { path: true } },
         },
       });
 
@@ -175,6 +207,10 @@ export class VenueService {
     } catch (error) {
       if (fileInstance) {
         this.eventEmitter.emit('FILE_DELETE', { Key: fileInstance.fileId });
+      }
+      if (fileInstanceTwo) {
+        this.eventEmitter.emit('FILE_DELETE', { Key: fileInstanceTwo.fileId });
+        
       }
       throw error;
     }

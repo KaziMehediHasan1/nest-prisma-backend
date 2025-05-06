@@ -23,7 +23,7 @@ export class BookingController {
   }
 
   @Get('decoration_enum')
-  @Roles('PLANNER')
+  @Roles('PLANNER',"VENUE_OWNER")
   @ApiOperation({ summary: 'Get decoration enum to create booking' })
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   @ApiBearerAuth()
