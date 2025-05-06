@@ -247,12 +247,12 @@ export class ProfileService {
     profileId: string,
     rawData: UpdatePlannerProfile,
   ): Promise<ApiResponse<any>> {
-    const { image, eventPreferenceIds, ...rest } = rawData;
+    const { image, eventPreferenceIds, userId, ...rest } = rawData;
 
     try {
       // First check if profile exists
       const existingProfile = await this.db.profile.findFirst({
-        where: { id: profileId },
+        where: { id: profileId, userId },
         include: {
           user: true,
         }
