@@ -4,6 +4,7 @@ import {
   UnauthorizedException,
   HttpException,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -353,7 +354,12 @@ export class AuthService {
               select:{
                 path:true
               },
-            }
+            },
+            coverPhoto: {
+              select: {
+                path: true,
+              },
+            },
           }
         },
       },
@@ -371,5 +377,52 @@ export class AuthService {
       message: 'User found successfully',
       data: rest,
     };
+  }
+
+  public async switchRoll({
+    id,
+    role,
+  }:{
+    id:string,
+    role:$Enums.UserRole
+  }):Promise<ApiResponse<any>>{
+
+    if (role === "ADMIN") {
+      throw new ForbiddenException('You cannot switch to admin role');
+    }
+
+    const user = await this.db.user.findUnique({
+      where:  {
+        id
+      } ,
+      include:{
+        profile:true
+      }
+    });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (user.role.filter((r) => r === role).length === 0) {
+      return {
+        statusCode: 200,
+        success: true,
+        message: `please Create Profile to ${role} role`,
+        data: {
+          hasProfile: false,
+          profile: user.profile
+        },
+      }
+    }
+      
+    return {
+      statusCode: 200,
+      success: true,
+      message: 'User found successfully',
+      data: {
+        hasProfile: true
+      },
+    }
   }
 }

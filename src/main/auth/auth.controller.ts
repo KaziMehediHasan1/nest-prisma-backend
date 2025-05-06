@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Req, Delete, UseGuards, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Req,
+  Delete,
+  UseGuards,
+  Get,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -11,14 +19,14 @@ import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
 import { VerifyCodeOnlyDto } from './dto/verifyCode.dto';
 import { VerificationService } from 'src/lib/verification/verification.service';
 import { ResendVerifyCodeDto } from './dto/resendCode.dto';
-
-
+import { SwitchRoleDto } from './dto/switchRole.dto';
+import { VerifiedGuard } from 'src/guard/verify.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly VerificationService: VerificationService
+    private readonly VerificationService: VerificationService,
   ) {}
 
   @Post('register')
@@ -26,7 +34,6 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
-  
   @Post('resend-verification-code')
   async resendVerificationCode(@Body() dto: ResendVerifyCodeDto) {
     await this.VerificationService.sendVerificationEmail(dto.email);
@@ -60,7 +67,7 @@ export class AuthController {
   @Delete('delete-account')
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
-  deleteAccount(@Req() req: AuthenticatedRequest) {    
+  deleteAccount(@Req() req: AuthenticatedRequest) {
     return this.authService.deleteUser(req.user.sub);
   }
 
@@ -69,7 +76,20 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   GetUserInfo(@Req() req: AuthenticatedRequest) {
     return this.authService.GetUserInfo({
-      id: req.user.sub
+      id: req.user.sub,
+    });
+  }
+
+  @Post('switch-role')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard)
+  switchRoll(
+    @Req() req: AuthenticatedRequest,
+    @Body() { role }: SwitchRoleDto,
+  ) {
+    return this.authService.switchRoll({
+      id: req.user.sub,
+      role,
     });
   }
 }

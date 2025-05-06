@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DbService } from 'src/lib/db/db.service';
 import {
   SetupPlannerProfileDto,
@@ -8,8 +12,12 @@ import {
 import { UploadService } from 'src/lib/upload/upload.service';
 import { EventService } from 'src/lib/event/event.service';
 import { ApiResponse } from 'src/interfaces/response';
-import { UpdatePlannerProfile, UpdateServiceProviderProfile, UpdateVenueOwnerProfile } from './dto/updateProfile.dto';
-import { FileInstance } from '@prisma/client';
+import {
+  UpdatePlannerProfile,
+  UpdateServiceProviderProfile,
+  UpdateVenueOwnerProfile,
+} from './dto/updateProfile.dto';
+import { FileInstance, Prisma } from '@prisma/client';
 
 @Injectable()
 export class ProfileService {
@@ -22,7 +30,7 @@ export class ProfileService {
   public async setupPlannerProfile(
     rawData: SetupPlannerProfileDto,
   ): Promise<ApiResponse<any>> {
-    const { userId, image,eventPreferenceIds, ...rest } = rawData;
+    const { userId, image, eventPreferenceIds, ...rest } = rawData;
 
     const isProfileExists = await this.db.profile.findFirst({
       where: {
@@ -38,14 +46,13 @@ export class ProfileService {
 
     const isNameExists = await this.db.profile.findFirst({
       where: {
-        name: rest.name
+        name: rest.name,
       },
     });
 
     if (isNameExists) {
       throw new BadRequestException('Profile name already exists');
     }
-    
 
     const fileInstance = await this.upload.uploadFile({
       file: image,
@@ -60,8 +67,8 @@ export class ProfileService {
               id: fileInstance.id,
             },
           },
-          eventPreference:{
-            connect: eventPreferenceIds.map(id => ({id}))
+          eventPreference: {
+            connect: eventPreferenceIds.map((id) => ({ id })),
           },
           user: {
             connect: {
@@ -90,7 +97,7 @@ export class ProfileService {
   public async setUpVenueOwnerProfile(
     rawData: SetupVenueOwnerProfileDto,
   ): Promise<ApiResponse<any>> {
-    const { userId, image , ...rest } = rawData;
+    const { userId, image, ...rest } = rawData;
 
     const isProfileExists = await this.db.profile.findFirst({
       where: {
@@ -106,15 +113,13 @@ export class ProfileService {
 
     const isNameExists = await this.db.profile.findFirst({
       where: {
-        name: rest.name
+        name: rest.name,
       },
     });
 
     if (isNameExists) {
       throw new BadRequestException('Profile name already exists');
     }
-    
-
 
     const fileInstance = await this.upload.uploadFile({
       file: image,
@@ -156,8 +161,8 @@ export class ProfileService {
   public async setUpServiceProviderProfile(
     rawData: SetupServiceProviderProfileDto,
   ): Promise<ApiResponse<any>> {
-    const { coverPhoto, image, userId, location, eventPreferenceIds, ...rest } = rawData;
-
+    const { coverPhoto, image, userId, location, eventPreferenceIds, ...rest } =
+      rawData;
 
     const isProfileExists = await this.db.profile.findFirst({
       where: {
@@ -173,14 +178,14 @@ export class ProfileService {
 
     const isNameExists = await this.db.profile.findFirst({
       where: {
-        name: rest.name
+        name: rest.name,
       },
     });
 
     if (isNameExists) {
       throw new BadRequestException('Profile name already exists');
     }
-    
+
     const [profilePic, coverPhotoPic] = await Promise.all([
       await this.upload.uploadFile({
         file: image,
@@ -199,8 +204,8 @@ export class ProfileService {
             },
           },
           ...rest,
-          eventPreference:{
-            connect: eventPreferenceIds.map(id => ({id}))
+          eventPreference: {
+            connect: eventPreferenceIds.map((id) => ({ id })),
           },
           coverPhoto: {
             connect: {
@@ -243,11 +248,14 @@ export class ProfileService {
     rawData: UpdatePlannerProfile,
   ): Promise<ApiResponse<any>> {
     const { image, eventPreferenceIds, ...rest } = rawData;
-    
+
     try {
       // First check if profile exists
       const existingProfile = await this.db.profile.findFirst({
         where: { id: profileId },
+        include: {
+          user: true,
+        }
       });
 
       if (!existingProfile) {
@@ -263,8 +271,16 @@ export class ProfileService {
       }
 
       // Prepare update data
-      const updateData: any = { ...rest };
-      
+      const updateData: Prisma.ProfileUpdateInput = { ...rest, user:{
+        update: {
+          ...(!existingProfile.user.role.includes('PLANNER') && {
+            role: {
+              push: 'PLANNER',
+            },
+          }),
+        },
+      } };
+
       // Add image if uploaded
       if (fileInstance) {
         updateData.image = {
@@ -272,7 +288,7 @@ export class ProfileService {
             id: fileInstance.id,
           },
         };
-        
+
         // Delete previous image if it exists
         if (existingProfile.imageId) {
           this.event.emit('FILE_DELETE', {
@@ -304,7 +320,7 @@ export class ProfileService {
 
         // Then connect new preferences
         updateData.eventPreference = {
-          connect: eventPreferenceIds.map(id => ({ id })),
+          connect: eventPreferenceIds.map((id) => ({ id })),
         };
       }
 
@@ -333,11 +349,14 @@ export class ProfileService {
     rawData: UpdateVenueOwnerProfile,
   ): Promise<ApiResponse<any>> {
     const { image, ...rest } = rawData;
-    
+
     try {
       // First check if profile exists
       const existingProfile = await this.db.profile.findFirst({
         where: { id: profileId },
+        include:{
+          user:true
+        }
       });
 
       if (!existingProfile) {
@@ -353,8 +372,16 @@ export class ProfileService {
       }
 
       // Prepare update data
-      const updateData: any = { ...rest };
-      
+      const updateData: Prisma.ProfileUpdateInput = { ...rest, user:{
+        update: {
+          ...(!existingProfile.user.role.includes('SERVICE_PROVIDER') && {
+            role: {
+              push: 'VENUE_OWNER',
+            },
+          }),
+        }
+      } };
+
       // Add image if uploaded
       if (fileInstance) {
         updateData.image = {
@@ -362,7 +389,7 @@ export class ProfileService {
             id: fileInstance.id,
           },
         };
-        
+
         // Delete previous image if it exists
         if (existingProfile.imageId) {
           this.event.emit('FILE_DELETE', {
@@ -391,20 +418,22 @@ export class ProfileService {
     }
   }
 
-  
   public async updateServiceProviderProfile(
     profileId: string,
     rawData: UpdateServiceProviderProfile,
   ): Promise<ApiResponse<any>> {
     const { image, coverPhoto, eventPreferenceIds, ...rest } = rawData;
-    
-    let profilePic:FileInstance|null = null;
-    let coverPhotoPic:FileInstance|null = null;
+
+    let profilePic: FileInstance | null = null;
+    let coverPhotoPic: FileInstance | null = null;
 
     try {
       // First check if profile exists
       const existingProfile = await this.db.profile.findFirst({
         where: { id: profileId },
+        include: {
+          user: true,
+        },
       });
 
       if (!existingProfile) {
@@ -412,10 +441,20 @@ export class ProfileService {
       }
 
       // Prepare update data
-      const updateData: any = { ...rest };
-      
+      const updateData: Prisma.ProfileUpdateInput = {
+        ...rest,
+        user: {
+          update: {
+            ...(!existingProfile.user.role.includes('SERVICE_PROVIDER') && {
+              role: {
+                push: 'SERVICE_PROVIDER',
+              },
+            }),
+          },
+        },
+      };
+
       // Handle file uploads
-  
 
       // Upload files if provided
       if (image && coverPhoto) {
@@ -436,7 +475,7 @@ export class ProfileService {
             id: profilePic.id,
           },
         };
-        
+
         // Delete previous image if it exists
         if (existingProfile.imageId) {
           this.event.emit('FILE_DELETE', {
@@ -452,7 +491,7 @@ export class ProfileService {
             id: coverPhotoPic.id,
           },
         };
-        
+
         // Delete previous cover photo if it exists
         if (existingProfile.coverPhotoId) {
           this.event.emit('FILE_DELETE', {
@@ -484,7 +523,7 @@ export class ProfileService {
 
         // Then connect new preferences
         updateData.eventPreference = {
-          connect: eventPreferenceIds.map(id => ({ id })),
+          connect: eventPreferenceIds.map((id) => ({ id })),
         };
       }
 
@@ -505,21 +544,20 @@ export class ProfileService {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      
+
       if (profilePic) {
         this.event.emit('FILE_DELETE', {
           Key: profilePic.fileId,
         });
       }
-      
+
       if (coverPhotoPic) {
         this.event.emit('FILE_DELETE', {
           Key: coverPhotoPic.fileId,
         });
       }
-      
+
       throw new BadRequestException(error.message);
     }
   }
-
 }

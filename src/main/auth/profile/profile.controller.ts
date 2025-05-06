@@ -95,8 +95,7 @@ export class ProfileController {
   @ApiConsumes('multipart/form-data', 'application/json')
   @UseInterceptors(FileInterceptor('image'))
   @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
-  @Roles("PLANNER")
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard)
   @ApiParam({ name: 'id', description: 'Profile ID to update' })
   updatePlannerProfile(
     @Param() {id}: IdDto,
@@ -113,8 +112,7 @@ export class ProfileController {
   @ApiConsumes('multipart/form-data', 'application/json')
   @UseInterceptors(FileInterceptor('image'))
   @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
-  @Roles("VENUE_OWNER")
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard)
   @ApiParam({ name: 'id', description: 'Profile ID to update' })
   updateVenueOwnerProfile(
     @Param() {id}: IdDto,
@@ -136,8 +134,7 @@ export class ProfileController {
     ])
   )
   @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
-  @Roles("SERVICE_PROVIDER")
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard)
   @ApiParam({ name: 'id', description: 'Profile ID to update' })
   updateServiceProviderProfile(
     @Param() {id}: IdDto,
