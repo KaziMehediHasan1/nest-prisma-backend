@@ -141,9 +141,9 @@ import {
     @Transform(({ value }) => parseInt(value, 10))
     price?: number;
   
-    @ApiProperty({ enum: BookingType })
+    @ApiPropertyOptional({ enum: BookingType, required: false })
     @IsString()
-    bookingType: BookingType;
+    bookingType?: BookingType;
   
     @ApiProperty({
       type: DecorationDto,
