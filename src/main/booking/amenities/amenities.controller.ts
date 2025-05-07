@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AmenitiesService } from './amenities.service';
 import { IdDto } from 'src/common/dto/id.dto';
 import { CreateAminityDto } from './dto/create-aminity.dto';
@@ -23,7 +23,7 @@ export class AmenitiesController {
   }
 
   @Post('create-amenity')
-  createAmenity(data: CreateAminityDto) {
+  createAmenity(@Body() data: CreateAminityDto) {
     return this.amenitiesService.createAmenity(data);
   }
 
