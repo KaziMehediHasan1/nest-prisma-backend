@@ -271,15 +271,7 @@ export class ProfileService {
       }
 
       // Prepare update data
-      const updateData: Prisma.ProfileUpdateInput = { ...rest, user:{
-        update: {
-          ...(!existingProfile.user.role.includes('PLANNER') && {
-            role: {
-              push: 'PLANNER',
-            },
-          }),
-        },
-      } };
+      const updateData: Prisma.ProfileUpdateInput = { ...rest };
 
       // Add image if uploaded
       if (fileInstance) {
@@ -372,15 +364,7 @@ export class ProfileService {
       }
 
       // Prepare update data
-      const updateData: Prisma.ProfileUpdateInput = { ...rest, user:{
-        update: {
-          ...(!existingProfile.user.role.includes('SERVICE_PROVIDER') && {
-            role: {
-              push: 'VENUE_OWNER',
-            },
-          }),
-        }
-      } };
+      const updateData: Prisma.ProfileUpdateInput = { ...rest };
 
       // Add image if uploaded
       if (fileInstance) {
@@ -442,16 +426,7 @@ export class ProfileService {
 
       // Prepare update data
       const updateData: Prisma.ProfileUpdateInput = {
-        ...rest,
-        user: {
-          update: {
-            ...(!existingProfile.user.role.includes('SERVICE_PROVIDER') && {
-              role: {
-                push: 'SERVICE_PROVIDER',
-              },
-            }),
-          },
-        },
+        ...rest
       };
 
       // Handle file uploads
