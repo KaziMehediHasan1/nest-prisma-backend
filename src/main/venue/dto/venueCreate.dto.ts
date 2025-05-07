@@ -9,7 +9,7 @@ import {
     IsEnum,
     IsObject,
   } from 'class-validator';
-  import { ApiProperty } from '@nestjs/swagger';
+  import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
   import { Transform, Type } from 'class-transformer';
   import {
     VenueType,
@@ -134,10 +134,12 @@ import {
     @IsString()
     extraServiceDescription?: string;
   
-    @ApiProperty()
+    @ApiPropertyOptional({
+      required: false,
+    })
     @IsInt()
     @Transform(({ value }) => parseInt(value, 10))
-    price: number;
+    price?: number;
   
     @ApiProperty({ enum: BookingType })
     @IsString()

@@ -22,13 +22,23 @@ export class VenueService {
   ) {}
 
   // create venue start================================`
-  public async createVenue(id:IdDto,dto: CreateVenueDto):Promise<ApiResponse<any>> {
-    const { arrangementsImage, venueImage, decoration, profileId, amenityIds, ...rest } =
-      dto;
+  public async createVenue(
+    id: IdDto,
+    dto: CreateVenueDto,
+  ): Promise<ApiResponse<any>> {
+    const {
+      arrangementsImage,
+      venueImage,
+      price,
+      decoration,
+      profileId,
+      amenityIds,
+      ...rest
+    } = dto;
 
-      const user = await this.db.user.findUnique({
-        where: { id: profileId },
-      })
+    const user = await this.db.user.findUnique({
+      where: { id: profileId },
+    });
     let fileInstance: FileInstance | null = null;
     let fileInstanceTwo: FileInstance | null = null;
 
@@ -38,7 +48,7 @@ export class VenueService {
       });
     }
 
-    if(venueImage) {
+    if (venueImage) {
       fileInstanceTwo = await this.uploadService.uploadFile({
         file: venueImage,
       });
@@ -64,6 +74,7 @@ export class VenueService {
       const newVenue = await this.db.venue.create({
         data: {
           ...rest,
+          price: price ? price : 0,
           Profile: { connect: { id: profileId } },
           amenities: {
             connect: foundAmenities.map((a) => ({ id: a.id })),
@@ -81,7 +92,7 @@ export class VenueService {
               connect: { id: fileInstanceTwo.id },
             },
           }),
-          verified: user?.isVerified? true : false
+          verified: user?.isVerified ? true : false,
         },
         include: {
           amenities: true,
@@ -104,7 +115,7 @@ export class VenueService {
         data: newVenue,
         message: 'Venue created successfully',
         statusCode: 201,
-        success: true
+        success: true,
       };
     } catch (error) {
       if (fileInstance) {
@@ -116,7 +127,6 @@ export class VenueService {
         this.eventEmitter.emit('FILE_DELETE', {
           Key: fileInstanceTwo.fileId,
         });
-        
       }
       throw error;
     }
@@ -125,9 +135,18 @@ export class VenueService {
 
   // update venue start==============================
 
-  public async updateVenue({ id }: IdDto, dto: UpdateVenueDto): Promise<ApiResponse<any>> {
-    const { arrangementsImage, venueImage, decoration, profileId, amenityIds, ...rest } =
-      dto;
+  public async updateVenue(
+    { id }: IdDto,
+    dto: UpdateVenueDto,
+  ): Promise<ApiResponse<any>> {
+    const {
+      arrangementsImage,
+      venueImage,
+      decoration,
+      profileId,
+      amenityIds,
+      ...rest
+    } = dto;
 
     let fileInstance: FileInstance | null = null;
     let fileInstanceTwo: FileInstance | null = null;
@@ -138,7 +157,7 @@ export class VenueService {
       });
     }
 
-    if(venueImage) {
+    if (venueImage) {
       fileInstanceTwo = await this.uploadService.uploadFile({
         file: venueImage,
       });
@@ -202,7 +221,7 @@ export class VenueService {
         data: updatedVenue,
         message: 'Venue updated successfully',
         statusCode: 200,
-        success: true
+        success: true,
       };
     } catch (error) {
       if (fileInstance) {
@@ -210,7 +229,6 @@ export class VenueService {
       }
       if (fileInstanceTwo) {
         this.eventEmitter.emit('FILE_DELETE', { Key: fileInstanceTwo.fileId });
-        
       }
       throw error;
     }
@@ -239,18 +257,18 @@ export class VenueService {
       where: { id },
     });
 
-    return { 
+    return {
       data: null,
       message: 'Venue deleted successfully',
       statusCode: 200,
-      success: true
+      success: true,
     };
   }
   // delete venue end===============================
 
   // get venue by id start=========================
 
-  public async getVenueById({ id }: IdDto):Promise<ApiResponse<any>> {
+  public async getVenueById({ id }: IdDto): Promise<ApiResponse<any>> {
     const venue = await this.db.venue.findUnique({
       where: { id },
       include: {
@@ -268,7 +286,7 @@ export class VenueService {
       data: venue,
       message: 'Venue fetched successfully',
       statusCode: 200,
-      success: true
+      success: true,
     };
   }
 
@@ -277,28 +295,29 @@ export class VenueService {
   // getAll venue start============================
 
   public async getAllVenues({
-    take, skip
-  }:PaginationDto):Promise<ApiResponse<any>> {
+    take,
+    skip,
+  }: PaginationDto): Promise<ApiResponse<any>> {
     const venues = await this.db.venue.findMany({
       include: {
         amenities: {
           select: {
             name: true,
-          }
+          },
         },
         decoration: true,
         arrangementsImage: { select: { path: true } },
       },
       take,
-      skip
+      skip,
     });
 
-    return{
+    return {
       data: venues,
-      message: "Venues fetched successfully",
+      message: 'Venues fetched successfully',
       statusCode: 200,
       success: true,
-    }
+    };
   }
 
   // getAll venue end==============================
