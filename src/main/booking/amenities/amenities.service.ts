@@ -1,9 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UseGuards } from '@nestjs/common';
 import { IdDto } from 'src/common/dto/id.dto';
 import { DbService } from 'src/lib/db/db.service';
 import { CreateAminityDto } from './dto/create-aminity.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { VerifiedGuard } from 'src/guard/verify.guard';
 
 @Injectable()
+@UseGuards(AuthGuard('jwt'), VerifiedGuard)
 export class AmenitiesService {
     constructor(private readonly db:DbService) {}
 
