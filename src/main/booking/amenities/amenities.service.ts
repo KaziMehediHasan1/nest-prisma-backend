@@ -6,7 +6,6 @@ import { AuthGuard } from '@nestjs/passport';
 import { VerifiedGuard } from 'src/guard/verify.guard';
 
 @Injectable()
-@UseGuards(AuthGuard('jwt'), VerifiedGuard)
 export class AmenitiesService {
     constructor(private readonly db:DbService) {}
 
