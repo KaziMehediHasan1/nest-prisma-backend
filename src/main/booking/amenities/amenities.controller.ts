@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { AmenitiesService } from './amenities.service';
 import { IdDto } from 'src/common/dto/id.dto';
 import { CreateAminityDto } from './dto/create-aminity.dto';
@@ -27,6 +27,9 @@ export class AmenitiesController {
 
   @Post('create-amenity')
   createAmenity(@Req() req: AuthenticatedRequest, @Body() data: CreateAminityDto) {
+    if (!req.user.profileId) {
+      throw new BadRequestException('Profile not Created');
+    }
     return this.amenitiesService.createAmenity({ id: req.user.profileId || "" },data);
   }
 
