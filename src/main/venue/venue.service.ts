@@ -75,7 +75,7 @@ export class VenueService {
       const newVenue = await this.db.venue.create({
         data: {
           ...rest,
-          bookingType: bookingType? bookingType:"REQUEST_BASED_BOOKING",
+          bookingType: bookingType ? bookingType : 'REQUEST_BASED_BOOKING',
           price: price ? price : 0,
           Profile: { connect: { id: profileId } },
           amenities: {

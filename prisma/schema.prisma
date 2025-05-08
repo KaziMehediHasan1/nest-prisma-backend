@@ -103,6 +103,7 @@ model Profile {
   GroupMessage             GroupMessage?           @relation(fields: [groupMessageId], references: [id])
   groupMessageId           String?
   serviceProviderRole      ServiceProviderRole?
+  amenities                Amenities[]
 }
 
 enum Gender {
@@ -429,10 +430,12 @@ model Review {
 //AMENITIES START
 
 model Amenities {
-  id      String  @id @default(uuid())
-  name    String  @unique
-  Venue   Venue[]
-  default Boolean @default(false)
+  id        String   @id @default(uuid())
+  name      String   @unique
+  Venue     Venue[]
+  default   Boolean  @default(false)
+  Profile   Profile? @relation(fields: [profileId], references: [id])
+  profileId String?
 }
 
 //AMENITIES END
