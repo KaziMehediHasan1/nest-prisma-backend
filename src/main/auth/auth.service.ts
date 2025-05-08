@@ -360,6 +360,15 @@ export class AuthService {
                 path: true,
               },
             },
+            eventPreference:{
+              include:{
+                avatar:{
+                  select:{
+                    path:true
+                  }
+                }
+              }
+            }
           }
         },
       },
