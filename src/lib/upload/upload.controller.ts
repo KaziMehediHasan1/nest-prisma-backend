@@ -1,12 +1,16 @@
-import { Controller, FileTypeValidator, MaxFileSizeValidator, ParseFilePipe, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, FileTypeValidator, Get, MaxFileSizeValidator, ParseFilePipe, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UploadService } from './upload.service';
 import { fileURLToPath } from 'url';
 import { ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
+import { FileUrlRefreshServiceService } from './file-url-refresh-service.service';
 
 @Controller('upload')
 export class UploadController {
-    constructor(private readonly uploadService: UploadService) {}
+    constructor(
+        private readonly uploadService: UploadService,
+        private readonly FileUrlRefreshServiceService: FileUrlRefreshServiceService
+    ) {}
 
     @Post('image')
     @UseInterceptors(FileInterceptor('image'))
@@ -63,5 +67,10 @@ export class UploadController {
         file: Express.Multer.File,
     ) {
         return this.uploadService.uploadFile({ file });
+    }
+
+    @Get("refresh")
+    updateExpiringFileUrls() {
+        return this.FileUrlRefreshServiceService.updateExpiringFileUrls();
     }
 }

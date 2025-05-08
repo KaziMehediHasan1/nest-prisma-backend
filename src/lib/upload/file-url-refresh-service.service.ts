@@ -1,18 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { DbService } from 'src/lib/db/db.service';
-import { UploadService } from 'src/lib/upload/upload.service';
+import { DbService } from '../db/db.service';
+import { UploadService } from './upload.service';
 
 @Injectable()
-export class FileInstanceCronService {
-  private readonly logger = new Logger(FileInstanceCronService.name);
-
+export class FileUrlRefreshServiceService {
+  private readonly logger = new Logger(FileUrlRefreshServiceService.name);
   constructor(
     private readonly db: DbService,
     private readonly uploadService: UploadService,
   ) {}
 
-  @Cron(CronExpression.EVERY_30_MINUTES)
   async updateExpiringFileUrls() {
     try {
       // Look for files expiring within 2 days instead of 1 day
@@ -30,10 +27,14 @@ export class FileInstanceCronService {
       for (const file of files) {
         try {
           // Check if the file exists before updating
-          const fileExists = await this.db.fileInstance.findUnique({ where: { fileId: file.fileId } }).then((file) => !!file); // Check if file exists by its fileId(file.fileId);
-          
+          const fileExists = await this.db.fileInstance
+            .findUnique({ where: { fileId: file.fileId } })
+            .then((file) => !!file); // Check if file exists by its fileId(file.fileId);
+
           if (!fileExists) {
-            this.logger.warn(`File ${file.id} (${file.fileId}) no longer exists in storage`);
+            this.logger.warn(
+              `File ${file.id} (${file.fileId}) no longer exists in storage`,
+            );
             continue;
           }
 
@@ -55,11 +56,15 @@ export class FileInstanceCronService {
           this.logger.log(`Successfully updated URL for file ${file.id}`);
         } catch (fileError) {
           // Individual file errors shouldn't stop the entire process
-          this.logger.error(`Error updating URL for file ${file.id}: ${fileError.message}`);
+          this.logger.error(
+            `Error updating URL for file ${file.id}: ${fileError.message}`,
+          );
         }
       }
     } catch (error) {
-      this.logger.error(`Failed to update expiring file URLs: ${error.message}`);
+      this.logger.error(
+        `Failed to update expiring file URLs: ${error.message}`,
+      );
     }
   }
 }
