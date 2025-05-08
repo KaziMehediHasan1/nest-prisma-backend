@@ -21,6 +21,7 @@ import {
     FlowerType,
     Fragrance,
   } from '@prisma/client';
+import { BadRequestException } from '@nestjs/common';
   
   export class DecorationDto {
     @ApiProperty({ enum: TableShape, isArray: true })
@@ -158,13 +159,11 @@ import {
       },
     })
     @Transform(({ value }) => {
-      console.log("Before parsing:", value);  // Log incoming value for debugging
       if (typeof value === 'string') {
         try {
-          return JSON.parse(value);  // Parse the string into an object
+          return JSON.parse(value);
         } catch (error) {
-          console.error("Error parsing decoration:", error);
-          throw new Error('Invalid decoration JSON');
+          throw new BadRequestException('Invalid decoration JSON format in decoration');
         }
       }
       return value;
