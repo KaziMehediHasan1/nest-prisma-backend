@@ -94,7 +94,7 @@ export class BillingService {
       this.logger.warn('Missing metadata in PaymentIntent: type or id');
       return;
     }
-    console.log(paymentIntent.amount_received);
+    console.log(paymentIntent.id);
 
     const { type, id, userId } = metadata;
 
@@ -105,14 +105,16 @@ export class BillingService {
         return this.handleBookingPayment(
           id,
           paymentIntent.amount_received / 100,
+          paymentIntent.id,
         );
       case 'fullPayment':
         return this.handleFullPayment(
           id,
           paymentIntent.amount_received / 100,
+          paymentIntent.id,
         );
-      case 'serviceBooking':
-        return this.handleVerificationFee(userId);
+      case 'verificationFee':
+        return this.handleVerificationFee(userId, paymentIntent.amount_received / 100);
       default:
         this.logger.warn(`Unknown PaymentIntent type: ${type}`);
     }
@@ -146,6 +148,7 @@ export class BillingService {
   private async handleBookingPayment(
     id: string,
     amount?: number,
+    paymentIntentId?: string,
   ) {
     this.logger.log(`Handling booking payment for ID: ${id}`);
 
@@ -187,6 +190,7 @@ export class BillingService {
               amount: amount,
               paymentMethod: 'CREDIT_CARD',
               paymentStatus: 'COMPLETED',
+              paymentIntentId
             },
           },
         },
@@ -200,6 +204,7 @@ export class BillingService {
   private async handleFullPayment(
     id: string,
     amount?: number,
+    paymentIntentId?: string,
   ) {
     this.logger.log(`Handling full payment for ID: ${id}`);
 
@@ -240,6 +245,7 @@ export class BillingService {
               amount: amount,
               paymentMethod: 'CREDIT_CARD',
               paymentStatus: 'COMPLETED',
+              paymentIntentId
             },
           },
         },
@@ -283,6 +289,7 @@ export class BillingService {
         isVerified: true,
         profile: {
           update: {
+            isPro: true,
             venues: {
               updateMany: {
                 where: { profileId: user.id },

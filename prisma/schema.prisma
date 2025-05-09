@@ -294,6 +294,7 @@ model Payment {
   updatedAt                DateTime                @updatedAt
   VerificationSubmission   VerificationSubmission? @relation(fields: [verificationSubmissionId], references: [id], onDelete: Cascade)
   verificationSubmissionId String?                 @unique
+  paymentIntentId          String?                 @unique
 }
 
 enum PaymentStatus {

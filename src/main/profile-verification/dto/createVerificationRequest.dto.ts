@@ -11,22 +11,21 @@ export class CreateVerificationRequestDto {
   profileId: string;
 
   @ApiProperty({
-    description: 'Avatar image for the event preference',
+    description: 'Id card image',
     type: 'string',
     format: 'binary',
   })
   idCard: Express.Multer.File;
 
   @ApiProperty({
-    description: 'Avatar image for the event preference',
+    description: 'Tread License image',
     type: 'string',
     format: 'binary',
   })
   tradeLicense: Express.Multer.File;
 
   @ApiProperty({
-    description: 'UUID of the first chat member (memberOne)',
-    format: 'uuid',
+    description: 'Short bio',
   })
   @IsNotEmpty()
   @IsString()   
