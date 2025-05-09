@@ -5,7 +5,7 @@ import {
   ForbiddenException 
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { $Enums } from '@prisma/client';
+import { $Enums, UserRole } from '@prisma/client';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -29,10 +29,11 @@ export class RolesGuard implements CanActivate {
     if (!user) {
       throw new ForbiddenException('User not authenticated');
     }
-
+    
     const hasRole = user.role?.some((userRole: $Enums.UserRole) =>
       requiredRoles.includes(userRole)
     );
+
 
     if (!hasRole) {
       throw new ForbiddenException('Insufficient permissions');

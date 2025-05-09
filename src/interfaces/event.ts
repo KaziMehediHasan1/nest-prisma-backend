@@ -4,12 +4,17 @@ export const EVENT_TYPES = {
   VERIFICATION_EMAIL_SEND: 'VERIFICATION_EMAIL_SEND',
   PASSWORD_RESET_EMAIL_SEND: 'PASSWORD_RESET_EMAIL_SEND',
   CONVERSATION_CREATE: 'CONVERSATION_CREATE',
+  CHAT_LIST_UPDATE: 'CHAT_LIST_UPDATE',
 } as const;
 
 export type EventType = typeof EVENT_TYPES[keyof typeof EVENT_TYPES];
 
 export interface FileDeleteEvent {
   Key: string;
+}
+
+export interface ChatListUpdateEvent {
+  userId: string;
 }
 
 export interface EmailSendEvent {
@@ -57,4 +62,5 @@ export interface EventPayloadMap {
   [EVENT_TYPES.VERIFICATION_EMAIL_SEND]: VerificationEmailEvent;
   [EVENT_TYPES.PASSWORD_RESET_EMAIL_SEND]: PasswordResetEmailEvent;
   [EVENT_TYPES.CONVERSATION_CREATE]: ConversationCreateEvent;
+  [EVENT_TYPES.CHAT_LIST_UPDATE]: ChatListUpdateEvent;
 }

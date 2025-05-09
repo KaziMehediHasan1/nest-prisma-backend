@@ -20,12 +20,10 @@ jobs:
           username: root
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
-            echo "💥 Cleaning up unused Docker resources..."
-            docker system prune -a --volumes -f
           
             cd ./onurtaskiner/onurtaskiner
             git pull origin main
             docker-compose down
-            docker-compose build --no-cache
+            docker-compose build
             docker-compose up -d
 

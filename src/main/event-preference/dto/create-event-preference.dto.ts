@@ -10,16 +10,14 @@ export class CreateEventPreferenceDto {
     type: String,
   })
   @IsString()
-  @IsNotEmpty()
   name: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'Avatar image for the event preference',
     type: 'string',
     format: 'binary',
   })
-  @IsOptional()
-  avatar?: Express.Multer.File;
+  avatar: Express.Multer.File;
 
   @ApiPropertyOptional({
     description: 'ID of the profile this preference belongs to',
@@ -27,5 +25,6 @@ export class CreateEventPreferenceDto {
     type: String,
   })
   @IsUUID()
+  @IsOptional()
   profileId?: string;
 }

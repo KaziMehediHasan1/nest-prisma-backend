@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { DbService } from 'src/lib/db/db.service';
 import { CreateBookingDto } from './dto/createBooking.dto';
@@ -10,9 +11,11 @@ import { $Enums, Profile, Venue } from '@prisma/client';
 import { ApiResponse } from 'src/interfaces/response';
 import { IdDto } from 'src/common/dto/id.dto';
 import { EventService } from 'src/lib/event/event.service';
+import { SetPriceDto } from './dto/setPrice.dto';
 
 @Injectable()
 export class BookingService {
+  private readonly logger = new Logger(BookingService.name);
   constructor(
     private readonly db: DbService,
     private readonly eventEmitter: EventService,
@@ -32,7 +35,7 @@ export class BookingService {
   //send enum service end==============================
 
   // create booking start================================
-  async create(rawData: CreateBookingDto) {
+  async create(rawData: CreateBookingDto): Promise<ApiResponse<any>> {
     const {
       bookedById,
       eventTypeId,
@@ -44,13 +47,13 @@ export class BookingService {
       endTime,
       ...rest
     } = rawData;
-  
+
     if (!venueId?.trim() && !serviceProviderId?.trim()) {
       throw new BadRequestException(
         'Either venueId or serviceProviderId must be provided.',
       );
     }
-  
+
     let venue: Venue | null = null;
     if (venueId?.trim()) {
       venue = await this.db.venue.findUnique({
@@ -60,7 +63,7 @@ export class BookingService {
         throw new BadRequestException('Venue not found.');
       }
     }
-  
+
     let serviceProvider: Profile | null = null;
     if (serviceProviderId?.trim()) {
       serviceProvider = await this.db.profile.findUnique({
@@ -70,90 +73,97 @@ export class BookingService {
         throw new BadRequestException('Service Provider not found.');
       }
     }
-  
+
     const start = new Date(startTime);
     const end = new Date(endTime);
-  
+
     if (start.getTime() >= end.getTime()) {
       throw new BadRequestException('Start time must be before end time.');
     }
-  
+
+    const durationMs = end.getTime() - start.getTime();
+    const durationMinutes = Math.floor(durationMs / 60000);
+
     // Check for venue double booking
     if (venueId?.trim()) {
       const conflictingVenueBooking = await this.db.booking.findFirst({
         where: {
           venueId,
           selectedDate,
-          AND: [
-            { startTime: { lt: end } },
-            { endTime: { gt: start } },
-          ],
+          AND: [{ startTime: { lt: end } }, { endTime: { gt: start } }],
         },
       });
-  
+
       if (conflictingVenueBooking) {
         throw new BadRequestException(
           'The venue is already booked for the selected date and time.',
         );
       }
     }
-  
+
     // Check for service provider double booking
     if (serviceProviderId?.trim()) {
       const conflictingServiceBooking = await this.db.booking.findFirst({
         where: {
           serviceProviderId,
           selectedDate,
-          AND: [
-            { startTime: { lt: end } },
-            { endTime: { gt: start } },
-          ],
+          AND: [{ startTime: { lt: end } }, { endTime: { gt: start } }],
         },
       });
-  
+
       if (conflictingServiceBooking) {
         throw new BadRequestException(
           'The service provider is already booked for the selected date and time.',
         );
       }
     }
-  
-    const booking = await this.db.booking.create({
-      data: {
-        ...rest,
-        bookedBy: {
-          connect: { id: bookedById },
+
+    try {
+      const booking = await this.db.booking.create({
+        data: {
+          ...rest,
+          bookingStatus: 'REQUESTED',
+          duration: durationMinutes,
+          bookedBy: {
+            connect: { id: bookedById },
+          },
+          EventType: {
+            connect: { id: eventTypeId },
+          },
+          decoration: Decoration ? JSON.stringify(Decoration) : undefined,
+          ...(venue && { venue: { connect: { id: venue.id } } }),
+          ...(serviceProvider && {
+            serviceProvider: { connect: { id: serviceProvider.id } },
+          }),
+          selectedDate: new Date(selectedDate),
+          startTime: start,
+          endTime: end,
         },
-        EventType: {
-          connect: { id: eventTypeId },
-        },
-        decoration: Decoration ? JSON.stringify(Decoration) : undefined,
-        ...(venue && { venue: { connect: { id: venue.id } } }),
-        ...(serviceProvider && {
-          serviceProvider: { connect: { id: serviceProvider.id } },
-        }),
-        selectedDate: new Date(selectedDate),
-        startTime: start,
-        endTime: end,
-      },
-    });
+      });
   
-    booking.decoration = JSON.parse(booking.decoration ?? '{}');
+      booking.decoration = JSON.parse(booking.decoration ?? '{}');
   
-    const memberTwoId = venue?.profileId ?? serviceProvider?.id;
+      const memberTwoId = venue?.profileId ?? serviceProvider?.id;
   
-    if (!memberTwoId) {
-      throw new BadRequestException('memberTwoId could not be resolved');
+      if (!memberTwoId) {
+        throw new BadRequestException('memberTwoId could not be resolved');
+      }
+  
+      this.eventEmitter.emit('CONVERSATION_CREATE', {
+        memberOneId: bookedById,
+        memberTwoId,
+      });
+  
+      return {
+        success: true,
+        data: booking,
+        message: 'Booking created successfully',
+        statusCode: 200,
+      };
+    } catch (error) {
+      throw new BadRequestException(error);
     }
-  
-    this.eventEmitter.emit('CONVERSATION_CREATE', {
-      memberOneId: bookedById,
-      memberTwoId,
-    });
-  
-    return booking;
   }
-  
 
   // create booking end================================
 
@@ -251,65 +261,83 @@ export class BookingService {
   }
 
   public async bookingList(venueOwnerId: string): Promise<
-    ApiResponse<{
-      requested: any[];
-      pending: any[];
-      confirmed: any[];
-      completed: any[];
-    }>
-  > {
-    const statuses = [
-      'REQUESTED',
-      'PENDING',
-      'CONFIRMED',
-      'COMPLETED',
-    ] as const;
+  ApiResponse<{
+    requested: any[];
+    pending: any[];
+    confirmed: any[];
+    completed: any[];
+  }>
+> {
+  const statuses = [
+    'REQUESTED',
+    'PENDING',
+    'CONFIRMED',
+    'COMPLETED',
+  ] as const;
 
-    const bookingPromises = statuses.map(
-      async (status) =>
-        await this.db.booking.findMany({
-          where: {
-            venue: { profileId: venueOwnerId },
-            bookingStatus: status,
-          },
-          take: 3,
-        }),
-    );
+  const bookingPromises = statuses.map(
+    async (status) =>
+      await this.db.booking.findMany({
+        where: {
+          venue: { profileId: venueOwnerId },
+          bookingStatus: status,
+        },
+        take: 3,
+      }),
+  );
 
-    const [
-      requestedBookings,
-      pendingBookings,
-      confirmedBookings,
-      completedBookings,
-    ] = await Promise.all(bookingPromises);
+  const [
+    requestedBookings,
+    pendingBookings,
+    confirmedBookings,
+    completedBookings,
+  ] = await Promise.all(bookingPromises);
 
-    return {
-      statusCode: 200,
-      success: true,
-      message: 'Bookings fetched successfully.',
-      data: {
-        requested: requestedBookings,
-        pending: pendingBookings,
-        confirmed: confirmedBookings,
-        completed: completedBookings,
-      },
-    };
-  }
+  // Process each booking array to parse decoration strings into JSON objects
+  const processBookings = (bookings: any[]) => {
+    return bookings.map(booking => {
+      const processedBooking = { ...booking };
+      
+      if (processedBooking.decoration && typeof processedBooking.decoration === 'string') {
+        try {
+          processedBooking.decoration = JSON.parse(processedBooking.decoration);
+        } catch (error) {
+          processedBooking.decoration = {};
+          this.logger.error(`Failed to parse decoration for booking ${processedBooking.id}:`, error);
+        }
+      }
+      
+      return processedBooking;
+    });
+  };
+
+  return {
+    statusCode: 200,
+    success: true,
+    message: 'Bookings fetched successfully.',
+    data: {
+      requested: processBookings(requestedBookings),
+      pending: processBookings(pendingBookings),
+      confirmed: processBookings(confirmedBookings),
+      completed: processBookings(completedBookings),
+    },
+  };
+}
 
   // update booking end================================
 
   // getBookedDate start===============================
 
-  async getBookedDate({ id }: IdDto):Promise<ApiResponse<any>> {
+  async getBookedDate({ id }: IdDto): Promise<ApiResponse<any>> {
     const booking = await this.db.booking.findMany({
       where: {
         venueId: id,
       },
-      select: { 
+      select: {
         selectedDate: true,
         startTime: true,
-        endTime: true
-       },
+        endTime: true,
+      },
     });
     if (!booking) {
       throw new NotFoundException(`Booking with id ${id} not found.`);
@@ -318,9 +346,32 @@ export class BookingService {
       data: booking,
       message: 'Bookings fetched successfully',
       statusCode: 200,
-      success: true
+      success: true,
     };
   }
 
   // getBookedDate end================================
+
+  // Set price start ================================
+
+  async setPrice({ id, totalAmount }: SetPriceDto): Promise<ApiResponse<any>> {
+    const booking = await this.db.booking.findUnique({
+      where: { id },
+    });
+    if (!booking) {
+      throw new NotFoundException(`Booking with id ${id} not found.`);
+    }
+    const updatedBooking = await this.db.booking.update({
+      where: { id:booking.id, bookingStatus: $Enums.BookingStatus.REQUESTED },
+      data: { totalAmount,due:totalAmount,paid:0 },
+    });
+    return {
+      data: updatedBooking,
+      message: 'Price updated successfully',
+      statusCode: 200,
+      success: true,
+    };
+  }
+
+  // Set price end ================================
 }

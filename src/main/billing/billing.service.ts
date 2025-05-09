@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { CreatePaymentIntentDtoWithId } from './dto/createPayment.dto';
@@ -97,7 +94,7 @@ export class BillingService {
       this.logger.warn('Missing metadata in PaymentIntent: type or id');
       return;
     }
-    console.log(paymentIntent.amount_received);
+    console.log(paymentIntent.id);
 
     const { type, id, userId } = metadata;
 
@@ -105,19 +102,35 @@ export class BillingService {
 
     switch (type) {
       case 'booking':
-        return this.handleBookingPayment(
-          id,
-          paymentIntent.amount_received / 100,
-          userId,
-        );
+        try {
+          return this.handleBookingPayment(
+            id,
+            paymentIntent.amount_received / 100,
+            paymentIntent.id,
+          );
+        } catch (error) {
+          this.logger.error(error);
+        }
       case 'fullPayment':
-        return this.handleFullPayment(
-          id,
-          paymentIntent.amount_received / 100,
-          userId,
-        );
-      case 'serviceBooking':
-        return this.handleServiceBooking(id);
+       try {
+          return this.handleFullPayment(
+            id,
+            paymentIntent.amount_received / 100,
+            paymentIntent.id,
+          );
+        } catch (error) {
+          this.logger.error(error);
+        }
+      case 'verificationFee':
+       try {
+          return this.handleVerificationFee(
+            userId,
+            paymentIntent.amount_received / 100,
+            paymentIntent.id,
+          );
+        } catch (error) {
+          this.logger.error(error);
+        }
       default:
         this.logger.warn(`Unknown PaymentIntent type: ${type}`);
     }
@@ -138,11 +151,23 @@ export class BillingService {
     // Add any specific handling logic for sessions if needed
     switch (type) {
       case 'booking':
+       try {
         return this.handleBookingPayment(id);
+       } catch (error) {
+        this.logger.error(error);
+       }
       case 'fullPayment':
+       try {
         return this.handleFullPayment(id);
-      case 'serviceBooking':
-        return this.handleServiceBooking(id);
+       } catch (error) {
+        this.logger.error(error);
+       }
+      case 'verificationFee':
+        try {
+          return this.handleVerificationFee(id);
+        } catch (error) {
+          this.logger.error(error);
+        }
       default:
         this.logger.warn(`Unknown CheckoutSession type: ${type}`);
     }
@@ -151,7 +176,7 @@ export class BillingService {
   private async handleBookingPayment(
     id: string,
     amount?: number,
-    userId?: string,
+    paymentIntentId?: string,
   ) {
     this.logger.log(`Handling booking payment for ID: ${id}`);
 
@@ -164,10 +189,6 @@ export class BillingService {
       where: { id },
     });
 
-    if (!userId) {
-      this.logger.error(`User not found for ID: ${id}`);
-      return;
-    }
 
     if (!booking) {
       this.logger.error(`Booking not found for ID: ${id}`);
@@ -197,6 +218,7 @@ export class BillingService {
               amount: amount,
               paymentMethod: 'CREDIT_CARD',
               paymentStatus: 'COMPLETED',
+              paymentIntentId
             },
           },
         },
@@ -210,7 +232,7 @@ export class BillingService {
   private async handleFullPayment(
     id: string,
     amount?: number,
-    userId?: string,
+    paymentIntentId?: string,
   ) {
     this.logger.log(`Handling full payment for ID: ${id}`);
 
@@ -222,11 +244,6 @@ export class BillingService {
     const booking = await this.db.booking.findUnique({
       where: { id },
     });
-
-    if (!userId) {
-      this.logger.error(`User not found for ID: ${id}`);
-      return;
-    }
 
     if (!booking) {
       this.logger.error(`Booking not found for ID: ${id}`);
@@ -256,6 +273,7 @@ export class BillingService {
               amount: amount,
               paymentMethod: 'CREDIT_CARD',
               paymentStatus: 'COMPLETED',
+              paymentIntentId
             },
           },
         },
@@ -266,9 +284,84 @@ export class BillingService {
     }
   }
 
-  private async handleServiceBooking(id: string) {
+  private async handleVerificationFee(
+    id: string, 
+    amount?: number,
+    paymentIntentId?: string,
+  ) {
     this.logger.log(`Handling service booking for ID: ${id}`);
     // TODO: Implement logic
+    if (!amount) {
+      this.logger.warn('Amount not found');
+      return;
+    }
+
+    const isSubmissionExist = await this.db.verificationSubmission.findFirst({
+      where: {
+       profile:{
+        id
+       }
+      }
+    })
+
+    if (!isSubmissionExist) {
+      this.logger.error(`Submission not found for ID: ${id}`);
+      return;
+    }
+
+    const user = await this.db.profile.findUnique({
+      where: {
+        id,
+        user: {
+          role: {
+            hasSome: ['VENUE_OWNER', 'SERVICE_PROVIDER'],
+          },
+        },
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    if (!user) {
+      this.logger.error(`User not found for ID: ${id}`);
+      return;
+    }
+
+    await this.db.user.update({
+      where: { id: user.user.id },
+      data: {
+        isVerified: true,
+        profile: {
+          update: {
+            isPro: true,
+            VerificationSubmission:{
+              update: {
+                where: { 
+                  id: isSubmissionExist.id
+                 },
+                data: { 
+                  payment:{
+                    create: {
+                      amount,
+                      paymentMethod: 'CREDIT_CARD',
+                      paymentStatus: 'COMPLETED',
+                      paymentIntentId
+                    }
+                  }
+                 },
+              },
+            },
+            venues: {
+              updateMany: {
+                where: { profileId: user.id },
+                data: { verified: true },
+              },
+            },
+          },
+        },
+      },
+    });
   }
 
   /**

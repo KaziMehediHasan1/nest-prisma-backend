@@ -72,6 +72,7 @@ model Profile {
   id                       String                  @id @default(uuid())
   userId                   String                  @unique
   user                     User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                     String?                 @unique
   gender                   Gender
   imageId                  String?                 @unique // FK for image
   image                    FileInstance?           @relation("ProfileImage", fields: [imageId], references: [id], onDelete: Cascade)
@@ -99,6 +100,10 @@ model Profile {
   task                     Task[]
   VerificationSubmission   VerificationSubmission? @relation(fields: [verificationSubmissionId], references: [id])
   verificationSubmissionId String?                 @unique
+  GroupMessage             GroupMessage?           @relation(fields: [groupMessageId], references: [id])
+  groupMessageId           String?
+  serviceProviderRole      ServiceProviderRole?
+  amenities                Amenities[]
 }
 
 enum Gender {
@@ -155,6 +160,7 @@ model Venue {
   Profile                 Profile?      @relation(fields: [profileId], references: [id])
   profileId               String?
   name                    String
+  venueImage              FileInstance? @relation("VenueImage")
   city                    String
   area                    String
   description             String?
@@ -166,7 +172,7 @@ model Venue {
   availabilityDescription String?
   extraServiceDescription String?
   amenities               Amenities[]
-  arrangementsImage       FileInstance?
+  arrangementsImage       FileInstance? @relation("VenueDecoration")
   shifts                  Shift[] // 1-to-many relation
   reviews                 Review[]
   price                   Int
@@ -231,11 +237,11 @@ model Shift {
 model Booking {
   id                String           @id @default(uuid())
   bookedById        String
-  bookedBy          Profile          @relation("BookedByProfile", fields: [bookedById], references: [id])
+  bookedBy          Profile          @relation("BookedByProfile", fields: [bookedById], references: [id], onDelete: Cascade)
   venueId           String?
-  venue             Venue?           @relation(fields: [venueId], references: [id])
+  venue             Venue?           @relation(fields: [venueId], references: [id], onDelete: Cascade)
   serviceProviderId String?
-  serviceProvider   Profile?         @relation("ServiceProviderProfile", fields: [serviceProviderId], references: [id])
+  serviceProvider   Profile?         @relation("ServiceProviderProfile", fields: [serviceProviderId], references: [id], onDelete: Cascade)
   eventName         String
   location          String
   plannerName       String
@@ -247,7 +253,6 @@ model Booking {
   guestNumber       Int
   decoration        String? //an string object of decoration
   services          String[] // Array of service names .  comes a string input from the client
-  totalCost         Int
   bookingStatus     BookingStatus    @default(REQUESTED) // completed when isEventFinished is true
   totalAmount       Int              @default(0) // Total amount for the booking
   paid              Int              @default(0) // Amount paid  (when the booking is confirmed)
@@ -279,16 +284,17 @@ enum AcceptanceStatus {
 
 model Payment {
   id                       String                  @id @default(uuid())
-  bookingId                String // FK for booking @unique
-  bookingInfo              Booking?                @relation(fields: [bookingId], references: [id])
+  bookingId                String? // FK for booking @unique
+  bookingInfo              Booking?                @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   paymentStatus            PaymentStatus // Enum for payment status
   paymentMethod            PaymentMethod // Enum for payment method
   amount                   Int // The amount paid
   transactionId            String? // Optional transaction ID
   createdAt                DateTime                @default(now())
   updatedAt                DateTime                @updatedAt
-  VerificationSubmission   VerificationSubmission? @relation(fields: [verificationSubmissionId], references: [id])
+  VerificationSubmission   VerificationSubmission? @relation(fields: [verificationSubmissionId], references: [id], onDelete: Cascade)
   verificationSubmissionId String?                 @unique
+  paymentIntentId          String?                 @unique
 }
 
 enum PaymentStatus {
@@ -425,10 +431,12 @@ model Review {
 //AMENITIES START
 
 model Amenities {
-  id      String  @id @default(uuid())
-  name    String  @unique
-  Venue   Venue[]
-  default Boolean @default(false)
+  id        String   @id @default(uuid())
+  name      String   @unique
+  Venue     Venue[]
+  default   Boolean  @default(false)
+  Profile   Profile? @relation(fields: [profileId], references: [id])
+  profileId String?
 }
 
 //AMENITIES END
@@ -446,8 +454,10 @@ model FileInstance {
   expiresAt           DateTime
   bucket              String
   type                FileType
-  Venue               Venue?                  @relation(fields: [venueId], references: [id])
+  Venue               Venue?                  @relation("VenueImage", fields: [venueId], references: [id])
   venueId             String?                 @unique
+  VenueDecoration     Venue?                  @relation("VenueDecoration", fields: [venueDecorationId], references: [id])
+  venueDecorationId   String?                 @unique
   imageOfProfile      Profile?                @relation("ProfileImage")
   coverPhotoOfProfile Profile?                @relation("ProfileCoverPhoto")
   EventPreference     EventType?              @relation(fields: [eventPreferenceId], references: [id])
@@ -460,6 +470,8 @@ model FileInstance {
   nationalIdCardId    String?                 @unique
   tradeLicense        VerificationSubmission? @relation("TradeLicense", fields: [tradeLicenseCardId], references: [id])
   tradeLicenseCardId  String?                 @unique
+  GroupMessage        GroupMessage?           @relation(fields: [groupMessageId], references: [id])
+  groupMessageId      String?                 @unique
 }
 
 // File Instance end=========================================================
@@ -473,6 +485,7 @@ model Conversation {
   memberTwoId    String
   memberTwo      Profile         @relation("MemberTwo", fields: [memberTwoId], references: [id], onDelete: Cascade)
   directMessages DirectMessage[]
+  lasMessage     DirectMessage?  @relation("LastConversationMessage")
 
   @@unique([memberOneId, memberTwoId])
   @@index([memberTwoId])
@@ -480,19 +493,38 @@ model Conversation {
 
 // conversation start =======================================================
 
+//Group Message Start =======================================================
+
+model GroupMessage {
+  id          String          @id @default(uuid())
+  name        String
+  image       FileInstance?
+  message     DirectMessage[]
+  profiles    Profile[]
+  lastMessage DirectMessage?  @relation("LastGroupMessage")
+}
+
+//Group Message End =======================================================
+
 // Direct Message start =====================================================
 
 model DirectMessage {
-  id             String        @id @default(uuid())
-  content        String
-  file           FileInstance?
-  memberId       String
-  member         Profile       @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  conversationId String
-  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  deleted        Boolean       @default(false)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id                        String        @id @default(uuid())
+  content                   String
+  file                      FileInstance?
+  memberId                  String
+  member                    Profile       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  conversationId            String?
+  conversation              Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  deleted                   Boolean       @default(false)
+  createdAt                 DateTime      @default(now())
+  updatedAt                 DateTime      @updatedAt
+  GroupMessage              GroupMessage? @relation(fields: [groupMessageId], references: [id])
+  groupMessageId            String?
+  lastGroupMessage          GroupMessage? @relation("LastGroupMessage", fields: [lastGroupMessageId], references: [id])
+  lastGroupMessageId        String?       @unique
+  lastConversationMessage   Conversation? @relation("LastConversationMessage", fields: [lastConversationMessageId], references: [id])
+  lastConversationMessageId String?       @unique
 
   @@index([memberId])
   @@index([conversationId])

@@ -8,6 +8,7 @@ import { RolesGuard } from 'src/guard/role.guard';
 import { Roles } from 'src/decorator/roles.decorator';
 import { IdDto } from 'src/common/dto/id.dto';
 import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
+import { SetPriceDto } from './dto/setPrice.dto';
 
 @Controller('booking')
 export class BookingController {
@@ -22,7 +23,7 @@ export class BookingController {
   }
 
   @Get('decoration_enum')
-  @Roles('PLANNER')
+  @Roles('PLANNER',"VENUE_OWNER")
   @ApiOperation({ summary: 'Get decoration enum to create booking' })
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   @ApiBearerAuth()
@@ -49,4 +50,13 @@ export class BookingController {
     return this.bookingService.getBookedDate(id);
   }
   
+
+  @Get('set-price')
+  @Roles('VENUE_OWNER')
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
+  @ApiBearerAuth()
+  setPrice(@Body() data: SetPriceDto) {
+    
+    return this.bookingService.setPrice(data);
+  }
 }

@@ -22,7 +22,6 @@ export class LoginDto {
     maxLength: 50
   })
   @IsString({ message: 'Password must be a string' })
-  @MinLength(8, { message: 'Password must be at least 8 characters long' })
   @MaxLength(50, { message: 'Password cannot be longer than 50 characters' })
   password: string;
 }

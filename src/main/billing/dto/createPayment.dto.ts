@@ -11,7 +11,7 @@ import {
 export enum PaymentType {
   BOOKING = 'booking',
   FULL_PAYMENT = 'fullPayment',
-  SERVICE_BOOKING = 'serviceBooking',
+  VERIFICATION_FEE = 'verificationFee',
 }
 
 

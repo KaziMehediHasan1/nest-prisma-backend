@@ -4,6 +4,7 @@ import {
   UnauthorizedException,
   HttpException,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -105,6 +106,7 @@ export class AuthService {
         roles: $Enums.UserRole[];
         isVerified: boolean;
         profileId?: string;
+        isProfileCreated: boolean;
       };
     }>
   > {
@@ -121,8 +123,9 @@ export class AuthService {
     }
 
     if (!user.isVerified) {
+      await this.verifyService.sendVerificationEmail(user.email, 5);
       throw new HttpException(
-        'Please verify your email',
+        'A verification code has been sent to your email. Please verify your email',
         HttpStatus.UNAUTHORIZED,
       );
     }
@@ -155,6 +158,7 @@ export class AuthService {
           roles: user.role,
           isVerified: user.isVerified,
           profileId: user.profile ? user.profile.id : '',
+          isProfileCreated: !!user.profile,
         },
       },
       statusCode: 200,
@@ -251,7 +255,7 @@ export class AuthService {
   }
 
   async resetPassword(dto: ResetPasswordDto): Promise<ApiResponse<null>> {
-    const { email, code, newPassword } = dto;
+    const { email, newPassword, code } = dto;
 
     // Check if user exists
     const user = await this.db.user.findUnique({
@@ -265,11 +269,17 @@ export class AuthService {
       );
     }
 
-    // Verify the reset code
-    const isCodeValid = await this.verifyService.verifyCode(email, code);
+    // Verify password reset code
+    const isCodeValid = await this.verifyService.verifyCode(
+      email,
+      code,
+    );
 
     if (!isCodeValid) {
-      throw new UnauthorizedException('Invalid or expired reset code');
+      throw new HttpException(
+        'Invalid password reset code',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     // Hash the new password
@@ -332,5 +342,96 @@ export class AuthService {
       message: 'User deleted successfully',
       data: null,
     };
+  }
+
+  public async GetUserInfo(id: IdDto): Promise<ApiResponse<any>> {
+    const user = await this.db.user.findUnique({
+      where:  id ,
+      include:{
+        profile: {
+          include:{
+            image:{
+              select:{
+                path:true
+              },
+            },
+            coverPhoto: {
+              select: {
+                path: true,
+              },
+            },
+            eventPreference:{
+              include:{
+                avatar:{
+                  select:{
+                    path:true
+                  }
+                }
+              }
+            }
+          }
+        },
+      },
+    });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    const {password, ...rest} = user
+
+    return {
+      statusCode: 200,
+      success: true,
+      message: 'User found successfully',
+      data: rest,
+    };
+  }
+
+  public async switchRoll({
+    id,
+    role,
+  }:{
+    id:string,
+    role:$Enums.UserRole
+  }):Promise<ApiResponse<any>>{
+
+    if (role === "ADMIN") {
+      throw new ForbiddenException('You cannot switch to admin role');
+    }
+
+    const user = await this.db.user.findUnique({
+      where:  {
+        id
+      } ,
+      include:{
+        profile:true
+      }
+    });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+
+    if (user.role.filter((r) => r === role).length === 0) {
+      return {
+        statusCode: 200,
+        success: true,
+        message: `please Create Profile to ${role} role`,
+        data: {
+          hasProfile: false,
+          profile: user.profile
+        },
+      }
+    }
+      
+    return {
+      statusCode: 200,
+      success: true,
+      message: 'User found successfully',
+      data: {
+        hasProfile: true
+      },
+    }
   }
 }

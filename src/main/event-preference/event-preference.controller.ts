@@ -19,6 +19,7 @@ import { RolesGuard } from 'src/guard/role.guard';
 import { Roles } from 'src/decorator/roles.decorator';
 import { VerifiedGuard } from 'src/guard/verify.guard';
 import { AuthGuard } from '@nestjs/passport';
+import { IdDto } from 'src/common/dto/id.dto';
 
 @Controller('event-preference')
 export class EventPreferenceController {
@@ -29,6 +30,9 @@ export class EventPreferenceController {
   @Post('create')
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('avatar'))
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard("jwt"), VerifiedGuard, RolesGuard)
+  @Roles("ADMIN")
   create(
     @Body() createEventPreferenceDto: CreateEventPreferenceDto,
     @UploadedFile() avatar: Express.Multer.File,
@@ -44,14 +48,14 @@ export class EventPreferenceController {
   @Get('get')
   @ApiBearerAuth()
   @Roles('PLANNER')
-  @UseGuards(AuthGuard("jwt"), VerifiedGuard, RolesGuard)
+  @UseGuards(AuthGuard("jwt"), VerifiedGuard)
   findAll() {
     return this.eventPreferenceService.findAll();
   }
 
   @Get('get/:id')
-  findOne(@Param('id') id: string) {
-    return this.eventPreferenceService.findOne(+id);
+  findOne(@Param() id: IdDto) {
+    return this.eventPreferenceService.findOne(id);
   }
 
   @Patch('update/:id')

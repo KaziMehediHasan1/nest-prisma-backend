@@ -14,6 +14,7 @@ import { access } from 'fs';
 import { CreateGuestDto } from './dto/createGuest.dto';
 import { UploadService } from 'src/lib/upload/upload.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { createGroupDto } from './dto/createGroup.dto';
 
 @Injectable()
 export class GuestService {
@@ -198,5 +199,62 @@ export class GuestService {
         success: true,
       };
     }
-  } 
+  }
+
+  async createGroupByBookingId(id: IdDto, hostId: string, rawData: createGroupDto): Promise<ApiResponse<any>> {
+    const { image, name } = rawData;
+    const fileInstance = await this.uploadService.uploadFile({
+      file: image,
+    })
+    try {
+      const profiles = await this.dbService.profile.findMany({
+        where: {
+          magicLink: {
+            bookingId: id.id,
+          },
+          user: {
+            role: {
+              equals: ['GUEST'],
+            },
+          },
+        },
+      });
+
+      const allProfileIds = [
+        ...profiles.map((profile) => ({ id: profile.id })),
+        { id: hostId },
+      ];
+  
+      const group = await this.dbService.groupMessage.create({
+        data: {
+          name,
+          profiles: {
+            connect: allProfileIds,
+          },
+          image: {
+            connect: {
+              id: fileInstance.id,
+            },
+          },
+        },
+        include:{
+          profiles: true
+        }
+      });
+  
+      return {
+        data: group,
+        message: 'Profiles fetched successfully',
+        statusCode: 200,
+        success: true,
+      }
+    } catch (error) {
+      this.uploadService.deleteFile({
+        Key: fileInstance.fileId
+      })
+      throw new BadRequestException(
+        Array.isArray(Error) ? error[0].message : error.message,
+      );
+    }
+  }
 }

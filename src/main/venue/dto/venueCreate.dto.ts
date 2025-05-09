@@ -9,7 +9,7 @@ import {
     IsEnum,
     IsObject,
   } from 'class-validator';
-  import { ApiProperty } from '@nestjs/swagger';
+  import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
   import { Transform, Type } from 'class-transformer';
   import {
     VenueType,
@@ -21,6 +21,7 @@ import {
     FlowerType,
     Fragrance,
   } from '@prisma/client';
+import { BadRequestException } from '@nestjs/common';
   
   export class DecorationDto {
     @ApiProperty({ enum: TableShape, isArray: true })
@@ -106,6 +107,13 @@ import {
       required: false,
     })
     arrangementsImage: Express.Multer.File;
+
+    @ApiProperty({
+      type: 'string',
+      format: 'binary',
+      required: false,
+    })
+    venueImage: Express.Multer.File;
   
     @ApiProperty({ required: false })
     @IsOptional()
@@ -127,14 +135,16 @@ import {
     @IsString()
     extraServiceDescription?: string;
   
-    @ApiProperty()
+    @ApiPropertyOptional({
+      required: false,
+    })
     @IsInt()
     @Transform(({ value }) => parseInt(value, 10))
-    price: number;
+    price?: number;
   
-    @ApiProperty({ enum: BookingType })
+    @ApiPropertyOptional({ enum: BookingType, required: false })
     @IsString()
-    bookingType: BookingType;
+    bookingType?: BookingType;
   
     @ApiProperty({
       type: DecorationDto,
@@ -149,13 +159,11 @@ import {
       },
     })
     @Transform(({ value }) => {
-      console.log("Before parsing:", value);  // Log incoming value for debugging
       if (typeof value === 'string') {
         try {
-          return JSON.parse(value);  // Parse the string into an object
+          return JSON.parse(value);
         } catch (error) {
-          console.error("Error parsing decoration:", error);
-          throw new Error('Invalid decoration JSON');
+          throw new BadRequestException('Invalid decoration JSON format in decoration');
         }
       }
       return value;

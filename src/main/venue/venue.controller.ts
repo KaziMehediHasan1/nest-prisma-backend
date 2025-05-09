@@ -7,14 +7,15 @@ import {
   Patch,
   Post,
   Query,
-  UploadedFile,
+  Req,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { VenueService } from './venue.service';
 import { CreateVenueDto } from './dto/venueCreate.dto';
 import { ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { IdDto } from 'src/common/dto/id.dto';
 import { UpdateVenueDto } from './dto/updateVenue.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -23,6 +24,7 @@ import { RolesGuard } from 'src/guard/role.guard';
 import { Roles } from 'src/decorator/roles.decorator';
 import { FilterService } from './filter.service';
 import { FilterVenuesDto } from './dto/filterVenue.dto';
+import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
 
 @Controller('venue')
 export class VenueController {
@@ -33,36 +35,55 @@ export class VenueController {
 
   @Post('create')
   @ApiConsumes('multipart/form-data', 'application/json')
-  @UseInterceptors(FileInterceptor('arrangementsImage'))
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'arrangementsImage', maxCount: 1 },
+      { name: 'venueImage', maxCount: 1 },
+    ]),
+  )
   @ApiBearerAuth()
   @Roles('VENUE_OWNER')
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   createVenue(
     @Body() createVenueDto: CreateVenueDto,
-    @UploadedFile() arrangementsImage: Express.Multer.File,
+    @UploadedFiles() files: { 
+      arrangementsImage: Express.Multer.File[],
+      venueImage: Express.Multer.File[],
+    },
+    @Req() req: AuthenticatedRequest,
   ) {
     const data = {
       ...createVenueDto,
-      arrangementsImage,
+      arrangementsImage: files.arrangementsImage?.[0],
+      venueImage: files.venueImage?.[0],
     };
 
-    return this.venueService.createVenue(data);
+    return this.venueService.createVenue({ id: req.user.sub }, data);
   }
 
   @Patch('update/:id')
   @ApiConsumes('multipart/form-data', 'application/json')
-  @UseInterceptors(FileInterceptor('arrangementsImage'))
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'arrangementsImage', maxCount: 1 },
+      { name: 'venueImage', maxCount: 1 },
+    ]),
+  )
   @ApiBearerAuth()
   @Roles('VENUE_OWNER')
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   updateVenue(
     @Param() id: IdDto,
     @Body() updateVenueDto: UpdateVenueDto,
-    @UploadedFile() arrangementsImage?: Express.Multer.File,
+    @UploadedFiles() files: { 
+      arrangementsImage?: Express.Multer.File[],
+      venueImage?: Express.Multer.File[],
+    },
   ) {
     const data = {
       ...updateVenueDto,
-      arrangementsImage,
+      arrangementsImage: files?.arrangementsImage?.[0],
+      venueImage: files?.venueImage?.[0],
     };
 
     return this.venueService.updateVenue(id, data);

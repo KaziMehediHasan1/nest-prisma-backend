@@ -8,10 +8,11 @@ import { MailService } from './mail/mail.service';
 import { EventService } from './event/event.service';
 import { VerificationService } from './verification/verification.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { FileUrlRefreshServiceService } from './upload/file-url-refresh-service.service';
 
 @Global()
 @Module({
-  providers: [UtilService, DbService, UploadService, FileInstanceCronService, MailService, EventService, VerificationService],
+  providers: [UtilService, DbService, UploadService, FileInstanceCronService, MailService, EventService, VerificationService, FileUrlRefreshServiceService],
   exports: [UtilService, DbService, UploadService, FileInstanceCronService, EventService, VerificationService],
   controllers: [UploadController],
 })

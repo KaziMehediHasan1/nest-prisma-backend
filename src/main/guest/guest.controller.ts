@@ -5,6 +5,7 @@ import {
   Param,
   Post,
   Query,
+  Req,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -19,6 +20,8 @@ import { VerifiedGuard } from 'src/guard/verify.guard';
 import { RolesGuard } from 'src/guard/role.guard';
 import { Roles } from 'src/decorator/roles.decorator';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { createGroupDto } from './dto/createGroup.dto';
+import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
 
 @Controller('guest')
 export class GuestController {
@@ -28,6 +31,7 @@ export class GuestController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   @Roles('PLANNER')
+  @ApiOperation({ summary: 'Generate magic link for a specific booking' })
   async generateMagicLink(@Query() id: IdDto) {
     return this.guestService.generateMagicLink(id);
   }
@@ -56,5 +60,25 @@ export class GuestController {
   @ApiOperation({ summary: 'Get all invites for a specific booking' })
   async getAllInvites(@Param() id: IdDto, @Query() pagination: PaginationDto) {
     return this.guestService.getAllInvites(id, pagination);
+  }
+
+  @Post("create-group")
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
+  @Roles('PLANNER')
+  @ApiBearerAuth()
+  @UseInterceptors(FileInterceptor('image'))
+  @ApiConsumes('multipart/form-data', 'application/json')
+  async createGuestGroup(
+    @UploadedFile() image: Express.Multer.File,
+    @Body() data: createGroupDto,
+    @Query() id: IdDto,
+    @Req() req: AuthenticatedRequest
+  ) {
+   const rawData = {
+      ...data,
+      image,
+    };
+    
+    return this.guestService.createGroupByBookingId(id, req.user.profileId? req.user.profileId : "" ,rawData);
   }
 }

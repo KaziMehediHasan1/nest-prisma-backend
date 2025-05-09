@@ -3,6 +3,8 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { EVENT_TYPES, PasswordResetEmailEvent, VerificationEmailEvent } from 'src/interfaces/event';
 import { EventService } from '../event/event.service';
+import { ApiResponse } from 'src/interfaces/response';
+import { VerifyCodeOnlyDto } from 'src/main/auth/dto/verifyCode.dto';
 
 @Injectable()
 export class VerificationService {
@@ -127,5 +129,23 @@ export class VerificationService {
     );
     
     return code;
+  }
+
+  async isCodeValid({
+    code,
+    email: identifier
+  }:VerifyCodeOnlyDto): Promise<ApiResponse<any>> {
+    const cacheKey = this.createCacheKey(identifier);
+    const storedCode = await this.cacheManager.get<string>(cacheKey);
+  
+    return {
+      statusCode: 200,
+      success: true,
+      message: 'Verification code is valid',
+      data: {
+        isValid: storedCode === code,
+        email: identifier
+      }
+    }
   }
 }

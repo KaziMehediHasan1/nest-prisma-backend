@@ -16,6 +16,7 @@ export class ChatService {
     private readonly uploadService: UploadService,
     private readonly eventEmitter: EventService,
     private readonly chatGateway: ChatGateway,
+    private readonly event: EventService,
   ) {}
 
   public findConversationById(id: string) {
@@ -54,16 +55,34 @@ export class ChatService {
       ...(cursor
         ? {
             cursor: { id: cursor },
-            skip: 1, 
+            skip: 1,
           }
         : {}),
       take,
       orderBy: {
         createdAt: 'desc',
       },
+      include: {
+        file: {
+          select: {
+            path: true,
+          },
+        },
+        member: {
+          select: {
+            id: true,
+            active: true,
+            image: {
+              select: {
+                path: true,
+              },
+            },
+            name: true,
+          },
+        },
+      },
     });
   }
-  
 
   private async findConversation(memberOneId: string, memberTwoId: string) {
     return await this.db.conversation.findFirst({
@@ -84,8 +103,7 @@ export class ChatService {
       },
     });
   }
-  
- 
+
   private async createConversation(memberOneId: string, memberTwoId: string) {
     return await this.db.conversation.create({
       data: {
@@ -96,12 +114,13 @@ export class ChatService {
   }
 
   @OnEvent(EVENT_TYPES.CONVERSATION_CREATE)
-  async getOrCreteConversationEventHandler({memberOneId, memberTwoId}:{
-    memberOneId:string,
-    memberTwoId:string
+  async getOrCreteConversationEventHandler({
+    memberOneId,
+    memberTwoId,
+  }: {
+    memberOneId: string;
+    memberTwoId: string;
   }) {
-  
-
     const conversation = await this.findConversation(memberOneId, memberTwoId);
 
     if (conversation) {
@@ -143,8 +162,8 @@ export class ChatService {
     }
 
     try {
-      const data = await this.db.directMessage
-        .create({
+      const data = await this.db.$transaction(async (tx) => {
+        const message = await tx.directMessage.create({
           data: {
             content: rawData.content,
             conversation: {
@@ -165,32 +184,58 @@ export class ChatService {
               },
             },
           },
-        })
-        this.chatGateway.broadcastToConversation({
-          conversationId: rawData.conversationId,
-          type: 'create',
-          payload: data,
-        })
-        return data
+        });
+
+        const conversation = await tx.conversation.update({
+          where: {
+            id: rawData.conversationId,
+          },
+          data: {
+            lasMessage: {
+              connect: {
+                id: message.id,
+              },
+            },
+          },
+          include:{
+            memberOne:{
+              select:{
+                id: true,
+              }
+            },
+            memberTwo:{
+              select:{
+                id: true,
+              }
+            }
+          }
+        });
+
+        return {message, conversation};
+      });
+
+
+      this.chatGateway.broadcastToConversation({
+        conversationId: rawData.conversationId,
+        type: 'create',
+        payload: data,
+      });
+
+      this.event.emit(EVENT_TYPES.CHAT_LIST_UPDATE, {
+        userId: data.conversation.memberOne.id,
+      })
+
+      this.event.emit(EVENT_TYPES.CHAT_LIST_UPDATE, {
+        userId: data.conversation.memberTwo.id,
+      })
+
+      return data.message;
+
     } catch (error) {
       if (fileInstance) {
         this.eventEmitter.emit('FILE_DELETE', { Key: fileInstance.fileId });
       }
       throw new HttpException(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-  }
-
-  public async getUserStatusForConversation( conversationId: string) {
-    return this.db.user.findMany({
-      where:{
-        profile:{
-          directMessages:{
-            every:{
-              conversationId
-            }
-          }
-        }
-      }
-    })
   }
 }
