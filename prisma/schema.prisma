@@ -284,7 +284,7 @@ enum AcceptanceStatus {
 
 model Payment {
   id                       String                  @id @default(uuid())
-  bookingId                String // FK for booking @unique
+  bookingId                String? // FK for booking @unique
   bookingInfo              Booking?                @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   paymentStatus            PaymentStatus // Enum for payment status
   paymentMethod            PaymentMethod // Enum for payment method

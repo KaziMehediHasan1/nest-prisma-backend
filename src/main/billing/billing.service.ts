@@ -102,19 +102,35 @@ export class BillingService {
 
     switch (type) {
       case 'booking':
-        return this.handleBookingPayment(
-          id,
-          paymentIntent.amount_received / 100,
-          paymentIntent.id,
-        );
+        try {
+          return this.handleBookingPayment(
+            id,
+            paymentIntent.amount_received / 100,
+            paymentIntent.id,
+          );
+        } catch (error) {
+          this.logger.error(error);
+        }
       case 'fullPayment':
-        return this.handleFullPayment(
-          id,
-          paymentIntent.amount_received / 100,
-          paymentIntent.id,
-        );
+       try {
+          return this.handleFullPayment(
+            id,
+            paymentIntent.amount_received / 100,
+            paymentIntent.id,
+          );
+        } catch (error) {
+          this.logger.error(error);
+        }
       case 'verificationFee':
-        return this.handleVerificationFee(userId, paymentIntent.amount_received / 100);
+       try {
+          return this.handleVerificationFee(
+            userId,
+            paymentIntent.amount_received / 100,
+            paymentIntent.id,
+          );
+        } catch (error) {
+          this.logger.error(error);
+        }
       default:
         this.logger.warn(`Unknown PaymentIntent type: ${type}`);
     }
@@ -135,11 +151,23 @@ export class BillingService {
     // Add any specific handling logic for sessions if needed
     switch (type) {
       case 'booking':
+       try {
         return this.handleBookingPayment(id);
+       } catch (error) {
+        this.logger.error(error);
+       }
       case 'fullPayment':
+       try {
         return this.handleFullPayment(id);
+       } catch (error) {
+        this.logger.error(error);
+       }
       case 'verificationFee':
-        return this.handleVerificationFee(id);
+        try {
+          return this.handleVerificationFee(id);
+        } catch (error) {
+          this.logger.error(error);
+        }
       default:
         this.logger.warn(`Unknown CheckoutSession type: ${type}`);
     }
@@ -256,11 +284,28 @@ export class BillingService {
     }
   }
 
-  private async handleVerificationFee(id: string, amount?: number) {
+  private async handleVerificationFee(
+    id: string, 
+    amount?: number,
+    paymentIntentId?: string,
+  ) {
     this.logger.log(`Handling service booking for ID: ${id}`);
     // TODO: Implement logic
     if (!amount) {
       this.logger.warn('Amount not found');
+      return;
+    }
+
+    const isSubmissionExist = await this.db.verificationSubmission.findFirst({
+      where: {
+       profile:{
+        id
+       }
+      }
+    })
+
+    if (!isSubmissionExist) {
+      this.logger.error(`Submission not found for ID: ${id}`);
       return;
     }
 
@@ -290,6 +335,23 @@ export class BillingService {
         profile: {
           update: {
             isPro: true,
+            VerificationSubmission:{
+              update: {
+                where: { 
+                  id: isSubmissionExist.id
+                 },
+                data: { 
+                  payment:{
+                    create: {
+                      amount,
+                      paymentMethod: 'CREDIT_CARD',
+                      paymentStatus: 'COMPLETED',
+                      paymentIntentId
+                    }
+                  }
+                 },
+              },
+            },
             venues: {
               updateMany: {
                 where: { profileId: user.id },
