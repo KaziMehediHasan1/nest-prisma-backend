@@ -281,21 +281,21 @@ export class VenueService {
         amenities: true,
         decoration: true,
         arrangementsImage: { select: { path: true } },
-        reviews:{
-          take:3,
-          include:{
-            Profile:{
-              select:{
-              name:true,
-                image:{
-                  select:{
-                    path:true
-                  }
-                }
-              }
-            }
+        reviews: {
+          take: 3,
+          include: {
+            Profile: {
+              select: {
+                name: true,
+                image: {
+                  select: {
+                    path: true,
+                  },
+                },
+              },
+            },
           },
-        }
+        },
       },
     });
 
@@ -303,26 +303,26 @@ export class VenueService {
       throw new NotFoundException(`Venue with ID ${id} not found`);
     }
 
-    
-
-    const venueMetrics = await this.venueRevenueService.getVenueMetrics(venue.id);
+    const venueMetrics = await this.venueRevenueService.getVenueMetrics(
+      venue.id,
+    );
     const bookedDate = await this.bookingService.getBookedDate({ id }, true);
     const bookingRequest = await this.db.booking.findMany({
       where: {
         venueId: id,
-        bookingStatus:"PENDING"
+        bookingStatus: 'PENDING',
       },
-      take:3
-    })
+      take: 3,
+    });
 
     const averageRating = await this.db.review.aggregate({
       _avg: {
         rating: true,
       },
       where: {
-        Venue:{
-          id
-        }
+        Venue: {
+          id,
+        },
       },
     });
 
@@ -332,7 +332,7 @@ export class VenueService {
         venueMetrics,
         bookedDate,
         bookingRequest,
-        ratting: averageRating._avg.rating ?? 0
+        ratting: averageRating._avg.rating ?? 0,
       },
       message: 'Venue fetched successfully',
       statusCode: 200,
@@ -373,28 +373,49 @@ export class VenueService {
   // getAll venue end==============================
   // getAll venue by venue owner start==============================
 
-  public async getAllVenuesByVenueOwner({ pagination:{skip, take}, profileId:{id} }: {pagination:PaginationDto, profileId: IdDto}): Promise<ApiResponse<any>> {
+  public async getAllVenuesByVenueOwner({
+    pagination: { skip, take },
+    profileId: { id },
+  }: {
+    pagination: PaginationDto;
+    profileId: IdDto;
+  }): Promise<ApiResponse<any>> {
+    // Step 1: Get venues
     const venues = await this.db.venue.findMany({
-      where: { profileId:id },
+      where: { profileId: id },
       include: {
-        amenities: {
-          select: {
-            name: true,
-          },
-        },
-        decoration: true,
         arrangementsImage: { select: { path: true } },
       },
       take,
       skip,
     });
 
+    // Step 2: For each venue, compute average rating
+    const venuesWithRatings = await Promise.all(
+      venues.map(async (venue) => {
+        const avgResult = await this.db.review.aggregate({
+          _avg: { rating: true },
+          where: {
+            Venue: {
+              id: venue.id,
+            },
+          },
+        });
+
+        return {
+          ...venue,
+          averageRating: avgResult._avg.rating ?? 0,
+        };
+      }),
+    );
+
     return {
-      data: venues,
+      data: venuesWithRatings,
       message: 'Venues fetched successfully',
       statusCode: 200,
       success: true,
-    };  
+    };
   }
+
   // getAll venue by venue owner end==============================
 }
