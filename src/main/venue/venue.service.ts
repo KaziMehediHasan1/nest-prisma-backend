@@ -281,6 +281,7 @@ export class VenueService {
         amenities: true,
         decoration: true,
         arrangementsImage: { select: { path: true } },
+        venueImage: { select: { path: true } },
         reviews: {
           take: 3,
           include: {
@@ -310,7 +311,18 @@ export class VenueService {
     const bookingRequest = await this.db.booking.findMany({
       where: {
         venueId: id,
-        bookingStatus: 'PENDING',
+        bookingStatus: 'REQUESTED',
+      },
+      include:{
+        EventType:{
+          include:{
+            avatar:{
+              select:{
+                path:true
+              }
+            }
+          }
+        }
       },
       take: 3,
     });
@@ -384,7 +396,7 @@ export class VenueService {
     const venues = await this.db.venue.findMany({
       where: { profileId: id },
       include: {
-        arrangementsImage: { select: { path: true } },
+        venueImage: { select: { path: true } },
       },
       take,
       skip,
