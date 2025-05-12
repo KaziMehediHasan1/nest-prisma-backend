@@ -78,9 +78,9 @@ export class ProfileService {
             },
           },
         },
-        include:{
-          user:true
-        }
+        include: {
+          user: true,
+        },
       });
 
       return {
@@ -92,7 +92,7 @@ export class ProfileService {
             id: profile.user.id,
             isVerified: profile.user.isVerified,
             profileId: profile.id,
-          })
+          }),
         },
         message: 'Profile created successfully',
         statusCode: 200,
@@ -154,9 +154,9 @@ export class ProfileService {
           },
           ...rest,
         },
-        include:{
-          user:true
-        }
+        include: {
+          user: true,
+        },
       });
 
       return {
@@ -168,7 +168,7 @@ export class ProfileService {
             id: profile.user.id,
             isVerified: profile.user.isVerified,
             profileId: profile.id,
-          })
+          }),
         },
         message: 'Profile created successfully',
         statusCode: 200,
@@ -246,9 +246,9 @@ export class ProfileService {
           gender: 'OTHER',
           location,
         },
-        include:{
-          user:true
-        }
+        include: {
+          user: true,
+        },
       });
 
       return {
@@ -260,7 +260,7 @@ export class ProfileService {
             id: profile.user.id,
             isVerified: profile.user.isVerified,
             profileId: profile.id,
-          })
+          }),
         },
         message: 'Profile created successfully',
         statusCode: 200,
@@ -285,7 +285,8 @@ export class ProfileService {
     profileId: string,
     rawData: UpdatePlannerProfile,
   ): Promise<ApiResponse<any>> {
-    const { image, eventPreferenceIds, userId, ...rest } = rawData;
+    const { image, eventPreferenceIds, name, userName, userId, ...rest } =
+      rawData;
 
     try {
       // First check if profile exists
@@ -293,7 +294,7 @@ export class ProfileService {
         where: { id: profileId, userId },
         include: {
           user: true,
-        }
+        },
       });
 
       if (!existingProfile) {
@@ -309,7 +310,15 @@ export class ProfileService {
       }
 
       // Prepare update data
-      const updateData: Prisma.ProfileUpdateInput = { ...rest };
+      const updateData: Prisma.ProfileUpdateInput = {
+        ...rest,
+        name: userName,
+        user: {
+          update: {
+            name,
+          },
+        },
+      };
 
       // Add image if uploaded
       if (fileInstance) {
@@ -378,15 +387,15 @@ export class ProfileService {
     profileId: string,
     rawData: UpdateVenueOwnerProfile,
   ): Promise<ApiResponse<any>> {
-    const { image, ...rest } = rawData;
+    const { image, name, userName, ...rest } = rawData;
 
     try {
       // First check if profile exists
       const existingProfile = await this.db.profile.findFirst({
         where: { id: profileId },
-        include:{
-          user:true
-        }
+        include: {
+          user: true,
+        },
       });
 
       if (!existingProfile) {
@@ -402,7 +411,15 @@ export class ProfileService {
       }
 
       // Prepare update data
-      const updateData: Prisma.ProfileUpdateInput = { ...rest };
+      const updateData: Prisma.ProfileUpdateInput = {
+        ...rest,
+        name: userName,
+        user: {
+          update: {
+            name,
+          },
+        },
+      };
 
       // Add image if uploaded
       if (fileInstance) {
@@ -444,7 +461,8 @@ export class ProfileService {
     profileId: string,
     rawData: UpdateServiceProviderProfile,
   ): Promise<ApiResponse<any>> {
-    const { image, coverPhoto, eventPreferenceIds, ...rest } = rawData;
+    const { image, coverPhoto, eventPreferenceIds, name, userName, ...rest } =
+      rawData;
 
     let profilePic: FileInstance | null = null;
     let coverPhotoPic: FileInstance | null = null;
@@ -464,7 +482,13 @@ export class ProfileService {
 
       // Prepare update data
       const updateData: Prisma.ProfileUpdateInput = {
-        ...rest
+        ...rest,
+        name: userName,
+        user: {
+          update: {
+            name,
+          },
+        },
       };
 
       // Handle file uploads
