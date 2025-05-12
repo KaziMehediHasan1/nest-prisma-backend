@@ -141,10 +141,10 @@ export class SetupServiceProviderProfileDto {
   })
   @IsArray()
   @ArrayNotEmpty({ message: 'At least one amenity ID must be provided.' })
-  @ArrayUnique({ message: 'Amenity IDs must be unique.' })
+  @ArrayUnique({ message: 'EventPreference IDs must be unique.' })
   @IsUUID('4', {
     each: true,
-    message: 'Each amenity ID must be a valid UUID (version 4).',
+    message: 'Each Event Preference ID must be a valid UUID (version 4).',
   })
   eventPreferenceIds: string[];
 
