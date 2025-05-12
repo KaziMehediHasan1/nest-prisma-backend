@@ -12,6 +12,7 @@ import { UpdateVenueDto } from './dto/updateVenue.dto';
 import { IdDto } from 'src/common/dto/id.dto';
 import { ApiResponse } from 'src/interfaces/response';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { VenueRevenueService } from './venue-revenue.service';
 
 @Injectable()
 export class VenueService {
@@ -19,6 +20,7 @@ export class VenueService {
     private readonly db: DbService,
     private readonly uploadService: UploadService,
     private readonly eventEmitter: EventService,
+    private readonly venueRevenueService: VenueRevenueService,
   ) {}
 
   // create venue start================================`
@@ -284,8 +286,13 @@ export class VenueService {
       throw new NotFoundException(`Venue with ID ${id} not found`);
     }
 
+    const venueMetrics = await this.venueRevenueService.getVenueMetrics(venue.id);
+
     return {
-      data: venue,
+      data: {
+        venue,
+        venueMetrics
+      },
       message: 'Venue fetched successfully',
       statusCode: 200,
       success: true,

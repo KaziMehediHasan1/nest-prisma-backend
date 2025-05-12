@@ -18,6 +18,7 @@ import {
   UpdateVenueOwnerProfile,
 } from './dto/updateProfile.dto';
 import { FileInstance, Prisma } from '@prisma/client';
+import { AuthService } from '../auth.service';
 
 @Injectable()
 export class ProfileService {
@@ -25,6 +26,7 @@ export class ProfileService {
     private readonly db: DbService,
     private readonly upload: UploadService,
     private readonly event: EventService,
+    private readonly authService: AuthService,
   ) {}
 
   public async setupPlannerProfile(
@@ -76,10 +78,22 @@ export class ProfileService {
             },
           },
         },
+        include:{
+          user:true
+        }
       });
 
       return {
-        data: profile,
+        data: {
+          profile,
+          access_token: this.authService.generateToken({
+            email: profile.user.email,
+            roles: profile.user.role,
+            id: profile.user.id,
+            isVerified: profile.user.isVerified,
+            profileId: profile.id,
+          })
+        },
         message: 'Profile created successfully',
         statusCode: 200,
         success: true,
@@ -140,10 +154,22 @@ export class ProfileService {
           },
           ...rest,
         },
+        include:{
+          user:true
+        }
       });
 
       return {
-        data: profile,
+        data: {
+          profile,
+          access_token: this.authService.generateToken({
+            email: profile.user.email,
+            roles: profile.user.role,
+            id: profile.user.id,
+            isVerified: profile.user.isVerified,
+            profileId: profile.id,
+          })
+        },
         message: 'Profile created successfully',
         statusCode: 200,
         success: true,
@@ -220,10 +246,22 @@ export class ProfileService {
           gender: 'OTHER',
           location,
         },
+        include:{
+          user:true
+        }
       });
 
       return {
-        data: profile,
+        data: {
+          profile,
+          access_token: this.authService.generateToken({
+            email: profile.user.email,
+            roles: profile.user.role,
+            id: profile.user.id,
+            isVerified: profile.user.isVerified,
+            profileId: profile.id,
+          })
+        },
         message: 'Profile created successfully',
         statusCode: 200,
         success: true,
