@@ -13,6 +13,7 @@ import { IdDto } from 'src/common/dto/id.dto';
 import { ApiResponse } from 'src/interfaces/response';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { VenueRevenueService } from './venue-revenue.service';
+import { BookingService } from '../booking/booking.service';
 
 @Injectable()
 export class VenueService {
@@ -21,6 +22,7 @@ export class VenueService {
     private readonly uploadService: UploadService,
     private readonly eventEmitter: EventService,
     private readonly venueRevenueService: VenueRevenueService,
+    private readonly bookingService: BookingService,
   ) {}
 
   // create venue start================================`
@@ -279,6 +281,21 @@ export class VenueService {
         amenities: true,
         decoration: true,
         arrangementsImage: { select: { path: true } },
+        reviews:{
+          take:3,
+          include:{
+            Profile:{
+              select:{
+              name:true,
+                image:{
+                  select:{
+                    path:true
+                  }
+                }
+              }
+            }
+          },
+        }
       },
     });
 
@@ -286,12 +303,36 @@ export class VenueService {
       throw new NotFoundException(`Venue with ID ${id} not found`);
     }
 
+    
+
     const venueMetrics = await this.venueRevenueService.getVenueMetrics(venue.id);
+    const bookedDate = await this.bookingService.getBookedDate({ id });
+    const bookingRequest = await this.db.booking.findMany({
+      where: {
+        venueId: id,
+        bookingStatus:"PENDING"
+      },
+      take:3
+    })
+
+    const averageRating = await this.db.review.aggregate({
+      _avg: {
+        rating: true,
+      },
+      where: {
+        Venue:{
+          id
+        }
+      },
+    });
 
     return {
       data: {
         venue,
-        venueMetrics
+        venueMetrics,
+        bookedDate,
+        bookingRequest,
+        ratting: averageRating._avg.rating ?? 0
       },
       message: 'Venue fetched successfully',
       statusCode: 200,
