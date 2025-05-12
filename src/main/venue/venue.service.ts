@@ -306,7 +306,7 @@ export class VenueService {
     
 
     const venueMetrics = await this.venueRevenueService.getVenueMetrics(venue.id);
-    const bookedDate = await this.bookingService.getBookedDate({ id });
+    const bookedDate = await this.bookingService.getBookedDate({ id }, true);
     const bookingRequest = await this.db.booking.findMany({
       where: {
         venueId: id,

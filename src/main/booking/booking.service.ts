@@ -328,7 +328,7 @@ export class BookingService {
 
   // getBookedDate start===============================
 
-  async getBookedDate({ id }: IdDto): Promise<ApiResponse<any>> {
+  async getBookedDate({ id }: IdDto, dataOnly?: boolean): Promise<ApiResponse<any>|any> {
     const booking = await this.db.booking.findMany({
       where: {
         venueId: id,
@@ -341,6 +341,9 @@ export class BookingService {
     });
     if (!booking) {
       throw new NotFoundException(`Booking with id ${id} not found.`);
+    }
+    if (dataOnly){
+      return booking
     }
     return {
       data: booking,
