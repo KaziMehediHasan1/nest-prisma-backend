@@ -86,7 +86,7 @@ export class ProfileService {
       return {
         data: {
           profile,
-          access_token: this.authService.generateToken({
+          access_token: await this.authService.generateToken({
             email: profile.user.email,
             roles: profile.user.role,
             id: profile.user.id,
@@ -162,7 +162,7 @@ export class ProfileService {
       return {
         data: {
           profile,
-          access_token: this.authService.generateToken({
+          access_token: await this.authService.generateToken({
             email: profile.user.email,
             roles: profile.user.role,
             id: profile.user.id,
@@ -254,7 +254,7 @@ export class ProfileService {
       return {
         data: {
           profile,
-          access_token: this.authService.generateToken({
+          access_token: await this.authService.generateToken({
             email: profile.user.email,
             roles: profile.user.role,
             id: profile.user.id,
