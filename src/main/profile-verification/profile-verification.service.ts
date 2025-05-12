@@ -13,6 +13,7 @@ export class ProfileVerificationService {
     ) {}
 
     async sendVerificationRequest(rawData:CreateVerificationRequestDto):Promise<ApiResponse<any>> {
+        
         const isRequestSent = await this.dbService.verificationSubmission.findFirst({
             where: {
                 profile: {

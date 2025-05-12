@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -46,10 +47,14 @@ export class ProfileVerificationController {
     @Req() req: AuthenticatedRequest,
     @Body() body: CreateVerificationRequestDto,
   ) {
+    if (!req.user.profileId) {
+      throw new BadRequestException('Profile not Created');
+    }
+    
     const data: CreateVerificationRequestDto = {
       idCard: files.idCard[0],
       tradeLicense: files.tradeLicense[0],
-      profileId: req.user.profileId || '',
+      profileId: req.user.profileId,
       bio: body.bio,
     };
     return this.profileVerificationService.sendVerificationRequest(data);

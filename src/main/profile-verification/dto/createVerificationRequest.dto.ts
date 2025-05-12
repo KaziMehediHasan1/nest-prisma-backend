@@ -3,7 +3,7 @@ import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
 export class CreateVerificationRequestDto {
   @ApiProperty({
-    description: 'UUID of the first chat member (memberOne)',
+    description: 'UUID of the profile to be verified',
     format: 'uuid',
   })
   @IsUUID()
