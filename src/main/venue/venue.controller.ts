@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -25,6 +26,7 @@ import { Roles } from 'src/decorator/roles.decorator';
 import { FilterService } from './filter.service';
 import { FilterVenuesDto } from './dto/filterVenue.dto';
 import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Controller('venue')
 export class VenueController {
@@ -46,9 +48,10 @@ export class VenueController {
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   createVenue(
     @Body() createVenueDto: CreateVenueDto,
-    @UploadedFiles() files: { 
-      arrangementsImage: Express.Multer.File[],
-      venueImage: Express.Multer.File[],
+    @UploadedFiles()
+    files: {
+      arrangementsImage: Express.Multer.File[];
+      venueImage: Express.Multer.File[];
     },
     @Req() req: AuthenticatedRequest,
   ) {
@@ -75,9 +78,10 @@ export class VenueController {
   updateVenue(
     @Param() id: IdDto,
     @Body() updateVenueDto: UpdateVenueDto,
-    @UploadedFiles() files: { 
-      arrangementsImage?: Express.Multer.File[],
-      venueImage?: Express.Multer.File[],
+    @UploadedFiles()
+    files: {
+      arrangementsImage?: Express.Multer.File[];
+      venueImage?: Express.Multer.File[];
     },
   ) {
     const data = {
@@ -110,5 +114,18 @@ export class VenueController {
   @UseGuards(AuthGuard('jwt'), VerifiedGuard)
   filter(@Query() filter: FilterVenuesDto) {
     return this.filterService.FilterVenues(filter);
+  }
+
+  @Get('get-all-by-venue-owner')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard)
+  getAll(@Req() req: AuthenticatedRequest, @Query() pagination:PaginationDto ) {
+    if (req.user.profileId) {
+      return this.venueService.getAllVenuesByVenueOwner({
+        profileId: { id: req.user.profileId },
+        pagination
+      });
+    }
+    throw new NotFoundException('Profile not found');
   }
 }

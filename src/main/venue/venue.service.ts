@@ -323,4 +323,30 @@ export class VenueService {
   }
 
   // getAll venue end==============================
+  // getAll venue by venue owner start==============================
+
+  public async getAllVenuesByVenueOwner({ pagination:{skip, take}, profileId:{id} }: {pagination:PaginationDto, profileId: IdDto}): Promise<ApiResponse<any>> {
+    const venues = await this.db.venue.findMany({
+      where: { profileId:id },
+      include: {
+        amenities: {
+          select: {
+            name: true,
+          },
+        },
+        decoration: true,
+        arrangementsImage: { select: { path: true } },
+      },
+      take,
+      skip,
+    });
+
+    return {
+      data: venues,
+      message: 'Venues fetched successfully',
+      statusCode: 200,
+      success: true,
+    };  
+  }
+  // getAll venue by venue owner end==============================
 }
