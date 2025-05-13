@@ -20,7 +20,11 @@ export class SetupPlannerProfileDto {
     required: false,
   })
   @IsEnum($Enums.Gender, {
-    message: `Gender must be one of: ${$Enums.Gender.MALE}, ${$Enums.Gender.FEMALE}, ${$Enums.Gender.OTHER}`,
+    message: `Gender must be one of: 
+    ${$Enums.Gender.MALE}, 
+    ${$Enums.Gender.FEMALE}, 
+    ${$Enums.Gender.OTHER}`
+    ,
   })
   gender: $Enums.Gender;
 

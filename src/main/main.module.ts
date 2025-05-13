@@ -14,6 +14,7 @@ import { PaymentModule } from './payment/payment.module';
 import { NotificationModule } from './notification/notification.module';
 import { CheckListModule } from './check-list/check-list.module';
 import { ProfileVerificationModule } from './profile-verification/profile-verification.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ProfileVerificationModule } from './profile-verification/profile-verifi
     NotificationModule,
     CheckListModule,
     ProfileVerificationModule,
+    AdminModule,
   ],
 })
 export class MainModule {}
