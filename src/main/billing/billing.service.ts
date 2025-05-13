@@ -1,9 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { CreatePaymentIntentDtoWithId } from './dto/createPayment.dto';
 import { DbService } from 'src/lib/db/db.service';
 import { $Enums } from '@prisma/client';
+import { ApiResponse } from 'src/interfaces/response';
 
 @Injectable()
 export class BillingService {
@@ -374,4 +375,51 @@ export class BillingService {
 
     return this.stripe.webhooks.constructEvent(body, sig, endpointSecret);
   }
+
+  public async createPaymentIntent({
+  currency,
+  email,
+  amount,
+  id,
+  paymentType,
+  userId,
+}: CreatePaymentIntentDtoWithId): Promise<ApiResponse<any>> {
+  try {
+    let customer
+    // Check if the customer exists in Stripe
+     customer = await this.stripe.customers.list({ email });
+
+    if (customer.data.length === 0) {
+      // If customer doesn't exist, create a new one
+      customer = await this.stripe.customers.create({ email });
+    } else {
+      // If customer exists, retrieve the first customer
+      customer = customer.data[0];
+    }
+
+    // Now use the customer's Stripe ID
+    const paymentIntent = await this.stripe.paymentIntents.create({
+      amount: amount * 100, // Convert to cents
+      currency,
+      customer: customer.id, // Use the customer's Stripe ID
+      metadata: {
+        id,
+        type: paymentType,
+        userId,
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        clientSecret: paymentIntent.client_secret,
+      },
+      statusCode: 200,
+      message: 'Payment intent created successfully',
+    };
+  } catch (error) {
+    throw new BadRequestException(error);
+  }
+}
+
 }
