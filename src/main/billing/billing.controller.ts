@@ -16,4 +16,9 @@ export class BillingController {
     async handleCheckoutSessionCompleted(@Body() session: Stripe.Event) {
         this.billingService.handleStripeEvent(session);
     }
+
+    @Post('create-payment-intent')
+    async createPaymentIntent(@Body() payment: CreatePaymentIntentDtoWithId) {
+        return this.billingService.createPaymentIntent(payment);
+    }
 }
