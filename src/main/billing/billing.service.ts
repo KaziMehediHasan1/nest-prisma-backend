@@ -5,6 +5,7 @@ import { CreatePaymentIntentDtoWithId } from './dto/createPayment.dto';
 import { DbService } from 'src/lib/db/db.service';
 import { $Enums } from '@prisma/client';
 import { ApiResponse } from 'src/interfaces/response';
+import { log } from 'console';
 
 @Injectable()
 export class BillingService {
@@ -113,7 +114,7 @@ export class BillingService {
           this.logger.error(error);
         }
       case 'fullPayment':
-       try {
+        try {
           return this.handleFullPayment(
             id,
             paymentIntent.amount_received / 100,
@@ -123,7 +124,7 @@ export class BillingService {
           this.logger.error(error);
         }
       case 'verificationFee':
-       try {
+        try {
           return this.handleVerificationFee(
             userId,
             paymentIntent.amount_received / 100,
@@ -152,17 +153,17 @@ export class BillingService {
     // Add any specific handling logic for sessions if needed
     switch (type) {
       case 'booking':
-       try {
-        return this.handleBookingPayment(id);
-       } catch (error) {
-        this.logger.error(error);
-       }
+        try {
+          return this.handleBookingPayment(id);
+        } catch (error) {
+          this.logger.error(error);
+        }
       case 'fullPayment':
-       try {
-        return this.handleFullPayment(id);
-       } catch (error) {
-        this.logger.error(error);
-       }
+        try {
+          return this.handleFullPayment(id);
+        } catch (error) {
+          this.logger.error(error);
+        }
       case 'verificationFee':
         try {
           return this.handleVerificationFee(id);
@@ -189,7 +190,6 @@ export class BillingService {
     const booking = await this.db.booking.findUnique({
       where: { id },
     });
-
 
     if (!booking) {
       this.logger.error(`Booking not found for ID: ${id}`);
@@ -219,7 +219,7 @@ export class BillingService {
               amount: amount,
               paymentMethod: 'CREDIT_CARD',
               paymentStatus: 'COMPLETED',
-              paymentIntentId
+              paymentIntentId,
             },
           },
         },
@@ -274,7 +274,7 @@ export class BillingService {
               amount: amount,
               paymentMethod: 'CREDIT_CARD',
               paymentStatus: 'COMPLETED',
-              paymentIntentId
+              paymentIntentId,
             },
           },
         },
@@ -286,7 +286,7 @@ export class BillingService {
   }
 
   private async handleVerificationFee(
-    id: string, 
+    id: string,
     amount?: number,
     paymentIntentId?: string,
   ) {
@@ -299,11 +299,11 @@ export class BillingService {
 
     const isSubmissionExist = await this.db.verificationSubmission.findFirst({
       where: {
-       profile:{
-        id
-       }
-      }
-    })
+        profile: {
+          id,
+        },
+      },
+    });
 
     if (!isSubmissionExist) {
       this.logger.error(`Submission not found for ID: ${id}`);
@@ -336,21 +336,21 @@ export class BillingService {
         profile: {
           update: {
             isPro: true,
-            VerificationSubmission:{
+            VerificationSubmission: {
               update: {
-                where: { 
-                  id: isSubmissionExist.id
-                 },
-                data: { 
-                  payment:{
+                where: {
+                  id: isSubmissionExist.id,
+                },
+                data: {
+                  payment: {
                     create: {
                       amount,
                       paymentMethod: 'CREDIT_CARD',
                       paymentStatus: 'COMPLETED',
-                      paymentIntentId
-                    }
-                  }
-                 },
+                      paymentIntentId,
+                    },
+                  },
+                },
               },
             },
             venues: {
@@ -377,49 +377,54 @@ export class BillingService {
   }
 
   public async createPaymentIntent({
-  currency,
-  email,
-  amount,
-  id,
-  paymentType,
-  userId,
-}: CreatePaymentIntentDtoWithId): Promise<ApiResponse<any>> {
-  try {
-    let customer
-    // Check if the customer exists in Stripe
-     customer = await this.stripe.customers.list({ email });
+    currency,
+    email,
+    amount,
+    id,
+    paymentType,
+    userId,
+  }: CreatePaymentIntentDtoWithId): Promise<ApiResponse<any>> {
+    try {
+      let customer;
+      // Check if the customer exists in Stripe
+      customer = await this.stripe.customers.list({ email });
 
-    if (customer.data.length === 0) {
-      // If customer doesn't exist, create a new one
-      customer = await this.stripe.customers.create({ email });
-    } else {
-      // If customer exists, retrieve the first customer
-      customer = customer.data[0];
+      if (customer.data.length === 0) {
+        // If customer doesn't exist, create a new one
+        customer = await this.stripe.customers.create({ email });
+      } else {
+        // If customer exists, retrieve the first customer
+        customer = customer.data[0];
+      }
+
+      // Now use the customer's Stripe ID
+      const paymentIntent = await this.stripe.paymentIntents.create({
+        amount: amount * 100, // Convert to cents
+        currency,
+        customer: customer.id, // Use the customer's Stripe ID
+        metadata: {
+          id,
+          type: paymentType,
+          userId,
+        },
+      });
+
+      const paymentIntentInfo = await this.stripe.paymentIntents.retrieve(
+        paymentIntent.id,
+      );
+
+      this.logger.log(paymentIntentInfo);
+
+      return {
+        success: true,
+        data: {
+          clientSecret: paymentIntent.client_secret,
+        },
+        statusCode: 200,
+        message: 'Payment intent created successfully',
+      };
+    } catch (error) {
+      throw new BadRequestException(error);
     }
-
-    // Now use the customer's Stripe ID
-    const paymentIntent = await this.stripe.paymentIntents.create({
-      amount: amount * 100, // Convert to cents
-      currency,
-      customer: customer.id, // Use the customer's Stripe ID
-      metadata: {
-        id,
-        type: paymentType,
-        userId,
-      },
-    });
-
-    return {
-      success: true,
-      data: {
-        clientSecret: paymentIntent.client_secret,
-      },
-      statusCode: 200,
-      message: 'Payment intent created successfully',
-    };
-  } catch (error) {
-    throw new BadRequestException(error);
   }
-}
-
 }
