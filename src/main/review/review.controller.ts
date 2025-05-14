@@ -29,7 +29,7 @@ export class ReviewController {
   }
 
   @Get('get-all/service-provider/:id')
-  @Roles('PLANNER')
+  @Roles('PLANNER',"SERVICE_PROVIDER")
   async getServiceProviderReviews(@Param() id: IdDto, @Query() pagination: PaginationDto) {
     return this.reviewService.getAllReviews(id, 'profile', pagination);
   }

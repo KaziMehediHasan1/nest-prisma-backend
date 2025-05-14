@@ -104,6 +104,18 @@ model Profile {
   groupMessageId           String?
   serviceProviderRole      ServiceProviderRole?
   amenities                Amenities[]
+  works                    Works[]
+}
+
+model Works {
+  id           String         @id @default(uuid())
+  EventType    EventType?     @relation(fields: [eventTypeId], references: [id])
+  eventTypeId  String?
+  projectTitle String
+  description  String
+  files         FileInstance[]
+  Profile      Profile?       @relation(fields: [profileId], references: [id])
+  profileId    String?
 }
 
 enum Gender {
@@ -149,6 +161,7 @@ model EventType {
   avatar  FileInstance?
   profile Profile[]
   Booking Booking[]
+  works   Works[]
 }
 
 //eventPreferences end================================================
@@ -472,6 +485,8 @@ model FileInstance {
   tradeLicenseCardId  String?                 @unique
   GroupMessage        GroupMessage?           @relation(fields: [groupMessageId], references: [id])
   groupMessageId      String?                 @unique
+  Works               Works?                  @relation(fields: [worksId], references: [id])
+  worksId             String?
 }
 
 // File Instance end=========================================================
