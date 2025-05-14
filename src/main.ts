@@ -17,7 +17,9 @@ async function bootstrap() {
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('docs', app, documentFactory);
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({ whitelist: true, transform: true }),
+  );
   app.useWebSocketAdapter(new WsAdapter(app));
   app.useGlobalFilters(new GlobalErrorHandlerFilter());
   app.enableCors();
