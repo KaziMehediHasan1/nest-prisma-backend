@@ -83,7 +83,15 @@ export class GlobalErrorHandlerFilter implements ExceptionFilter {
 
     Logger.error(
       `Exception caught at ${request.method} ${request.url}`,
-      exception,
+      JSON.stringify(
+        {
+          statusCode: status,
+          message,
+          errorDetails,
+        },
+        null,
+        2,
+      ),
     );
   }
 }
