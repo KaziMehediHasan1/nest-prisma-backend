@@ -96,7 +96,6 @@ export class BillingService {
       this.logger.warn('Missing metadata in PaymentIntent: type or id/userId');
       return;
     }
-    console.log(paymentIntent.id);
 
     const { type, id, userId } = metadata;
 
@@ -408,12 +407,7 @@ export class BillingService {
           userId,
         },
       });
-
-      const paymentIntentInfo = await this.stripe.paymentIntents.retrieve(
-        paymentIntent.id,
-      );
-
-      this.logger.log(paymentIntentInfo);
+    
 
       return {
         success: true,
