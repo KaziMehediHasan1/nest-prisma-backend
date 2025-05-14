@@ -92,8 +92,8 @@ export class BillingService {
     const paymentIntent = event.data.object as Stripe.PaymentIntent;
 
     const metadata = paymentIntent.metadata;
-    if (!metadata?.type || !metadata?.id) {
-      this.logger.warn('Missing metadata in PaymentIntent: type or id');
+    if (!metadata?.type && (!metadata?.userId || !metadata?.id)) {
+      this.logger.warn('Missing metadata in PaymentIntent: type or id/userId');
       return;
     }
     console.log(paymentIntent.id);
