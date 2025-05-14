@@ -7,69 +7,109 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class ReviewService {
-    constructor(
-        private readonly db:DbService
-    ){}
+  constructor(private readonly db: DbService) {}
 
-    public async createReview(rawData: CreateReviewDto): Promise<ApiResponse<any>>{
-        const {
-            profileId, 
-            venueId,
-            ...rest
-        } = rawData
-        const review = await this.db.review.create({
-            data:{
-                ...(profileId && {
-                    Profile:{
-                        connect:{
-                            id:profileId
-                        }
-                    }
-                }),
-                ...(venueId && {
-                    Venue:{
-                        connect:{
-                            id:venueId
-                        }
-                    }
-                }),
-                ...rest
-            }
-        })
-
-        return {
-            success: true,
-            data: review,
-            message: 'Review created successfully',
-            statusCode: 200
-        }
-    }
-
-    async getAllReviews(id: IdDto, type:"venue" | "profile", {
-        skip,
-        take
-    }:PaginationDto):Promise<ApiResponse<any>>{
-        const reviews = await this.db.review.findMany({
-            where: {
-                ...(type === "venue" && {
-                    Venue: {
-                        id: id.id
-                    }
-                }),
-                ...(type === "profile" && {
-                    Profile: {
-                        id: id.id
-                    }
-                })
+  public async createReview(
+    rawData: CreateReviewDto,
+  ): Promise<ApiResponse<any>> {
+    const { profileId, venueId, ...rest } = rawData;
+    const review = await this.db.review.create({
+      data: {
+        ...(profileId && {
+          Profile: {
+            connect: {
+              id: profileId,
             },
-            skip,
-            take
-        })
-        return {
-            success: true,
-            data: reviews,
-            message: 'Reviews fetched successfully',
-            statusCode: 200
-        }
-    }
+          },
+        }),
+        ...(venueId && {
+          Venue: {
+            connect: {
+              id: venueId,
+            },
+          },
+        }),
+        ...rest,
+      },
+    });
+
+    return {
+      success: true,
+      data: review,
+      message: 'Review created successfully',
+      statusCode: 200,
+    };
+  }
+
+  async getAllReviews(
+    id: IdDto,
+    type: 'venue' | 'profile',
+    { skip, take }: PaginationDto,
+  ): Promise<ApiResponse<any>> {
+    // Define the where condition based on type
+    const whereCondition =
+      type === 'venue' ? { Venue: { id: id.id } } : { Profile: { id: id.id } };
+
+    // Get paginated reviews
+    const reviews = await this.db.review.findMany({
+      where: whereCondition,
+      skip,
+      take,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        Profile: {
+          select: {
+            name: true,
+            image: {
+              select: {
+                path: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Get average rating
+    const avgRating = await this.db.review.aggregate({
+      where: whereCondition,
+      _avg: {
+        rating: true,
+      },
+    });
+
+    // Get count for each rating value (5, 4, 3, 2, 1)
+    const ratingsCount = await Promise.all(
+      [5, 4, 3, 2, 1].map(async (rating) => {
+        const count = await this.db.review.count({
+          where: {
+            ...whereCondition,
+            rating,
+          },
+        });
+        return { rating, count };
+      }),
+    );
+
+    // Get total count of reviews
+    const totalReviews = await this.db.review.count({
+      where: whereCondition,
+    });
+
+    return {
+      success: true,
+      data: {
+        reviews,
+        stats: {
+          averageRating: avgRating._avg.rating || 0,
+          totalReviews,
+          ratingsBreakdown: ratingsCount,
+        },
+      },
+      message: 'Reviews fetched successfully',
+      statusCode: 200,
+    };
+  }
 }
