@@ -1,8 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEmail,
   IsEnum,
   IsNumber,
+  IsOptional,
   IsPositive,
   IsString,
   IsUUID,
@@ -42,17 +43,20 @@ export class CreatePaymentIntentDto {
 }
 
 export class CreatePaymentIntentDtoWithId extends CreatePaymentIntentDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Unique identifier (UUID) of a venue or service provider',
     example: '550e8400-e29b-41d4-a716-446655440000',
+    required: false,
   })
   @IsUUID('4', { message: 'ID must be a valid UUID (version 4).' })
+  @IsOptional()
   id: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Unique identifier (UUID)',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
+  @IsOptional()
   @IsUUID('4', { message: 'ID must be a valid UUID (version 4).' })
   userId: string;
 
