@@ -510,6 +510,8 @@ export class VenueService {
 
   async getThreeUpcomingEvents(id:string) {
     const today = new Date();
+    console.log(today);
+    
 
     const bookings = await this.db.booking.findMany({
       where: {

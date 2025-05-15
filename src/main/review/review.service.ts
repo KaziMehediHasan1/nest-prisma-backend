@@ -112,4 +112,71 @@ export class ReviewService {
       statusCode: 200,
     };
   }
+  async getAllVenueOwnerReviews(ownerId: string, {take, skip}:PaginationDto): Promise<ApiResponse<any>> {
+    // Step 1: Get all venues owned by the user
+    const venues = await this.db.venue.findMany({
+      where: {
+        Profile: {
+          id: ownerId,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+      take,
+      skip
+    });
+
+    const venueIds = venues.map((v) => v.id);
+
+    if (venueIds.length === 0) {
+      return {
+        data: [],
+        message: 'No venues found',
+        statusCode: 200,
+        success: true,
+      }
+    }
+
+    // Step 2: Get all reviews for those venues
+    const reviews = await this.db.review.findMany({
+      where: {
+        venueId: {
+          in: venueIds,
+        },
+      },
+      include: {
+        Venue: {
+          select: {
+            name: true,
+          },
+        },
+        Profile: {
+          select: {
+            name: true, // or email or username
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const data = await reviews.map((review) => ({
+      id: review.id,
+      content: review.comment,
+      rating: review.rating,
+      venueName: review.Venue?.name,
+      userName: review.Profile?.name,
+      createdAt: review.createdAt,
+    }));
+
+    return {
+      data,
+      message: 'Reviews fetched successfully',
+      statusCode: 200,
+      success: true,
+    };
+  }
 }

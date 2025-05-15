@@ -59,4 +59,20 @@ export class BookingController {
     
     return this.bookingService.setPrice(data);
   }
+
+  @Get("get-all-venue-owner-bookings")
+  @Roles("VENUE_OWNER")
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
+  @ApiBearerAuth()
+  getAllVenueOwnerBookings(@Req() {user}: AuthenticatedRequest){
+    if(!user.profileId){
+      return {
+        data: [],
+        message: "No venues found",
+        statusCode: 200,
+        success: true,
+      };
+    }
+    return this.bookingService.getAllVenueOwnerBookings(user.profileId)
+  }
 }
