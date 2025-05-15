@@ -14,6 +14,7 @@ import { ApiResponse } from 'src/interfaces/response';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { VenueRevenueService } from './venue-revenue.service';
 import { BookingService } from '../booking/booking.service';
+import { IdsDto } from 'src/common/dto/ids.sto';
 
 @Injectable()
 export class VenueService {
@@ -583,4 +584,27 @@ export class VenueService {
   }
 
   // getAll venue by venue owner end==============================
+
+  async getVenueForComparison({
+     ids
+  }:IdsDto):Promise<ApiResponse<any>>{
+    const venues = await this.db.venue.findMany({
+      where: {
+        id: {
+          in: ids
+        }
+      },
+      include: {
+        venueImage: { select: { path: true } },
+        decoration: true
+      },
+      
+    });
+    return { 
+      data: venues,
+      message: 'Venues fetched successfully',
+      statusCode: 200,
+      success: true
+     };
+  }
 }
