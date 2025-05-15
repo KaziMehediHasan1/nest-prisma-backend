@@ -19,6 +19,7 @@ import {
 } from './dto/updateProfile.dto';
 import { FileInstance, Prisma } from '@prisma/client';
 import { AuthService } from '../auth.service';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class ProfileService {
@@ -187,8 +188,15 @@ export class ProfileService {
   public async setUpServiceProviderProfile(
     rawData: SetupServiceProviderProfileDto,
   ): Promise<ApiResponse<any>> {
-    const { coverPhoto, image, userId, location, eventPreferenceIds, ...rest } =
-      rawData;
+    const {
+      coverPhoto,
+      image,
+      userId,
+      location,
+      eventPreferenceIds,
+      serviceTypeId,
+      ...rest
+    } = rawData;
 
     const isProfileExists = await this.db.profile.findFirst({
       where: {
@@ -241,6 +249,11 @@ export class ProfileService {
           user: {
             connect: {
               id: userId,
+            },
+          },
+          serviceType: {
+            connect: {
+              id: serviceTypeId,
             },
           },
           gender: 'OTHER',
@@ -461,8 +474,15 @@ export class ProfileService {
     profileId: string,
     rawData: UpdateServiceProviderProfile,
   ): Promise<ApiResponse<any>> {
-    const { image, coverPhoto, eventPreferenceIds, name, userName, ...rest } =
-      rawData;
+    const {
+      image,
+      coverPhoto,
+      eventPreferenceIds,
+      name,
+      userName,
+      serviceTypeId,
+      ...rest
+    } = rawData;
 
     let profilePic: FileInstance | null = null;
     let coverPhotoPic: FileInstance | null = null;
@@ -489,6 +509,9 @@ export class ProfileService {
             name,
           },
         },
+        ...(serviceTypeId
+          ? { serviceType: { connect: { id: serviceTypeId } } }
+          : {}),
       };
 
       // Handle file uploads
@@ -596,5 +619,46 @@ export class ProfileService {
 
       throw new BadRequestException(error.message);
     }
+  }
+
+  public async getServiceProviderProfile(
+    { take, skip }: PaginationDto,
+    search?: string,
+  ): Promise<ApiResponse<any>> {
+    
+    const data = await this.db.profile.findMany({
+      where: {
+        ...(search && {
+          OR: [
+            {
+              name: {
+                contains: search,
+                mode: 'insensitive',
+              },
+            },
+            {
+              user: {
+                name: {
+                  contains: search,
+                  mode: 'insensitive',
+                },
+              },
+            },
+          ],
+        }),
+      },
+      include: {
+        user: true,
+        serviceType: true,
+      },
+      take,
+      skip,
+    });
+    return {
+      data,
+      message: 'Service provider profile fetched successfully',
+      statusCode: 200,
+      success: true,
+    };
   }
 }

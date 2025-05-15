@@ -112,13 +112,6 @@ export class EventPreferenceService {
       updateData.name = updateEventPreferenceDto.name;
     }
 
-    if (updateEventPreferenceDto.profileId) {
-      updateData.Profile = {
-        connect: {
-          id: updateEventPreferenceDto.profileId,
-        },
-      };
-    }
 
     let newFileInstance;
     if (updateEventPreferenceDto.avatar) {

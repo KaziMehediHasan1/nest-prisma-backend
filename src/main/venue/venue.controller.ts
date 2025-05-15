@@ -27,12 +27,14 @@ import { FilterService } from './filter.service';
 import { FilterVenuesDto } from './dto/filterVenue.dto';
 import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { HomeService } from './home.service';
 
 @Controller('venue')
 export class VenueController {
   constructor(
     private readonly venueService: VenueService,
     private readonly filterService: FilterService,
+    private readonly homeService: HomeService,
   ) {}
 
   @Post('create')
@@ -127,5 +129,14 @@ export class VenueController {
       });
     }
     throw new NotFoundException('Profile not found');
+  }
+
+  @Get('planner-home')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
+  @Roles('VENUE_OWNER')
+  getPlannerHome(@Req() req: AuthenticatedRequest) {
+    if(!req.user.profileId) throw new NotFoundException('Profile not found');
+   return this.homeService.getHomeData(req.user.profileId);
   }
 }

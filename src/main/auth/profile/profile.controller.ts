@@ -8,9 +8,11 @@ import {
   UploadedFiles,
   UseGuards,
   UseInterceptors,
+  Get,
+  Query,
 } from '@nestjs/common';
 import { ProfileService } from './profile.service';
-import { ApiBearerAuth, ApiConsumes, ApiParam } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { 
   SetupPlannerProfileDto, 
@@ -27,6 +29,7 @@ import { VerifiedGuard } from 'src/guard/verify.guard';
 import { RolesGuard } from 'src/guard/role.guard';
 import { Roles } from 'src/decorator/roles.decorator';
 import { IdDto } from 'src/common/dto/id.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Controller('profile')
 export class ProfileController {
@@ -154,5 +157,19 @@ export class ProfileController {
     }
 
     return this.profileService.updateServiceProviderProfile(id, updateProfileDto);
+  }
+
+  // @ApiBearerAuth()
+  // @UseGuards(AuthGuard('jwt'), VerifiedGuard)
+  @Get('get-service-provider-profiles')
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'take', required: false, type: Number })
+  @ApiQuery({ name: 'skip', required: false, type: Number })
+  getProfiles(
+    @Query('search') search?: string,
+    @Query('take') take = 10,
+    @Query('skip') skip = 0,
+  ) {
+    return this.profileService.getServiceProviderProfile( {take, skip}, search)
   }
 }

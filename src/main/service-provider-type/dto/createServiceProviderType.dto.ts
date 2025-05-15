@@ -1,9 +1,7 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsUUID, IsOptional } from 'class-validator';
-import { Type } from 'class-transformer';
-import { Express } from 'express';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString } from 'class-validator';
 
-export class CreateEventPreferenceDto {
+export class CreateServiceProviderTypeDto {
   @ApiProperty({
     description: 'The name of the event preference',
     example: 'Tech Conferences',
@@ -18,5 +16,4 @@ export class CreateEventPreferenceDto {
     format: 'binary',
   })
   avatar: Express.Multer.File;
-
 }

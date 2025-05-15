@@ -150,12 +150,6 @@ export class SetupServiceProviderProfileDto {
     })
     eventPreferenceIds: string[];
   
-    @ApiProperty({
-      description: 'Role of the service provider',
-      enum: $Enums.ServiceProviderRole,
-    })
-    @IsEnum($Enums.ServiceProviderRole)
-    servicePRoviderRole: $Enums.ServiceProviderRole;
   
     @ApiProperty({
       description: 'User address',
