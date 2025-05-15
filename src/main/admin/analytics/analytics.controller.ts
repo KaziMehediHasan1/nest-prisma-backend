@@ -17,7 +17,12 @@ export class AnalyticsController {
 
   @Get("dashboard-analytics")
   async returnAnalytics() {
-    return await this.analyticsService.returnAnalytics();
+    return await this.analyticsService.returnDashboardAnalytics();
+  }
+
+  @Get("user-analytics")
+  async getUserGrowthLast6Months() {
+    return await this.analyticsService.getUserGrowthLast6Months();
   }
 
 }

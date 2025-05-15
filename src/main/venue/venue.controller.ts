@@ -134,9 +134,19 @@ export class VenueController {
   @Get('planner-home')
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
-  @Roles('VENUE_OWNER')
+  @Roles("PLANNER")
   getPlannerHome(@Req() req: AuthenticatedRequest) {
     if(!req.user.profileId) throw new NotFoundException('Profile not found');
    return this.homeService.getHomeData(req.user.profileId);
   }
+
+  @Get('venue-owner-home')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
+  @Roles('VENUE_OWNER')
+  getVenueOwnerHome(@Req() req: AuthenticatedRequest) {
+    if(!req.user.profileId) throw new NotFoundException('Profile not found');
+   return this.venueService.getOverviewOfVenueOwnerHome(req.user.profileId);
+  }
+
 }
