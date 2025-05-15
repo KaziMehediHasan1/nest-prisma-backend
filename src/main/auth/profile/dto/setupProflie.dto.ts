@@ -152,12 +152,6 @@ export class SetupServiceProviderProfileDto {
   })
   eventPreferenceIds: string[];
 
-  @ApiProperty({
-    description: 'Role of the service provider',
-    enum: $Enums.ServiceProviderRole,
-  })
-  @IsEnum($Enums.ServiceProviderRole)
-  serviceProviderRole: $Enums.ServiceProviderRole;
 
   @ApiProperty({
     description: 'User DDescription',
@@ -211,4 +205,13 @@ export class SetupServiceProviderProfileDto {
   })
   @IsString({ message: 'Name must be a string' })
   name: string;
+
+   @ApiProperty({
+    description: 'ServiceType Id',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @IsString({ message: 'ServiceType must be a string' })
+  @IsUUID('4', { message: 'ServiceType Id must be a valid uuid V4' })
+  serviceTypeId: string;
+
 }

@@ -16,6 +16,7 @@ import { CheckListModule } from './check-list/check-list.module';
 import { ProfileVerificationModule } from './profile-verification/profile-verification.module';
 import { AdminModule } from './admin/admin.module';
 import { WorksModule } from './works/works.module';
+import { ServiceProviderTypeModule } from './service-provider-type/service-provider-type.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { WorksModule } from './works/works.module';
     ProfileVerificationModule,
     AdminModule,
     WorksModule,
+    ServiceProviderTypeModule,
   ],
 })
 export class MainModule {}

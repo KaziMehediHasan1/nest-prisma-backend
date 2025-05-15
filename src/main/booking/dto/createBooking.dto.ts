@@ -16,7 +16,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   BookingType,
   BookingStatus,
-  AcceptanceStatus,
   TableShape,
   SeatingStyle,
   LightingStyle,
@@ -29,63 +28,45 @@ import { Transform, Type } from 'class-transformer';
 class DecorationDto {
     @ApiProperty({
       description: 'Array of table shapes',
-      isArray: true,
       enum: TableShape,
     })
-    @IsArray()
-    @ArrayNotEmpty()
-    @IsEnum(TableShape, { each: true })
-    tableShapes: TableShape[];
+    @IsEnum(TableShape)
+    tableShapes: TableShape;
   
     @ApiProperty({
       description: 'Array of seating styles',
-      isArray: true,
       enum: SeatingStyle,
     })
-    @IsArray()
-    @ArrayNotEmpty()
-    @IsEnum(SeatingStyle, { each: true })
-    seatingStyles: SeatingStyle[];
+    @IsEnum(SeatingStyle)
+    seatingStyles: SeatingStyle;
   
     @ApiProperty({
       description: 'Array of lighting styles',
-      isArray: true,
       enum: LightingStyle,
     })
-    @IsArray()
-    @ArrayNotEmpty()
-    @IsEnum(LightingStyle, { each: true })
-    lighting: LightingStyle[];
+    @IsEnum(LightingStyle)
+    lighting: LightingStyle;
   
     @ApiProperty({
       description: 'Array of flower colors',
-      isArray: true,
       enum: FlowerColor,
     })
-    @IsArray()
-    @ArrayNotEmpty()
-    @IsEnum(FlowerColor, { each: true })
-    flowerColors: FlowerColor[];
+    @IsEnum(FlowerColor)
+    flowerColors: FlowerColor;
   
     @ApiProperty({
       description: 'Array of flower types',
-      isArray: true,
       enum: FlowerType,
     })
-    @IsOptional()
-    @IsArray()
-    @IsEnum(FlowerType, { each: true })
-    flowerTypes?: FlowerType[];
+    @IsEnum(FlowerType)
+    flowerTypes: FlowerType;
   
     @ApiProperty({
       description: 'Array of fragrances',
-      isArray: true,
       enum: Fragrance,
     })
-    @IsArray()
-    @ArrayNotEmpty()
-    @IsEnum(Fragrance, { each: true })
-    fragrances: Fragrance[];
+    @IsEnum(Fragrance)
+    fragrances: Fragrance;
   }
   
 

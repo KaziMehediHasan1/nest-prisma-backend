@@ -58,14 +58,6 @@ enum UserRole {
 
 //
 
-enum ServiceProviderRole {
-  PHOTOGRAPHER
-  VIDEOGRAPHER
-  DJ_BAND
-  CATERING
-  ENTERTAINER
-}
-
 //profile start==========================================================
 
 model Profile {
@@ -102,9 +94,16 @@ model Profile {
   verificationSubmissionId String?                 @unique
   GroupMessage             GroupMessage?           @relation(fields: [groupMessageId], references: [id])
   groupMessageId           String?
-  serviceProviderRole      ServiceProviderRole?
   amenities                Amenities[]
   works                    Works[]
+  serviceType              ServiceProviderType[]
+}
+
+model ServiceProviderType {
+  id      String        @id @default(uuid())
+  name    String
+  avatar  FileInstance?
+  profile Profile[]
 }
 
 model Works {
@@ -113,7 +112,7 @@ model Works {
   eventTypeId  String?
   projectTitle String
   description  String
-  files         FileInstance[]
+  files        FileInstance[]
   Profile      Profile?       @relation(fields: [profileId], references: [id])
   profileId    String?
 }
@@ -459,34 +458,36 @@ model Amenities {
 // File Instance start=======================================================
 
 model FileInstance {
-  id                  String                  @id @default(uuid())
-  name                String
-  fileId              String                  @unique
-  path                String
-  createdAt           DateTime                @default(now())
-  expiresAt           DateTime
-  bucket              String
-  type                FileType
-  Venue               Venue?                  @relation("VenueImage", fields: [venueId], references: [id])
-  venueId             String?                 @unique
-  VenueDecoration     Venue?                  @relation("VenueDecoration", fields: [venueDecorationId], references: [id])
-  venueDecorationId   String?                 @unique
-  imageOfProfile      Profile?                @relation("ProfileImage")
-  coverPhotoOfProfile Profile?                @relation("ProfileCoverPhoto")
-  EventPreference     EventType?              @relation(fields: [eventPreferenceId], references: [id])
-  eventPreferenceId   String?                 @unique
-  Profile             Profile?                @relation(fields: [profileId], references: [id])
-  profileId           String?
-  DirectMessage       DirectMessage?          @relation(fields: [directMessageId], references: [id])
-  directMessageId     String?                 @unique
-  nationalIdCard      VerificationSubmission? @relation("IdCard", fields: [nationalIdCardId], references: [id])
-  nationalIdCardId    String?                 @unique
-  tradeLicense        VerificationSubmission? @relation("TradeLicense", fields: [tradeLicenseCardId], references: [id])
-  tradeLicenseCardId  String?                 @unique
-  GroupMessage        GroupMessage?           @relation(fields: [groupMessageId], references: [id])
-  groupMessageId      String?                 @unique
-  Works               Works?                  @relation(fields: [worksId], references: [id])
-  worksId             String?
+  id                    String                  @id @default(uuid())
+  name                  String
+  fileId                String                  @unique
+  path                  String
+  createdAt             DateTime                @default(now())
+  expiresAt             DateTime
+  bucket                String
+  type                  FileType
+  Venue                 Venue?                  @relation("VenueImage", fields: [venueId], references: [id])
+  venueId               String?                 @unique
+  VenueDecoration       Venue?                  @relation("VenueDecoration", fields: [venueDecorationId], references: [id])
+  venueDecorationId     String?                 @unique
+  imageOfProfile        Profile?                @relation("ProfileImage")
+  coverPhotoOfProfile   Profile?                @relation("ProfileCoverPhoto")
+  EventPreference       EventType?              @relation(fields: [eventPreferenceId], references: [id])
+  eventPreferenceId     String?                 @unique
+  Profile               Profile?                @relation(fields: [profileId], references: [id])
+  profileId             String?
+  DirectMessage         DirectMessage?          @relation(fields: [directMessageId], references: [id])
+  directMessageId       String?                 @unique
+  nationalIdCard        VerificationSubmission? @relation("IdCard", fields: [nationalIdCardId], references: [id])
+  nationalIdCardId      String?                 @unique
+  tradeLicense          VerificationSubmission? @relation("TradeLicense", fields: [tradeLicenseCardId], references: [id])
+  tradeLicenseCardId    String?                 @unique
+  GroupMessage          GroupMessage?           @relation(fields: [groupMessageId], references: [id])
+  groupMessageId        String?                 @unique
+  Works                 Works?                  @relation(fields: [worksId], references: [id])
+  worksId               String?
+  ServiceProviderType   ServiceProviderType?    @relation(fields: [serviceProviderTypeId], references: [id])
+  serviceProviderTypeId String?                 @unique
 }
 
 // File Instance end=========================================================
