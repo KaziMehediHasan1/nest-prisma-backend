@@ -166,7 +166,7 @@ export class AnalyticsService {
     return trends;
   }
 
-  async returnAnalytics(): Promise<ApiResponse<any>> {
+  async returnDashboardAnalytics(): Promise<ApiResponse<any>> {
     const totalUsers = await this.getTotalUsers();
     const activeVenues = await this.getActiveVenues();
     const monthlyRevenue = await this.getMonthlyRevenue();
@@ -183,6 +183,63 @@ export class AnalyticsService {
         monthlyBookingTrends,
         monthlyEarningTrends,
       },
+    };
+  }
+
+  async getUserGrowthLast6Months() {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - 5); // Include current month = 6 total
+
+    // Get all users created in the last 6 months
+    const users = await this.db.user.findMany({
+      where: {
+        createdAt: {
+          gte: new Date(startDate.getFullYear(), startDate.getMonth(), 1),
+          lte: new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0),
+        },
+      },
+      select: {
+        role: true,
+        createdAt: true,
+      },
+    });
+
+    // Generate labels like ['2024-12', '2025-01', ..., '2025-05']
+    const labels: string[] = [];
+    const monthIndexMap: Record<string, number> = {};
+
+    for (let i = 0; i < 6; i++) {
+      const date = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+      const label = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      labels.push(label);
+      monthIndexMap[label] = i;
+    }
+
+    // Initialize counts
+    const data = {
+      ALL_USERS: Array(6).fill(0),
+      VENUE_OWNER: Array(6).fill(0),
+      SERVICE_PROVIDER: Array(6).fill(0),
+      EVENT_PLANNER: Array(6).fill(0),
+    };
+
+    // Count users per month per role
+    for (const user of users) {
+      const createdAt = new Date(user.createdAt);
+      const label = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}`;
+      const idx = monthIndexMap[label];
+      if (idx !== undefined) {
+        data.ALL_USERS[idx] += 1;
+        if (user.role.includes('VENUE_OWNER')) data.VENUE_OWNER[idx] += 1;
+        if (user.role.includes('SERVICE_PROVIDER')) data.SERVICE_PROVIDER[idx] += 1;
+        if (user.role.includes('PLANNER')) data.EVENT_PLANNER[idx] += 1;
+      }
+    }
+
+    return {
+      months: labels,
+      data,
     };
   }
 }

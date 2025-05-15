@@ -661,8 +661,21 @@ export class ProfileService {
       }
       },
       include: {
-        user: true,
+        user: {
+          select:{
+            role: true,
+            name:true,
+            isVerified:true,
+            createdAt:true,
+            email:true,
+          }
+        },
         serviceType: true,
+        image:{
+          select:{
+            path:true
+          }
+        }
       },
       take,
       skip,
