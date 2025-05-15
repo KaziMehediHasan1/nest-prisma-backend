@@ -1,6 +1,17 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ServiceProviderTypeService } from './service-provider-type.service';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { VerifiedGuard } from 'src/guard/verify.guard';
 import { RolesGuard } from 'src/guard/role.guard';
@@ -8,6 +19,7 @@ import { CreateServiceProviderTypeDto } from './dto/createServiceProviderType.dt
 import { Roles } from 'src/decorator/roles.decorator';
 import { UpdateServiceTypeDto } from './dto/updateServiceType.dto';
 import { IdDto } from 'src/common/dto/id.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('service-provider-type')
 @ApiBearerAuth()
@@ -19,8 +31,17 @@ export class ServiceProviderTypeController {
 
   @Post('create')
   @Roles('ADMIN')
-  create(@Body() data: CreateServiceProviderTypeDto) {
-    return this.serviceProviderTypeService.createServiceProviderType(data);
+  @UseInterceptors(FileInterceptor('avatar'))
+  @ApiConsumes('multipart/form-data')
+  create(
+    @Body() data: CreateServiceProviderTypeDto,
+    @UploadedFile() avatar: Express.Multer.File,
+  ) {
+    const rawData = {
+      ...data,
+      avatar,
+    };
+    return this.serviceProviderTypeService.createServiceProviderType(rawData);
   }
 
   @Get('get')
@@ -30,14 +51,25 @@ export class ServiceProviderTypeController {
 
   @Patch('update/:id')
   @Roles('ADMIN')
-  update(@Param() {id}: IdDto ,@Body() data: UpdateServiceTypeDto) {
-    return this.serviceProviderTypeService.updateServiceProviderType({id}, data);
+  @UseInterceptors(FileInterceptor('avatar'))
+  @ApiConsumes('multipart/form-data')
+  update(
+    @Param() { id }: IdDto,
+    @Body() data: UpdateServiceTypeDto,
+    @UploadedFile() avatar?: Express.Multer.File,
+  ) {
+    if (avatar) {
+      data.avatar = avatar;
+    }
+    return this.serviceProviderTypeService.updateServiceProviderType(
+      { id },
+      data,
+    );
   }
 
   @Delete('delete/:id')
   @Roles('ADMIN')
-  delete(@Param() {id}: IdDto) {
-    return this.serviceProviderTypeService.deleteServiceProviderType({id});
+  delete(@Param() { id }: IdDto) {
+    return this.serviceProviderTypeService.deleteServiceProviderType({ id });
   }
-
 }
