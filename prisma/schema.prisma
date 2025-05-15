@@ -97,6 +97,7 @@ model Profile {
   amenities                Amenities[]
   works                    Works[]
   serviceType              ServiceProviderType[]
+  basePrice                Int                     @default(0)
 }
 
 model ServiceProviderType {
