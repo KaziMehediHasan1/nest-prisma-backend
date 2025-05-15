@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
   Param,
@@ -27,8 +28,7 @@ export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 
   @Post('create')
-  @Roles('PLANNER')
-  async createReview(rawData: CreateReviewDto) {
+  async createReview( @Body() rawData: CreateReviewDto) {
     return this.reviewService.createReview(rawData);
   }
 
