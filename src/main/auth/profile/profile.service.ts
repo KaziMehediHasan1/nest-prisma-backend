@@ -20,6 +20,7 @@ import {
 import { FileInstance, Prisma } from '@prisma/client';
 import { AuthService } from '../auth.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { IdDto } from 'src/common/dto/id.dto';
 
 @Injectable()
 export class ProfileService {
@@ -623,9 +624,9 @@ export class ProfileService {
 
   public async getServiceProviderProfile(
     { take, skip }: PaginationDto,
+     id ?: string,
     search?: string,
   ): Promise<ApiResponse<any>> {
-    
     const data = await this.db.profile.findMany({
       where: {
         ...(search && {
@@ -646,6 +647,18 @@ export class ProfileService {
             },
           ],
         }),
+        ...(id && {
+          serviceType: {
+            some: {
+              id,
+            },
+          },
+        }),
+      user:{
+        role: {
+          has:"SERVICE_PROVIDER"
+        }
+      }
       },
       include: {
         user: true,

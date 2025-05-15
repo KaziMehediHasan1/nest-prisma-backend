@@ -170,8 +170,8 @@ export class AnalyticsService {
     const totalUsers = await this.getTotalUsers();
     const activeVenues = await this.getActiveVenues();
     const monthlyRevenue = await this.getMonthlyRevenue();
-    const monthlyBookingTrends = await this.getMonthlyBookingTrends();
-    const monthlyEarningTrends = await this.getMonthlyEarningTrends();
+    const monthlyBookingTrends = (await this.getMonthlyBookingTrends()).reverse();
+    const monthlyEarningTrends = (await this.getMonthlyEarningTrends()).reverse();
     return {
       success: true,
       message: 'Analytics fetched successfully',
