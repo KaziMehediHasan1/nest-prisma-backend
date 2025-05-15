@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { DbService } from 'src/lib/db/db.service';
 import { CreateReviewDto } from './dto/createReview.dto';
 import { ApiResponse } from 'src/interfaces/response';
@@ -12,7 +12,8 @@ export class ReviewService {
   public async createReview(
     rawData: CreateReviewDto,
   ): Promise<ApiResponse<any>> {
-    const { profileId, venueId, ...rest } = rawData;
+    try {
+      const { profileId, venueId, ...rest } = rawData;
     const review = await this.db.review.create({
       data: {
         ...(profileId && {
@@ -39,6 +40,9 @@ export class ReviewService {
       message: 'Review created successfully',
       statusCode: 200,
     };
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
   async getAllReviews(

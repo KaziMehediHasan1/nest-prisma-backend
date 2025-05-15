@@ -429,7 +429,7 @@ enum VenueType {
 
 model Review {
   id        String   @id @default(uuid())
-  venueId   String
+  venueId   String?
   rating    Int // Rating (e.g., 1-5 stars)
   comment   String? // Optional comment
   createdAt DateTime @default(now())
