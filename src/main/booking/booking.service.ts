@@ -140,20 +140,20 @@ export class BookingService {
           endTime: end,
         },
       });
-  
+
       booking.decoration = JSON.parse(booking.decoration ?? '{}');
-  
+
       const memberTwoId = venue?.profileId ?? serviceProvider?.id;
-  
+
       if (!memberTwoId) {
         throw new BadRequestException('memberTwoId could not be resolved');
       }
-  
+
       this.eventEmitter.emit('CONVERSATION_CREATE', {
         memberOneId: bookedById,
         memberTwoId,
       });
-  
+
       return {
         success: true,
         data: booking,
@@ -261,74 +261,85 @@ export class BookingService {
   }
 
   public async bookingList(venueOwnerId: string): Promise<
-  ApiResponse<{
-    requested: any[];
-    pending: any[];
-    confirmed: any[];
-    completed: any[];
-  }>
-> {
-  const statuses = [
-    'REQUESTED',
-    'PENDING',
-    'CONFIRMED',
-    'COMPLETED',
-  ] as const;
+    ApiResponse<{
+      requested: any[];
+      pending: any[];
+      confirmed: any[];
+      completed: any[];
+    }>
+  > {
+    const statuses = [
+      'REQUESTED',
+      'PENDING',
+      'CONFIRMED',
+      'COMPLETED',
+    ] as const;
 
-  const bookingPromises = statuses.map(
-    async (status) =>
-      await this.db.booking.findMany({
-        where: {
-          venue: { profileId: venueOwnerId },
-          bookingStatus: status,
-        },
-        take: 3,
-      }),
-  );
+    const bookingPromises = statuses.map(
+      async (status) =>
+        await this.db.booking.findMany({
+          where: {
+            venue: { profileId: venueOwnerId },
+            bookingStatus: status,
+          },
+          take: 3,
+        }),
+    );
 
-  const [
-    requestedBookings,
-    pendingBookings,
-    confirmedBookings,
-    completedBookings,
-  ] = await Promise.all(bookingPromises);
+    const [
+      requestedBookings,
+      pendingBookings,
+      confirmedBookings,
+      completedBookings,
+    ] = await Promise.all(bookingPromises);
 
-  // Process each booking array to parse decoration strings into JSON objects
-  const processBookings = (bookings: any[]) => {
-    return bookings.map(booking => {
-      const processedBooking = { ...booking };
-      
-      if (processedBooking.decoration && typeof processedBooking.decoration === 'string') {
-        try {
-          processedBooking.decoration = JSON.parse(processedBooking.decoration);
-        } catch (error) {
-          processedBooking.decoration = {};
-          this.logger.error(`Failed to parse decoration for booking ${processedBooking.id}:`, error);
+    // Process each booking array to parse decoration strings into JSON objects
+    const processBookings = (bookings: any[]) => {
+      return bookings.map((booking) => {
+        const processedBooking = { ...booking };
+
+        if (
+          processedBooking.decoration &&
+          typeof processedBooking.decoration === 'string'
+        ) {
+          try {
+            processedBooking.decoration = JSON.parse(
+              processedBooking.decoration,
+            );
+          } catch (error) {
+            processedBooking.decoration = {};
+            this.logger.error(
+              `Failed to parse decoration for booking ${processedBooking.id}:`,
+              error,
+            );
+          }
         }
-      }
-      
-      return processedBooking;
-    });
-  };
 
-  return {
-    statusCode: 200,
-    success: true,
-    message: 'Bookings fetched successfully.',
-    data: {
-      requested: processBookings(requestedBookings),
-      pending: processBookings(pendingBookings),
-      confirmed: processBookings(confirmedBookings),
-      completed: processBookings(completedBookings),
-    },
-  };
-}
+        return processedBooking;
+      });
+    };
+
+    return {
+      statusCode: 200,
+      success: true,
+      message: 'Bookings fetched successfully.',
+      data: {
+        requested: processBookings(requestedBookings),
+        pending: processBookings(pendingBookings),
+        confirmed: processBookings(confirmedBookings),
+        completed: processBookings(completedBookings),
+      },
+    };
+  }
 
   // update booking end================================
 
   // getBookedDate start===============================
 
-  async getBookedDate({ id }: IdDto, dataOnly?: boolean): Promise<ApiResponse<any>|any> {
+  async getBookedDate(
+    { id }: IdDto,
+    dataOnly?: boolean,
+  ): Promise<ApiResponse<any> | any> {
     const booking = await this.db.booking.findMany({
       where: {
         venueId: id,
@@ -342,8 +353,8 @@ export class BookingService {
     if (!booking) {
       throw new NotFoundException(`Booking with id ${id} not found.`);
     }
-    if (dataOnly){
-      return booking
+    if (dataOnly) {
+      return booking;
     }
     return {
       data: booking,
@@ -365,8 +376,8 @@ export class BookingService {
       throw new NotFoundException(`Booking with id ${id} not found.`);
     }
     const updatedBooking = await this.db.booking.update({
-      where: { id:booking.id, bookingStatus: $Enums.BookingStatus.REQUESTED },
-      data: { totalAmount,due:totalAmount,paid:0 },
+      where: { id: booking.id, bookingStatus: $Enums.BookingStatus.REQUESTED },
+      data: { totalAmount, due: totalAmount, paid: 0 },
     });
     return {
       data: updatedBooking,
@@ -377,4 +388,80 @@ export class BookingService {
   }
 
   // Set price end ================================
+
+  async getAllVenueOwnerBookings(ownerId: string):Promise<ApiResponse<any>> {
+    // Step 1: Get all venues owned by this user
+    const venues = await this.db.venue.findMany({
+      where: {
+        Profile: {
+          id: ownerId,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+
+    const venueIds = venues.map((v) => v.id);
+
+    if (venueIds.length === 0) {
+      return {
+        data: [],
+        message: 'No venues found',
+        statusCode: 200,
+        success: true,
+      };
+    }
+
+    // Step 2: Get bookings with status PENDING or CONFIRMED for those venues
+    const bookings = await this.db.booking.findMany({
+      where: {
+        venueId: {
+          in: venueIds,
+        },
+        bookingStatus: {
+          in: ['PENDING', 'CONFIRMED'],
+        },
+      },
+      include: {
+        venue: {
+          select: {
+            name: true,
+            Profile: {
+              select: {
+                name: true,
+                image: {
+                  select: {
+                    path: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // Step 3: Format response
+    const data =  await bookings.map((booking) => ({
+      id: booking.id,
+      venueName: booking.venue?.name ?? 'Unknown Venue',
+      userName: booking.venue?.Profile?.name ?? 'Unknown Owner',
+      status: booking.bookingStatus,
+      eventDate: booking.selectedDate,
+      totalAmount: booking.totalAmount,
+      createdAt: booking.createdAt,
+    }));
+
+    return {
+      data,
+      message: 'Bookings fetched successfully',
+      statusCode: 200,
+      success: true,
+    }
+  }
 }
