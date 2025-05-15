@@ -28,6 +28,7 @@ import { FilterVenuesDto } from './dto/filterVenue.dto';
 import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { HomeService } from './home.service';
+import { IdsDto } from 'src/common/dto/ids.sto';
 
 @Controller('venue')
 export class VenueController {
@@ -147,6 +148,15 @@ export class VenueController {
   getVenueOwnerHome(@Req() req: AuthenticatedRequest) {
     if(!req.user.profileId) throw new NotFoundException('Profile not found');
    return this.venueService.getOverviewOfVenueOwnerHome(req.user.profileId);
+  }
+
+  @Post("get-venue-for-comparison")
+  // @ApiBearerAuth()
+  // @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
+  // @Roles('PLANNER')
+  getVenueForComparison(@Body() id: IdsDto) {
+    
+    return this.venueService.getVenueForComparison(id);
   }
 
 }
