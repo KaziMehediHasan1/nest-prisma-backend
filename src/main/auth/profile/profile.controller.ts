@@ -165,11 +165,13 @@ export class ProfileController {
   @ApiQuery({ name: 'search', required: false })
   @ApiQuery({ name: 'take', required: false, type: Number })
   @ApiQuery({ name: 'skip', required: false, type: Number })
+  @ApiQuery({ name: 'id', required: false })
   getProfiles(
     @Query('search') search?: string,
     @Query('take') take = 10,
     @Query('skip') skip = 0,
+    @Query("id") id?: string
   ) {
-    return this.profileService.getServiceProviderProfile( {take, skip}, search)
+    return this.profileService.getServiceProviderProfile( {take, skip},id, search)
   }
 }
