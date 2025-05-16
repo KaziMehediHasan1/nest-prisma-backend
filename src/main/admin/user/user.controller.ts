@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
-import { UserService } from './user.service';
+import { UserService } from './services/user.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/guard/role.guard';
@@ -8,6 +8,7 @@ import { filter } from 'rxjs';
 import { GetAllProfilesDto } from './dto/getUser.dto';
 import { IdDto } from 'src/common/dto/id.dto';
 import { AuthService } from 'src/main/auth/auth.service';
+import { GetProfileService } from './services/get-profile.service';
 
 @ApiTags('admin')
 @Controller('user-management')
@@ -17,6 +18,7 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly authService: AuthService,
+    private readonly getProfileService: GetProfileService,
   ) {}
 
   @Get('get-all-user')
@@ -32,5 +34,10 @@ export class UserController {
   @Post('delete-user')
   deleteUser(@Query() { id }: IdDto) {
     return this.authService.deleteUser(id);
+  }
+
+  @Get('get-profile')
+  unSuspendUser(@Query() id: IdDto) {
+    return this.getProfileService.getProfile(id);
   }
 }
