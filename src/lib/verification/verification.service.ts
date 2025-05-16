@@ -141,7 +141,7 @@ export class VerificationService {
     return {
       statusCode: 200,
       success: true,
-      message: 'Verification code is valid',
+      message: `Verification code is ${storedCode === code ? 'valid' : 'invalid'}`,
       data: {
         isValid: storedCode === code,
         email: identifier
