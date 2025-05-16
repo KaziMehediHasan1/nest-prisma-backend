@@ -4,9 +4,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DbService } from 'src/lib/db/db.service';
-import { CreateShiftDto } from './dto/createShift.dto';
+import { CreateShiftDto } from '../dto/createShift.dto';
 import { Venue } from '@prisma/client';
-import { UpdateShiftDto } from './dto/updateShift.sto';
+import { UpdateShiftDto } from '../dto/updateShift.sto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { IdDto } from 'src/common/dto/id.dto';
 import { ApiResponse } from 'src/interfaces/response';

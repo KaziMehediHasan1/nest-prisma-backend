@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ShiftService } from './shift.service';
+import { ShiftService } from './services/shift.service';
 import { ShiftController } from './shift.controller';
 
 @Module({
