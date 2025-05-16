@@ -1,11 +1,15 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DbService } from 'src/lib/db/db.service';
-import { CreateWorkShowCaseDto } from './dto/createWorkShowCase.dto';
+import { CreateWorkShowCaseDto } from '../dto/createWorkShowCase.dto';
 import { UploadService } from 'src/lib/upload/upload.service';
 import { IdDto } from 'src/common/dto/id.dto';
 import { ApiResponse } from 'src/interfaces/response';
 import { FileInstance } from '@prisma/client';
-import { UpdateWorkShowCaseDto } from './dto/updateWroke.dto';
+import { UpdateWorkShowCaseDto } from '../dto/updateWroke.dto';
 
 @Injectable()
 export class WorksService {
@@ -129,15 +133,17 @@ export class WorksService {
     });
 
     if (!existingWork) {
-      throw new NotFoundException('Work not found or you do not have permission to update it');
+      throw new NotFoundException(
+        'Work not found or you do not have permission to update it',
+      );
     }
 
     const { files, eventTypeId, ...rest } = rawData;
-     let newFilesInstance:FileInstance[] = [];
+    let newFilesInstance: FileInstance[] = [];
     try {
       // Create update data object
       const updateData: any = { ...rest };
-      
+
       // Handle event type update if provided
       if (eventTypeId) {
         updateData.EventType = {
@@ -146,7 +152,7 @@ export class WorksService {
       }
 
       // Handle files if provided
-     
+
       if (files && files.length > 0) {
         // Upload new files
         newFilesInstance = await Promise.all(
@@ -156,7 +162,7 @@ export class WorksService {
         // Disconnect existing files
         if (existingWork.files && existingWork.files.length > 0) {
           // Delete old files from storage
-          existingWork.files.forEach(file => {
+          existingWork.files.forEach((file) => {
             if (file.fileId) {
               this.uploadService.deleteFile({
                 Key: file.fileId,
@@ -166,13 +172,13 @@ export class WorksService {
 
           // Update database relationships
           updateData.files = {
-            disconnect: existingWork.files.map(file => ({ id: file.id })),
-            connect: newFilesInstance.map(file => ({ id: file.id })),
+            disconnect: existingWork.files.map((file) => ({ id: file.id })),
+            connect: newFilesInstance.map((file) => ({ id: file.id })),
           };
         } else {
           // Just connect new files if there were no existing ones
           updateData.files = {
-            connect: newFilesInstance.map(file => ({ id: file.id })),
+            connect: newFilesInstance.map((file) => ({ id: file.id })),
           };
         }
       }
@@ -210,8 +216,8 @@ export class WorksService {
   }
 
   public async deleteWork(
-    workId: string, 
-    profileId: string
+    workId: string,
+    profileId: string,
   ): Promise<ApiResponse<any>> {
     // First, check if work exists and belongs to the profile
     const existingWork = await this.db.works.findFirst({
@@ -227,7 +233,9 @@ export class WorksService {
     });
 
     if (!existingWork) {
-      throw new NotFoundException('Work not found or you do not have permission to delete it');
+      throw new NotFoundException(
+        'Work not found or you do not have permission to delete it',
+      );
     }
 
     try {
