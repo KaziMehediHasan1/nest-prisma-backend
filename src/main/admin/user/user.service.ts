@@ -17,7 +17,7 @@ export class UserService {
             has: userRole,
           }
         },
-        ...(typeof isActive ? { isActive } : {}),
+      ...(isActive !== undefined ? { active: isActive } : {}),
       },
       include: {
         user: true, // Optional: Include user info if needed
