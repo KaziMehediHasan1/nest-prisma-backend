@@ -147,6 +147,7 @@ export class VerificationService {
   }: VerifyCodeOnlyDto): Promise<ApiResponse<any>> {
     const cacheKey = this.createCacheKey(identifier);
     const storedCode = await this.cacheManager.get<string>(cacheKey);
+    
     if (storedCode !== code) {
       throw new BadRequestException('Code is not valid');  
     }
