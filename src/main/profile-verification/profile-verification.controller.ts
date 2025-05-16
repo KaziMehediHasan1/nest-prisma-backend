@@ -10,7 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ProfileVerificationService } from './profile-verification.service';
+import { ProfileVerificationService } from './services/profile-verification.service';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
@@ -50,7 +50,7 @@ export class ProfileVerificationController {
     if (!req.user.profileId) {
       throw new BadRequestException('Profile not Created');
     }
-    
+
     const data: CreateVerificationRequestDto = {
       idCard: files.idCard[0],
       tradeLicense: files.tradeLicense[0],
@@ -63,6 +63,8 @@ export class ProfileVerificationController {
   @Get('get-all-verification-requests')
   @Roles('ADMIN')
   getAllVerificationRequests(@Query() pagination: PaginationDto) {
-    return this.profileVerificationService.getAllVerificationRequests(pagination);
+    return this.profileVerificationService.getAllVerificationRequests(
+      pagination,
+    );
   }
 }
