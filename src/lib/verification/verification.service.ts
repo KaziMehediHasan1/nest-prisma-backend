@@ -14,6 +14,7 @@ import {
 import { EventService } from '../event/event.service';
 import { ApiResponse } from 'src/interfaces/response';
 import { VerifyCodeOnlyDto } from 'src/main/auth/dto/verifyCode.dto';
+import { isValid } from 'date-fns';
 
 @Injectable()
 export class VerificationService {
@@ -147,7 +148,18 @@ export class VerificationService {
     const cacheKey = this.createCacheKey(identifier);
     const storedCode = await this.cacheManager.get<string>(cacheKey);
     if (storedCode !== code) {
+      throw new BadRequestException('Code is not valid');  
     }
-    throw new BadRequestException('Code is not valid');
+
+    return {
+      statusCode: 200,
+      success: true,
+      message: 'Code is valid',
+      data: {
+        isValid: true,
+        email: identifier
+      },
+    };
+    
   }
 }

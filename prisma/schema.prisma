@@ -98,6 +98,7 @@ model Profile {
   works                    Works[]
   serviceType              ServiceProviderType[]
   basePrice                Int                     @default(0)
+  susPend                  Boolean                 @default(false)
 }
 
 model ServiceProviderType {
