@@ -541,7 +541,7 @@ export class VenueService {
     return bookings;
   }
 
-  async getRecentVenueReviews(id: string) {
+  private async getRecentVenueReviews(id: string) {
     return this.db.review.findMany({
       where: {
         Venue: {
