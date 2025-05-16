@@ -13,7 +13,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { VenueService } from './venue.service';
+import { VenueService } from './services/venue.service';
 import { CreateVenueDto } from './dto/venueCreate.dto';
 import { ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -23,12 +23,13 @@ import { AuthGuard } from '@nestjs/passport';
 import { VerifiedGuard } from 'src/guard/verify.guard';
 import { RolesGuard } from 'src/guard/role.guard';
 import { Roles } from 'src/decorator/roles.decorator';
-import { FilterService } from './filter.service';
 import { FilterVenuesDto } from './dto/filterVenue.dto';
 import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { HomeService } from './home.service';
+import { HomeService } from './services/home.service';
 import { IdsDto } from 'src/common/dto/ids.sto';
+import { FilterService } from './services/filter.service';
+import { VenueOwnerService } from './services/venueOwner.service';
 
 @Controller('venue')
 export class VenueController {
@@ -36,6 +37,7 @@ export class VenueController {
     private readonly venueService: VenueService,
     private readonly filterService: FilterService,
     private readonly homeService: HomeService,
+    private readonly venueOwnerService:VenueOwnerService,
   ) {}
 
   @Post('create')
@@ -122,11 +124,11 @@ export class VenueController {
   @Get('get-all-by-venue-owner')
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'), VerifiedGuard)
-  getAll(@Req() req: AuthenticatedRequest, @Query() pagination:PaginationDto ) {
+  getAll(@Req() req: AuthenticatedRequest, @Query() pagination: PaginationDto) {
     if (req.user.profileId) {
-      return this.venueService.getAllVenuesByVenueOwner({
+      return this.venueOwnerService.getAllVenuesByVenueOwner({
         profileId: { id: req.user.profileId },
-        pagination
+        pagination,
       });
     }
     throw new NotFoundException('Profile not found');
@@ -135,10 +137,10 @@ export class VenueController {
   @Get('planner-home')
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
-  @Roles("PLANNER")
+  @Roles('PLANNER')
   getPlannerHome(@Req() req: AuthenticatedRequest) {
-    if(!req.user.profileId) throw new NotFoundException('Profile not found');
-   return this.homeService.getHomeData(req.user.profileId);
+    if (!req.user.profileId) throw new NotFoundException('Profile not found');
+    return this.homeService.getHomeData(req.user.profileId);
   }
 
   @Get('venue-owner-home')
@@ -146,17 +148,15 @@ export class VenueController {
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   @Roles('VENUE_OWNER')
   getVenueOwnerHome(@Req() req: AuthenticatedRequest) {
-    if(!req.user.profileId) throw new NotFoundException('Profile not found');
-   return this.venueService.getOverviewOfVenueOwnerHome(req.user.profileId);
+    if (!req.user.profileId) throw new NotFoundException('Profile not found');
+    return this.venueOwnerService.getOverviewOfVenueOwnerHome(req.user.profileId);
   }
 
-  @Post("get-venue-for-comparison")
+  @Post('get-venue-for-comparison')
   // @ApiBearerAuth()
   // @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   // @Roles('PLANNER')
   getVenueForComparison(@Body() id: IdsDto) {
-    
-    return this.venueService.getVenueForComparison(id);
+    return this.venueOwnerService.getVenueForComparison(id);
   }
-
 }
