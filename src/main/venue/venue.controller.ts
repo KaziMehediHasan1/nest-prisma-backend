@@ -37,7 +37,7 @@ export class VenueController {
     private readonly venueService: VenueService,
     private readonly filterService: FilterService,
     private readonly homeService: HomeService,
-    private readonly venueOwnerService:VenueOwnerService,
+    private readonly venueOwnerService: VenueOwnerService,
   ) {}
 
   @Post('create')
@@ -149,7 +149,9 @@ export class VenueController {
   @Roles('VENUE_OWNER')
   getVenueOwnerHome(@Req() req: AuthenticatedRequest) {
     if (!req.user.profileId) throw new NotFoundException('Profile not found');
-    return this.venueOwnerService.getOverviewOfVenueOwnerHome(req.user.profileId);
+    return this.venueOwnerService.getOverviewOfVenueOwnerHome(
+      req.user.profileId,
+    );
   }
 
   @Post('get-venue-for-comparison')
@@ -158,5 +160,10 @@ export class VenueController {
   // @Roles('PLANNER')
   getVenueForComparison(@Body() id: IdsDto) {
     return this.venueOwnerService.getVenueForComparison(id);
+  }
+
+  @Get('get-all-venues')
+  getAllVenues(@Query() pagination: PaginationDto) {
+    return this.venueService.getAllVenues(pagination);
   }
 }

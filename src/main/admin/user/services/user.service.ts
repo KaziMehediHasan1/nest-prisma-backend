@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { DbService } from 'src/lib/db/db.service';
-import { GetAllProfilesDto } from './dto/getUser.dto';
+import { GetAllProfilesDto } from '../dto/getUser.dto';
 import { ApiResponse } from 'src/interfaces/response';
 import { IdDto } from 'src/common/dto/id.dto';
 

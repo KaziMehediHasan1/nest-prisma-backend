@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
-import { PaymentService } from './payment.service';
+import { PaymentService } from './services/payment.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { VerifiedGuard } from 'src/guard/verify.guard';
@@ -14,10 +14,13 @@ import { Roles } from 'src/decorator/roles.decorator';
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
-  @Get("cash_in/venue_owner/:id")
-  @Roles("VENUE_OWNER")
+  @Get('cash_in/venue_owner/:id')
+  @Roles('VENUE_OWNER')
   @UseGuards(RolesGuard)
-  async getCashInListForVenue(@Param() { id }: IdDto, @Query() params: PaginationDto) {
+  async getCashInListForVenue(
+    @Param() { id }: IdDto,
+    @Query() params: PaginationDto,
+  ) {
     return await this.paymentService.getCashInListForVenue(id, params);
   }
 }
