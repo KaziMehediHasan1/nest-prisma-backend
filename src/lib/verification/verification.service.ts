@@ -1,7 +1,16 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Injectable, Inject, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  Logger,
+  BadRequestException,
+} from '@nestjs/common';
 import { Cache } from 'cache-manager';
-import { EVENT_TYPES, PasswordResetEmailEvent, VerificationEmailEvent } from 'src/interfaces/event';
+import {
+  EVENT_TYPES,
+  PasswordResetEmailEvent,
+  VerificationEmailEvent,
+} from 'src/interfaces/event';
 import { EventService } from '../event/event.service';
 import { ApiResponse } from 'src/interfaces/response';
 import { VerifyCodeOnlyDto } from 'src/main/auth/dto/verifyCode.dto';
@@ -24,46 +33,46 @@ export class VerificationService {
   }
 
   async generateVerificationCode(
-    identifier: string, 
-    expiresInMinutes: number = 5
+    identifier: string,
+    expiresInMinutes: number = 5,
   ): Promise<string> {
     try {
       const cacheKey = this.createCacheKey(identifier);
-      
+
       const existingCode = await this.cacheManager.get(cacheKey);
-      
+
       if (existingCode) {
         await this.cacheManager.del(cacheKey);
       }
-      
+
       const code = this.generateCode();
-      
+
       try {
         // Convert minutes to milliseconds for the cache TTL
         await this.cacheManager.set(
-          cacheKey, 
-          code, 
-          1000 * 60 * expiresInMinutes
+          cacheKey,
+          code,
+          1000 * 60 * expiresInMinutes,
         );
       } catch (error) {
         console.log(error);
         throw error;
       }
-      
+
       return code;
     } catch (error) {
       Logger.error(
         `Failed to generate verification code for ${identifier}`,
         error,
       );
-      
+
       throw new Error(`Unable to generate verification code: ${error.message}`);
     }
   }
 
   async verifyCode(identifier: string, code: string): Promise<boolean> {
     const cacheKey = this.createCacheKey(identifier);
-    const storedCode = await this.cacheManager.get<string>(cacheKey);    
+    const storedCode = await this.cacheManager.get<string>(cacheKey);
 
     if (!storedCode || storedCode !== code) {
       return false;
@@ -109,7 +118,7 @@ export class VerificationService {
   ): Promise<string> {
     // Generate verification code and store in cache
     const code = await this.generateVerificationCode(email, expiresInMinutes);
-    
+
     // Prepare password reset email payload
     const passwordResetPayload: PasswordResetEmailEvent = {
       to: email,
@@ -118,34 +127,27 @@ export class VerificationService {
       subject: metadata.subject || 'Password Reset Code',
       metadata: {
         ...metadata,
-        type: 'password_reset'
+        type: 'password_reset',
       },
     };
-    
+
     // Emit event to send the password reset email
     this.eventEmitter.emit(
       EVENT_TYPES.PASSWORD_RESET_EMAIL_SEND,
       passwordResetPayload,
     );
-    
+
     return code;
   }
 
   async isCodeValid({
     code,
-    email: identifier
-  }:VerifyCodeOnlyDto): Promise<ApiResponse<any>> {
+    email: identifier,
+  }: VerifyCodeOnlyDto): Promise<ApiResponse<any>> {
     const cacheKey = this.createCacheKey(identifier);
     const storedCode = await this.cacheManager.get<string>(cacheKey);
-  
-    return {
-      statusCode: 200,
-      success: true,
-      message: `Verification code is ${storedCode === code ? 'valid' : 'invalid'}`,
-      data: {
-        isValid: storedCode === code,
-        email: identifier
-      }
+    if (storedCode !== code) {
     }
+    throw new BadRequestException('Code is not valid');
   }
 }
