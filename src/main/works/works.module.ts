@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { WorksService } from './works.service';
+import { WorksService } from './services/works.service';
 import { WorksController } from './works.controller';
 
 @Module({

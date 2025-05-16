@@ -15,7 +15,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { WorksService } from './works.service';
+import { WorksService } from './services/works.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/guard/role.guard';
 import { VerifiedGuard } from 'src/guard/verify.guard';
@@ -23,7 +23,13 @@ import { IdDto } from 'src/common/dto/id.dto';
 import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
 import { CreateWorkShowCaseDto } from './dto/createWorkShowCase.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiConsumes, ApiParam, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiParam,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Roles } from 'src/decorator/roles.decorator';
 import { get } from 'http';
 import { UpdateWorkShowCaseDto } from './dto/updateWroke.dto';
