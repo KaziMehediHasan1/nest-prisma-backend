@@ -155,14 +155,16 @@ export class VenueController {
   }
 
   @Post('get-venue-for-comparison')
-  // @ApiBearerAuth()
-  // @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
-  // @Roles('PLANNER')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
+  @Roles('PLANNER')
   getVenueForComparison(@Body() id: IdsDto) {
     return this.venueOwnerService.getVenueForComparison(id);
   }
 
   @Get('get-all-venues')
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard)
   getAllVenues(@Query() pagination: PaginationDto) {
     return this.venueService.getAllVenues(pagination);
   }
