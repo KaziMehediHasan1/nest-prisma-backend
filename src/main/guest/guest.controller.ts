@@ -10,7 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { GuestService } from './guest.service';
+import { GuestService } from './services/guest.service';
 import { IdDto } from 'src/common/dto/id.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreateGuestDto } from './dto/createGuest.dto';
@@ -22,10 +22,15 @@ import { Roles } from 'src/decorator/roles.decorator';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { createGroupDto } from './dto/createGroup.dto';
 import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
+import { GuestLinkService } from './services/guestLink.service';
 
 @Controller('guest')
 export class GuestController {
-  constructor(private readonly guestService: GuestService) {}
+  constructor(
+    private readonly guestService: GuestService,
+    private readonly gestlinkService:GuestLinkService
+  
+  ) {}
 
   @Get('magic-link/generate')
   @ApiBearerAuth()
@@ -33,12 +38,12 @@ export class GuestController {
   @Roles('PLANNER')
   @ApiOperation({ summary: 'Generate magic link for a specific booking' })
   async generateMagicLink(@Query() id: IdDto) {
-    return this.guestService.generateMagicLink(id);
+    return this.gestlinkService.generateMagicLink(id);
   }
 
   @Get('magic-link/verify')
   async verifyMagicLink(@Query() id: IdDto) {
-    return this.guestService.verifyMagicLink(id);
+    return this.gestlinkService.verifyMagicLink(id);
   }
 
   @Post('create')
@@ -62,7 +67,7 @@ export class GuestController {
     return this.guestService.getAllInvites(id, pagination);
   }
 
-  @Post("create-group")
+  @Post('create-group')
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   @Roles('PLANNER')
   @ApiBearerAuth()
@@ -72,13 +77,17 @@ export class GuestController {
     @UploadedFile() image: Express.Multer.File,
     @Body() data: createGroupDto,
     @Query() id: IdDto,
-    @Req() req: AuthenticatedRequest
+    @Req() req: AuthenticatedRequest,
   ) {
-   const rawData = {
+    const rawData = {
       ...data,
       image,
     };
-    
-    return this.guestService.createGroupByBookingId(id, req.user.profileId? req.user.profileId : "" ,rawData);
+
+    return this.guestService.createGroupByBookingId(
+      id,
+      req.user.profileId ? req.user.profileId : '',
+      rawData,
+    );
   }
 }

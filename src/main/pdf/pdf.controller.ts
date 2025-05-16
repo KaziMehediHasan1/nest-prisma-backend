@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Res } from '@nestjs/common';
-import { PdfService } from './pdf.service';
+import { PdfService } from './services/pdf.service';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CreateInviteDto } from './dto/create-invite.dto';
 import { Response } from 'express';
