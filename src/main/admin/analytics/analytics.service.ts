@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DbService } from 'src/lib/db/db.service';
 import { startOfMonth, subMonths, format } from 'date-fns';
 import { ApiResponse } from 'src/interfaces/response';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class AnalyticsService {
@@ -170,8 +171,12 @@ export class AnalyticsService {
     const totalUsers = await this.getTotalUsers();
     const activeVenues = await this.getActiveVenues();
     const monthlyRevenue = await this.getMonthlyRevenue();
-    const monthlyBookingTrends = (await this.getMonthlyBookingTrends()).reverse();
-    const monthlyEarningTrends = (await this.getMonthlyEarningTrends()).reverse();
+    const monthlyBookingTrends = (
+      await this.getMonthlyBookingTrends()
+    ).reverse();
+    const monthlyEarningTrends = (
+      await this.getMonthlyEarningTrends()
+    ).reverse();
     return {
       success: true,
       message: 'Analytics fetched successfully',
@@ -210,7 +215,11 @@ export class AnalyticsService {
     const monthIndexMap: Record<string, number> = {};
 
     for (let i = 0; i < 6; i++) {
-      const date = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+      const date = new Date(
+        startDate.getFullYear(),
+        startDate.getMonth() + i,
+        1,
+      );
       const label = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       labels.push(label);
       monthIndexMap[label] = i;
@@ -232,7 +241,8 @@ export class AnalyticsService {
       if (idx !== undefined) {
         data.ALL_USERS[idx] += 1;
         if (user.role.includes('VENUE_OWNER')) data.VENUE_OWNER[idx] += 1;
-        if (user.role.includes('SERVICE_PROVIDER')) data.SERVICE_PROVIDER[idx] += 1;
+        if (user.role.includes('SERVICE_PROVIDER'))
+          data.SERVICE_PROVIDER[idx] += 1;
         if (user.role.includes('PLANNER')) data.EVENT_PLANNER[idx] += 1;
       }
     }
@@ -241,5 +251,47 @@ export class AnalyticsService {
       months: labels,
       data,
     };
+  }
+
+  async getUserRoleDistribution():Promise<ApiResponse<any>> {
+    // Count total users for each role
+    const [venueOwners, serviceProviders, eventPlanners] = await Promise.all([
+      this.db.user.count({
+        where: {
+          role: {
+            has: UserRole.VENUE_OWNER,
+          },
+        },
+      }),
+      this.db.user.count({
+        where: { role: { has: UserRole.SERVICE_PROVIDER } },
+      }),
+      this.db.user.count({ where: { role: { has: UserRole.PLANNER } } }),
+    ]);
+
+    const total = venueOwners + serviceProviders + eventPlanners || 1;
+
+    return {
+      data: [
+      {
+        role: 'Venue Owner',
+        count: venueOwners,
+        percentage: ((venueOwners / total) * 100).toFixed(1),
+      },
+      {
+        role: 'Service Provider',
+        count: serviceProviders,
+        percentage: ((serviceProviders / total) * 100).toFixed(1),
+      },
+      {
+        role: 'Event Planner',
+        count: eventPlanners,
+        percentage: ((eventPlanners / total) * 100).toFixed(1),
+      },
+    ],
+      message: 'User role distribution fetched successfully',
+      statusCode: 200,
+      success: true,
+    }
   }
 }
