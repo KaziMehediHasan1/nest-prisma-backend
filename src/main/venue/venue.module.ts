@@ -1,13 +1,22 @@
 import { Module } from '@nestjs/common';
-import { VenueService } from './venue.service';
+import { VenueService } from './services/venue.service';
 import { VenueController } from './venue.controller';
-import { FilterService } from './filter.service';
-import { VenueRevenueService } from './venue-revenue.service';
+
+import { VenueRevenueService } from './services/venue-revenue.service';
 import { BookingService } from '../booking/booking.service';
-import { HomeService } from './home.service';
+import { HomeService } from './services/home.service';
+import { FilterService } from './services/filter.service';
+import { VenueOwnerService } from './services/venueOwner.service';
 
 @Module({
   controllers: [VenueController],
-  providers: [VenueService, FilterService, VenueRevenueService, BookingService, HomeService],
+  providers: [
+    VenueService,
+    FilterService,
+    VenueRevenueService,
+    BookingService,
+    HomeService,
+    VenueOwnerService,
+  ],
 })
 export class VenueModule {}
