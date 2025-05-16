@@ -9,7 +9,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ReviewService } from './review.service';
+import { ReviewService } from './services/review.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { VerifiedGuard } from 'src/guard/verify.guard';
@@ -28,7 +28,7 @@ export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 
   @Post('create')
-  async createReview( @Body() rawData: CreateReviewDto) {
+  async createReview(@Body() rawData: CreateReviewDto) {
     return this.reviewService.createReview(rawData);
   }
 
