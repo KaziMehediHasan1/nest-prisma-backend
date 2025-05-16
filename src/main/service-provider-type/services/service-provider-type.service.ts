@@ -4,11 +4,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DbService } from 'src/lib/db/db.service';
-import { CreateServiceProviderTypeDto } from './dto/createServiceProviderType.dto';
+import { CreateServiceProviderTypeDto } from '../dto/createServiceProviderType.dto';
 import { UploadService } from 'src/lib/upload/upload.service';
 import { ApiResponse } from 'src/interfaces/response';
 import { IdDto } from 'src/common/dto/id.dto';
-import { UpdateServiceTypeDto } from './dto/updateServiceType.dto';
+import { UpdateServiceTypeDto } from '../dto/updateServiceType.dto';
 
 @Injectable()
 export class ServiceProviderTypeService {
