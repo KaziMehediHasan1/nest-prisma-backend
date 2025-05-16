@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ServiceProviderTypeService } from './service-provider-type.service';
+import { ServiceProviderTypeService } from './services/service-provider-type.service';
 import { ServiceProviderTypeController } from './service-provider-type.controller';
 
 @Module({

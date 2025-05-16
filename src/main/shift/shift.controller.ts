@@ -1,5 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
-import { ShiftService } from './shift.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { ShiftService } from './services/shift.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from 'src/decorator/roles.decorator';
 import { AuthGuard } from '@nestjs/passport';
