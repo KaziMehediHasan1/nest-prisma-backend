@@ -10,7 +10,7 @@ import {
   UploadedFile,
   UseGuards,
 } from '@nestjs/common';
-import { EventPreferenceService } from './event-preference.service';
+import { EventPreferenceService } from './service/event-preference.service';
 import { CreateEventPreferenceDto } from './dto/create-event-preference.dto';
 import { UpdateEventPreferenceDto } from './dto/update-event-preference.dto';
 import { ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
@@ -31,8 +31,8 @@ export class EventPreferenceController {
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('avatar'))
   @ApiBearerAuth()
-  @UseGuards(AuthGuard("jwt"), VerifiedGuard, RolesGuard)
-  @Roles("ADMIN")
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
+  @Roles('ADMIN')
   create(
     @Body() createEventPreferenceDto: CreateEventPreferenceDto,
     @UploadedFile() avatar: Express.Multer.File,
@@ -48,7 +48,7 @@ export class EventPreferenceController {
   @Get('get')
   @ApiBearerAuth()
   @Roles('PLANNER')
-  @UseGuards(AuthGuard("jwt"), VerifiedGuard)
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard)
   findAll() {
     return this.eventPreferenceService.findAll();
   }

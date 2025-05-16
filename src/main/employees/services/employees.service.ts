@@ -4,8 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { DbService } from 'src/lib/db/db.service';
-import { CreateEmployeeDto } from './dto/createEmployee.dto';
-import { UpdateEmployeeDto } from './dto/updateEmployee.dto';
+import { CreateEmployeeDto } from '../dto/createEmployee.dto';
+import { UpdateEmployeeDto } from '../dto/updateEmployee.dto';
 import { Prisma } from '@prisma/client';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { IdDto } from 'src/common/dto/id.dto';
@@ -69,17 +69,14 @@ export class EmployeesService {
     });
   }
 
-  async getAllEmployees({
-    skip,
-    take
-  }:PaginationDto) {
+  async getAllEmployees({ skip, take }: PaginationDto) {
     return this.db.employee.findMany({
       include: {
         venue: true, // includes related venue if needed
         shifts: true, // includes assigned shifts if needed
       },
       take,
-      skip
+      skip,
     });
   }
 

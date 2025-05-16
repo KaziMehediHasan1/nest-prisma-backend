@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
-import { CreatePaymentIntentDtoWithId } from './dto/createPayment.dto';
+import { CreatePaymentIntentDtoWithId } from '../dto/createPayment.dto';
 import { DbService } from 'src/lib/db/db.service';
 import { $Enums } from '@prisma/client';
 import { ApiResponse } from 'src/interfaces/response';
@@ -407,7 +407,6 @@ export class BillingService {
           userId,
         },
       });
-    
 
       return {
         success: true,
