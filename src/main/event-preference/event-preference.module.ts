@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { EventPreferenceService } from './event-preference.service';
+import { EventPreferenceService } from './service/event-preference.service';
 import { EventPreferenceController } from './event-preference.controller';
 
 @Module({

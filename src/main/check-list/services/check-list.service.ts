@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { DbService } from 'src/lib/db/db.service';
-import { CreateTaskDto } from './dto/createTask.dto';
+import { CreateTaskDto } from '../dto/createTask.dto';
 import { ApiResponse } from 'src/interfaces/response';
 import { IdDto } from 'src/common/dto/id.dto';
-import { UpdateTaskDto } from './dto/updateTask.dto';
+import { UpdateTaskDto } from '../dto/updateTask.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { FilterTaskDto } from './dto/filter-task.dto';
+import { FilterTaskDto } from '../dto/filter-task.dto';
 
 @Injectable()
 export class CheckListService {
@@ -112,16 +112,16 @@ export class CheckListService {
 
     const now = new Date();
 
-    const taskWithArgent = tasks.map(task => {
-        const timeDiff = new Date(task.time).getTime() - now.getTime();
-        const hoursLeft = timeDiff / (1000 * 60 * 60);
-        const urgent = hoursLeft <= 12;
-  
-        return {
-          ...task,
-          urgent,
-        };
-      });
+    const taskWithArgent = tasks.map((task) => {
+      const timeDiff = new Date(task.time).getTime() - now.getTime();
+      const hoursLeft = timeDiff / (1000 * 60 * 60);
+      const urgent = hoursLeft <= 12;
+
+      return {
+        ...task,
+        urgent,
+      };
+    });
 
     return {
       success: true,
