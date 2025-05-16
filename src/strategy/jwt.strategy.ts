@@ -33,19 +33,24 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     const isExist = await this.db.user.findUnique({
       where: { 
         id: payload.sub,
-        email: payload.email 
+        email: payload.email,
       },
       select: {
         id: true,
         email: true,
         role: true,
         name: true,
-        profile:true
+        profile:true,
+        
       }
     });
 
     if (!isExist) {
       throw new UnauthorizedException('User not found');
+    }
+
+    if(isExist.profile?.susPend){
+      throw new UnauthorizedException('User is suspended');
     }
 
     const user = {
