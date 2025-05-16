@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DbService } from 'src/lib/db/db.service';
-import { CreateReviewDto } from './dto/createReview.dto';
+import { CreateReviewDto } from '../dto/createReview.dto';
 import { ApiResponse } from 'src/interfaces/response';
 import { IdDto } from 'src/common/dto/id.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -14,32 +14,32 @@ export class ReviewService {
   ): Promise<ApiResponse<any>> {
     try {
       const { profileId, venueId, ...rest } = rawData;
-    const review = await this.db.review.create({
-      data: {
-        ...(profileId && {
-          Profile: {
-            connect: {
-              id: profileId,
+      const review = await this.db.review.create({
+        data: {
+          ...(profileId && {
+            Profile: {
+              connect: {
+                id: profileId,
+              },
             },
-          },
-        }),
-        ...(venueId && {
-          Venue: {
-            connect: {
-              id: venueId,
+          }),
+          ...(venueId && {
+            Venue: {
+              connect: {
+                id: venueId,
+              },
             },
-          },
-        }),
-        ...rest,
-      },
-    });
+          }),
+          ...rest,
+        },
+      });
 
-    return {
-      success: true,
-      data: review,
-      message: 'Review created successfully',
-      statusCode: 200,
-    };
+      return {
+        success: true,
+        data: review,
+        message: 'Review created successfully',
+        statusCode: 200,
+      };
     } catch (error) {
       throw new BadRequestException(error);
     }
@@ -116,7 +116,10 @@ export class ReviewService {
       statusCode: 200,
     };
   }
-  async getAllVenueOwnerReviews(ownerId: string, {take, skip}:PaginationDto): Promise<ApiResponse<any>> {
+  async getAllVenueOwnerReviews(
+    ownerId: string,
+    { take, skip }: PaginationDto,
+  ): Promise<ApiResponse<any>> {
     // Step 1: Get all venues owned by the user
     const venues = await this.db.venue.findMany({
       where: {
@@ -129,7 +132,7 @@ export class ReviewService {
         name: true,
       },
       take,
-      skip
+      skip,
     });
 
     const venueIds = venues.map((v) => v.id);
@@ -140,7 +143,7 @@ export class ReviewService {
         message: 'No venues found',
         statusCode: 200,
         success: true,
-      }
+      };
     }
 
     // Step 2: Get all reviews for those venues
