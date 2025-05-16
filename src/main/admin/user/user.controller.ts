@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -6,16 +6,31 @@ import { RolesGuard } from 'src/guard/role.guard';
 import { VerifiedGuard } from 'src/guard/verify.guard';
 import { filter } from 'rxjs';
 import { GetAllProfilesDto } from './dto/getUser.dto';
+import { IdDto } from 'src/common/dto/id.dto';
+import { AuthService } from 'src/main/auth/auth.service';
 
-@ApiTags("admin")
+@ApiTags('admin')
 @Controller('user-management')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
 export class UserController {
-  constructor(private readonly userService: UserService) {}
-  
-  @Get("get-all-user")
+  constructor(
+    private readonly userService: UserService,
+    private readonly authService: AuthService,
+  ) {}
+
+  @Get('get-all-user')
   getAllUser(@Query() filter: GetAllProfilesDto) {
     return this.userService.getAllProfiles(filter);
+  }
+
+  @Post('suspend-user')
+  suspendUser(@Query() id: IdDto) {
+    return this.userService.suspendUser(id);
+  }
+
+  @Post('delete-user')
+  deleteUser(@Query() { id }: IdDto) {
+    return this.authService.deleteUser(id);
   }
 }
