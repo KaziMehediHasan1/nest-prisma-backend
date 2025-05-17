@@ -191,67 +191,74 @@ export class AnalyticsService {
     };
   }
 
-  async getUserGrowthLast6Months() {
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setMonth(startDate.getMonth() - 5); // Include current month = 6 total
-
-    // Get all users created in the last 6 months
-    const users = await this.db.user.findMany({
-      where: {
-        createdAt: {
-          gte: new Date(startDate.getFullYear(), startDate.getMonth(), 1),
-          lte: new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0),
-        },
+async getUserGrowthLast6Months() {
+  const endDate = new Date();
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - 5); // Include current month = 6 total
+  
+  // Get all users created in the last 6 months
+  const users = await this.db.user.findMany({
+    where: {
+      createdAt: {
+        gte: new Date(startDate.getFullYear(), startDate.getMonth(), 1),
+        lte: new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0),
       },
-      select: {
-        role: true,
-        createdAt: true,
-      },
+    },
+    select: {
+      role: true,
+      createdAt: true,
+    },
+  });
+  
+  // Initialize the data structure with month names and zero counts
+  const months: { fullLabel: string; name: string }[] = [];
+  const chartData: { name: string; eventPlanner: number; venueOwner: number; serviceProvider: number }[] = [];
+  
+  // Month name map
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  // Generate the empty data structure for 6 months
+  for (let i = 0; i < 6; i++) {
+    const date = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+    const monthIndex = date.getMonth();
+    
+    months.push({
+      fullLabel: `${date.getFullYear()}-${String(monthIndex + 1).padStart(2, '0')}`,
+      name: monthNames[monthIndex]
     });
-
-    // Generate labels like ['2024-12', '2025-01', ..., '2025-05']
-    const labels: string[] = [];
-    const monthIndexMap: Record<string, number> = {};
-
-    for (let i = 0; i < 6; i++) {
-      const date = new Date(
-        startDate.getFullYear(),
-        startDate.getMonth() + i,
-        1,
-      );
-      const label = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      labels.push(label);
-      monthIndexMap[label] = i;
-    }
-
-    // Initialize counts
-    const data = {
-      ALL_USERS: Array(6).fill(0),
-      VENUE_OWNER: Array(6).fill(0),
-      SERVICE_PROVIDER: Array(6).fill(0),
-      EVENT_PLANNER: Array(6).fill(0),
-    };
-
-    // Count users per month per role
-    for (const user of users) {
-      const createdAt = new Date(user.createdAt);
-      const label = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}`;
-      const idx = monthIndexMap[label];
-      if (idx !== undefined) {
-        data.ALL_USERS[idx] += 1;
-        if (user.role.includes('VENUE_OWNER')) data.VENUE_OWNER[idx] += 1;
-        if (user.role.includes('SERVICE_PROVIDER'))
-          data.SERVICE_PROVIDER[idx] += 1;
-        if (user.role.includes('PLANNER')) data.EVENT_PLANNER[idx] += 1;
+    
+    chartData.push({
+      name: monthNames[monthIndex],
+      eventPlanner: 0,
+      venueOwner: 0,
+      serviceProvider: 0
+    });
+  }
+  
+  // Count users per month per role
+  for (const user of users) {
+    const createdAt = new Date(user.createdAt);
+    const monthYearKey = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Find the index of this month in our data
+    const monthIndex = months.findIndex(month => month.fullLabel === monthYearKey);
+    
+    if (monthIndex !== -1) {
+      if (user.role.includes('PLANNER')) {
+        chartData[monthIndex].eventPlanner += 1;
+      }
+      if (user.role.includes('VENUE_OWNER')) {
+        chartData[monthIndex].venueOwner += 1;
+      }
+      if (user.role.includes('SERVICE_PROVIDER')) {
+        chartData[monthIndex].serviceProvider += 1;
       }
     }
-
-    return {
-      months: labels,
-      data,
-    };
   }
+  
+  return chartData;
+}
 
   async getUserRoleDistribution():Promise<ApiResponse<any>> {
     // Count total users for each role

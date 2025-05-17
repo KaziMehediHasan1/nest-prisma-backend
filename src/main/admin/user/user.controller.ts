@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { UserService } from './services/user.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -36,8 +36,8 @@ export class UserController {
     return this.authService.deleteUser(id);
   }
 
-  @Get('get-profile')
-  unSuspendUser(@Query() id: IdDto) {
+  @Get('get-profile/:id')
+  unSuspendUser(@Param() id: IdDto) {
     return this.getProfileService.getProfile(id);
   }
 }
