@@ -82,7 +82,7 @@ export class HomeService {
           name: true,
           area: true,
           capacity: true,
-          decoration: true,
+          description: true,
           venueImage: {
             select: { path: true },
           },
