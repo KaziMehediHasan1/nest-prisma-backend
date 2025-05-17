@@ -1,5 +1,13 @@
-import { Body, Controller, Delete, Get, Post, Query, UseGuards } from '@nestjs/common';
-import { CheckListService } from './check-list.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { CheckListService } from './services/check-list.service';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { VerifiedGuard } from 'src/guard/verify.guard';
@@ -37,7 +45,7 @@ export class CheckListController {
     return this.checkListService.delete(id);
   }
 
-  @Get('get/:id')   
+  @Get('get/:id')
   async get(@Query() id: IdDto) {
     return this.checkListService.getTaskById(id);
   }

@@ -12,6 +12,7 @@ import { ApiResponse } from 'src/interfaces/response';
 import { IdDto } from 'src/common/dto/id.dto';
 import { EventService } from 'src/lib/event/event.service';
 import { SetPriceDto } from './dto/setPrice.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class BookingService {
@@ -389,7 +390,10 @@ export class BookingService {
 
   // Set price end ================================
 
-  async getAllVenueOwnerBookings(ownerId: string):Promise<ApiResponse<any>> {
+  async getAllVenueOwnerBookings(
+    ownerId: string,
+    { skip, take }: PaginationDto,
+  ): Promise<ApiResponse<any>> {
     // Step 1: Get all venues owned by this user
     const venues = await this.db.venue.findMany({
       where: {
@@ -401,6 +405,8 @@ export class BookingService {
         id: true,
         name: true,
       },
+      skip,
+      take,
     });
 
     const venueIds = venues.map((v) => v.id);
@@ -421,13 +427,18 @@ export class BookingService {
           in: venueIds,
         },
         bookingStatus: {
-          in: ['PENDING', 'CONFIRMED'],
+          in: ['PENDING', 'CONFIRMED', 'REQUESTED'],
         },
       },
       include: {
         venue: {
           select: {
             name: true,
+            venueImage:{
+              select:{
+                path: true
+              }
+            },
             Profile: {
               select: {
                 name: true,
@@ -447,7 +458,7 @@ export class BookingService {
     });
 
     // Step 3: Format response
-    const data =  await bookings.map((booking) => ({
+    const data = await bookings.map((booking) => ({
       id: booking.id,
       venueName: booking.venue?.name ?? 'Unknown Venue',
       userName: booking.venue?.Profile?.name ?? 'Unknown Owner',
@@ -455,6 +466,9 @@ export class BookingService {
       eventDate: booking.selectedDate,
       totalAmount: booking.totalAmount,
       createdAt: booking.createdAt,
+      startTime: booking.startTime,
+      endTime: booking.endTime,
+      venueImage: booking.venue?.venueImage?.path ?? null,
     }));
 
     return {
@@ -462,6 +476,6 @@ export class BookingService {
       message: 'Bookings fetched successfully',
       statusCode: 200,
       success: true,
-    }
+    };
   }
 }

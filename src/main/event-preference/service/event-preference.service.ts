@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
-import { CreateEventPreferenceDto } from './dto/create-event-preference.dto';
-import { UpdateEventPreferenceDto } from './dto/update-event-preference.dto';
+import { CreateEventPreferenceDto } from '../dto/create-event-preference.dto';
+import { UpdateEventPreferenceDto } from '../dto/update-event-preference.dto';
 import { DbService } from 'src/lib/db/db.service';
 import { UploadService } from 'src/lib/upload/upload.service';
 import { EventService } from 'src/lib/event/event.service';
@@ -79,7 +79,7 @@ export class EventPreferenceService {
 
   findOne(id: IdDto) {
     return this.db.eventType.findUnique({
-      where:  id ,
+      where: id,
       include: {
         avatar: {
           select: {
@@ -90,7 +90,10 @@ export class EventPreferenceService {
     });
   }
 
-  async update(id: string, updateEventPreferenceDto: UpdateEventPreferenceDto): Promise<ApiResponse<any>> {
+  async update(
+    id: string,
+    updateEventPreferenceDto: UpdateEventPreferenceDto,
+  ): Promise<ApiResponse<any>> {
     // First check if the event preference exists
     const existingPreference = await this.db.eventType.findUnique({
       where: { id },
@@ -111,7 +114,6 @@ export class EventPreferenceService {
     if (updateEventPreferenceDto.name) {
       updateData.name = updateEventPreferenceDto.name;
     }
-
 
     let newFileInstance;
     if (updateEventPreferenceDto.avatar) {
