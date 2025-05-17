@@ -161,7 +161,12 @@ export class ReviewService {
         },
         Profile: {
           select: {
-            name: true, // or email or username
+            name: true,
+            image:{
+              select:{
+                path:true
+              }
+            } // or email or username
           },
         },
       },
@@ -177,6 +182,7 @@ export class ReviewService {
       venueName: review.Venue?.name,
       userName: review.Profile?.name,
       createdAt: review.createdAt,
+      userImage: review.Profile?.image?.path?? null
     }));
 
     return {

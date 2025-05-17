@@ -191,7 +191,7 @@ export class AnalyticsService {
     };
   }
 
-async getUserGrowthLast6Months() {
+async getUserGrowthLast6Months():Promise<ApiResponse<any>> {
   const endDate = new Date();
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - 5); // Include current month = 6 total
@@ -257,7 +257,14 @@ async getUserGrowthLast6Months() {
     }
   }
   
-  return chartData;
+  return {
+    success: true,
+    message: 'Analytics fetched successfully',
+    statusCode: 200,
+    data: {
+    chartData: chartData.reverse(),
+    }
+  };
 }
 
   async getUserRoleDistribution():Promise<ApiResponse<any>> {

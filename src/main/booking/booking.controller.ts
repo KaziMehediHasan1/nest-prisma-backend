@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { CreateBookingDto } from './dto/createBooking.dto';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
@@ -9,6 +9,7 @@ import { Roles } from 'src/decorator/roles.decorator';
 import { IdDto } from 'src/common/dto/id.dto';
 import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
 import { SetPriceDto } from './dto/setPrice.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Controller('booking')
 export class BookingController {
@@ -64,7 +65,7 @@ export class BookingController {
   @Roles("VENUE_OWNER")
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   @ApiBearerAuth()
-  getAllVenueOwnerBookings(@Req() {user}: AuthenticatedRequest){
+  getAllVenueOwnerBookings(@Req() {user}: AuthenticatedRequest, @Query() pagination: PaginationDto) {
     if(!user.profileId){
       return {
         data: [],
@@ -73,6 +74,6 @@ export class BookingController {
         success: true,
       };
     }
-    return this.bookingService.getAllVenueOwnerBookings(user.profileId)
+    return this.bookingService.getAllVenueOwnerBookings(user.profileId, pagination)
   }
 }
