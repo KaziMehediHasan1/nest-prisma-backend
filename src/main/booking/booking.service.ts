@@ -433,6 +433,7 @@ export class BookingService {
       include: {
         venue: {
           select: {
+            id: true,
             name: true,
             venueImage:{
               select:{
@@ -469,6 +470,9 @@ export class BookingService {
       startTime: booking.startTime,
       endTime: booking.endTime,
       venueImage: booking.venue?.venueImage?.path ?? null,
+      venueId: booking.venue?.id ?? null,
+      bookedById: booking.bookedById,
+      eventName: booking.eventName,
     }));
 
     return {

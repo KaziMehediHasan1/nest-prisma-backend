@@ -99,6 +99,8 @@ model Profile {
   serviceType              ServiceProviderType[]
   basePrice                Int                     @default(0)
   susPend                  Boolean                 @default(false)
+  receivedServiceReviews   ServiceProviderReview[] @relation("ReceivedServiceReviews")
+  givenServiceReviews      ServiceProviderReview[] @relation("GivenServiceReviews")
 }
 
 model ServiceProviderType {
@@ -445,6 +447,24 @@ model Review {
   Venue     Venue?   @relation(fields: [venueId], references: [id])
   Profile   Profile? @relation(fields: [profileId], references: [id])
   profileId String?
+}
+
+model ServiceProviderReview {
+  id String @id @default(uuid())
+
+  // Service provider being reviewed
+  serviceProviderId String
+  serviceProvider   Profile @relation("ReceivedServiceReviews", fields: [serviceProviderId], references: [id])
+
+  // Who is giving the review
+  reviewerId String
+  reviewer   Profile @relation("GivenServiceReviews", fields: [reviewerId], references: [id])
+
+  // Review content
+  rating    Int // Rating (e.g., 1-5 stars)
+  comment   String? // Optional comment
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Review end===================================================
