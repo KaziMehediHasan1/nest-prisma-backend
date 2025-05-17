@@ -168,4 +168,11 @@ export class VenueController {
   getAllVenues(@Query() pagination: PaginationDto) {
     return this.venueService.getAllVenues(pagination);
   }
+
+  @Get("get-venue-by-planner/:id")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard)
+  getVenueById(@Param() id: IdDto) {
+    return this.homeService.getVenueByIdByPlanner(id);
+  }
 }
