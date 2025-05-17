@@ -107,7 +107,7 @@ export class WorksService {
       },
     });
     return {
-      data,
+      data: data ? data : [],
       message: 'Work fetched successfully',
       statusCode: 200,
       success: true,
