@@ -13,7 +13,7 @@ import { IdDto } from 'src/common/dto/id.dto';
 import { ApiResponse } from 'src/interfaces/response';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { VenueRevenueService } from './venue-revenue.service';
-import { BookingService } from '../../booking/booking.service';
+import { BookingService } from '../../booking/services/booking.service';
 import { IdsDto } from 'src/common/dto/ids.sto';
 
 @Injectable()

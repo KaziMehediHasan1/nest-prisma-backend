@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { BookingService } from './booking.service';
+import { BadRequestException, Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { BookingService } from './services/booking.service';
 import { CreateBookingDto } from './dto/createBooking.dto';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
@@ -10,10 +10,15 @@ import { IdDto } from 'src/common/dto/id.dto';
 import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
 import { SetPriceDto } from './dto/setPrice.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { ServiceProviderService } from './services/service-provider.service';
+import { CreateServiceProviderBookingDto } from './dto/serviceProviderBooking.dto';
 
 @Controller('booking')
 export class BookingController {
-  constructor(private readonly bookingService: BookingService) {}
+  constructor(
+    private readonly bookingService: BookingService,
+    private readonly serviceProviderService: ServiceProviderService
+  ) {}
 
   @Post('create')
   @Roles('PLANNER')
@@ -75,5 +80,16 @@ export class BookingController {
       };
     }
     return this.bookingService.getAllVenueOwnerBookings(user.profileId, pagination)
+  }
+
+  @Post("service-provider-booking")
+  @Roles("PLANNER")
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
+  @ApiBearerAuth()
+  createServiceProviderBooking(@Body() dto: CreateServiceProviderBookingDto, @Req() {user}: AuthenticatedRequest) {
+    if (!user.profileId) {
+      throw new BadRequestException('Profile not Created');
+    }
+    return this.serviceProviderService.createBooking(dto, {id: user.profileId});
   }
 }
