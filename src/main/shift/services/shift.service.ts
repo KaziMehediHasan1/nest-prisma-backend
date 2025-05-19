@@ -25,7 +25,7 @@ export class ShiftService {
   }
 
   async createShift(dto: CreateShiftDto): Promise<ApiResponse<any>> {
-  const { venueId, startTime, endTime } = dto;
+  const { venueId, startTime, endTime, ids } = dto;
 
   // Validate venue exists
   const isExist = await this.isVenueExist(venueId);
@@ -77,6 +77,9 @@ export class ShiftService {
       endTime: endTimeDate,
       duration: durationInMinutes,
       shiftName: dto.shiftName,
+      employee:{
+        connect: ids.map((id) => ({ id }))
+      }
     },
   });
 
@@ -142,6 +145,7 @@ export class ShiftService {
       duration: durationInMinutes,
       shiftName: dto.shiftName ?? undefined,
       venueId: dto.venueId ?? undefined,
+     ...(dto.ids && { employee: { connect: dto.ids.map((id) => ({ id })) } }),
     },
   });
 
@@ -154,7 +158,7 @@ export class ShiftService {
 }
 
 
-  async getAllShifts({ skip, take }: PaginationDto): Promise<ApiResponse<any>> {
+  async getAllShifts({ skip, take }: PaginationDto, {id}:IdDto): Promise<ApiResponse<any>> {
     const shifts = await this.dbService.shift.findMany({
       include: {
         venue: true,
@@ -163,6 +167,11 @@ export class ShiftService {
       take,
       skip,
       orderBy: { startTime: 'asc' },
+      where: {
+        venue:{
+          profileId: id
+        }
+      }
     });
 
     return {

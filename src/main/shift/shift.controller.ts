@@ -27,9 +27,9 @@ import { UpdateShiftDto } from './dto/updateShift.sto';
 export class ShiftController {
   constructor(private readonly shiftService: ShiftService) {}
 
-  @Get('/all')
-  async getAllShifts(@Query() params: PaginationDto) {
-    return await this.shiftService.getAllShifts(params);
+  @Get('/all/:id')
+  async getAllShifts(@Query() params: PaginationDto, @Param() { id }: IdDto) {
+    return await this.shiftService.getAllShifts(params, { id });
   }
 
   @Get('/:id')

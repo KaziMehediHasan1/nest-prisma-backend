@@ -6,6 +6,7 @@ import { UtilService } from 'src/lib/util/util.service';
 
 @Injectable()
 export class AdminSeeder implements OnModuleInit {
+  private readonly logger = new Logger(AdminSeeder.name);
   constructor(
     private readonly config: ConfigService,
     private readonly lib: UtilService,
@@ -46,9 +47,9 @@ export class AdminSeeder implements OnModuleInit {
           }
         },
       });
-      Logger.log('Super Admin user created successfully.');
+      this.logger.log('Super Admin user created successfully.');
     } else {
-      Logger.log('Super Admin user already exists.');
+      this.logger.log('Super Admin user already exists.');
     }
   }
 }
