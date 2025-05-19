@@ -5,13 +5,13 @@ import {
   Logger,
 } from '@nestjs/common';
 import { DbService } from 'src/lib/db/db.service';
-import { CreateBookingDto } from './dto/createBooking.dto';
-import { UpdateBookingDto } from './dto/updateBooking.dto';
-import { $Enums, Profile, Venue } from '@prisma/client';
+import { CreateBookingDto } from '../dto/createBooking.dto';
+import { UpdateBookingDto } from '../dto/updateBooking.dto';
+import { $Enums, Venue } from '@prisma/client';
 import { ApiResponse } from 'src/interfaces/response';
 import { IdDto } from 'src/common/dto/id.dto';
 import { EventService } from 'src/lib/event/event.service';
-import { SetPriceDto } from './dto/setPrice.dto';
+import { SetPriceDto } from '../dto/setPrice.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
@@ -42,37 +42,22 @@ export class BookingService {
       eventTypeId,
       decoration: Decoration,
       venueId,
-      serviceProviderId,
       selectedDate,
       startTime,
       endTime,
       ...rest
     } = rawData;
 
-    if (!venueId?.trim() && !serviceProviderId?.trim()) {
-      throw new BadRequestException(
-        'Either venueId or serviceProviderId must be provided.',
-      );
+    if (!venueId?.trim()) {
+      throw new BadRequestException('Venue ID is required.');
     }
 
     let venue: Venue | null = null;
-    if (venueId?.trim()) {
-      venue = await this.db.venue.findUnique({
-        where: { id: venueId },
-      });
-      if (!venue) {
-        throw new BadRequestException('Venue not found.');
-      }
-    }
-
-    let serviceProvider: Profile | null = null;
-    if (serviceProviderId?.trim()) {
-      serviceProvider = await this.db.profile.findUnique({
-        where: { id: serviceProviderId },
-      });
-      if (!serviceProvider) {
-        throw new BadRequestException('Service Provider not found.');
-      }
+    venue = await this.db.venue.findUnique({
+      where: { id: venueId },
+    });
+    if (!venue) {
+      throw new BadRequestException('Venue not found.');
     }
 
     const start = new Date(startTime);
@@ -86,37 +71,18 @@ export class BookingService {
     const durationMinutes = Math.floor(durationMs / 60000);
 
     // Check for venue double booking
-    if (venueId?.trim()) {
-      const conflictingVenueBooking = await this.db.booking.findFirst({
-        where: {
-          venueId,
-          selectedDate,
-          AND: [{ startTime: { lt: end } }, { endTime: { gt: start } }],
-        },
-      });
+    const conflictingVenueBooking = await this.db.booking.findFirst({
+      where: {
+        venueId,
+        selectedDate,
+        AND: [{ startTime: { lt: end } }, { endTime: { gt: start } }],
+      },
+    });
 
-      if (conflictingVenueBooking) {
-        throw new BadRequestException(
-          'The venue is already booked for the selected date and time.',
-        );
-      }
-    }
-
-    // Check for service provider double booking
-    if (serviceProviderId?.trim()) {
-      const conflictingServiceBooking = await this.db.booking.findFirst({
-        where: {
-          serviceProviderId,
-          selectedDate,
-          AND: [{ startTime: { lt: end } }, { endTime: { gt: start } }],
-        },
-      });
-
-      if (conflictingServiceBooking) {
-        throw new BadRequestException(
-          'The service provider is already booked for the selected date and time.',
-        );
-      }
+    if (conflictingVenueBooking) {
+      throw new BadRequestException(
+        'The venue is already booked for the selected date and time.',
+      );
     }
 
     try {
@@ -132,10 +98,7 @@ export class BookingService {
             connect: { id: eventTypeId },
           },
           decoration: Decoration ? JSON.stringify(Decoration) : undefined,
-          ...(venue && { venue: { connect: { id: venue.id } } }),
-          ...(serviceProvider && {
-            serviceProvider: { connect: { id: serviceProvider.id } },
-          }),
+          venue: { connect: { id: venue.id } },
           selectedDate: new Date(selectedDate),
           startTime: start,
           endTime: end,
@@ -144,10 +107,10 @@ export class BookingService {
 
       booking.decoration = JSON.parse(booking.decoration ?? '{}');
 
-      const memberTwoId = venue?.profileId ?? serviceProvider?.id;
+      const memberTwoId = venue.profileId;
 
       if (!memberTwoId) {
-        throw new BadRequestException('memberTwoId could not be resolved');
+        throw new BadRequestException('Venue owner ID could not be resolved');
       }
 
       this.eventEmitter.emit('CONVERSATION_CREATE', {
@@ -233,11 +196,6 @@ export class BookingService {
     }
     if (updateData.venueId) {
       updatePayload.venue = { connect: { id: updateData.venueId } };
-    }
-    if (updateData.serviceProviderId) {
-      updatePayload.serviceProvider = {
-        connect: { id: updateData.serviceProviderId },
-      };
     }
     if (updateData.decoration) {
       updatePayload.decoration = JSON.stringify(updateData.decoration);

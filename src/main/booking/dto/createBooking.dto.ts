@@ -70,26 +70,17 @@ class DecorationDto {
   }
   
 
-// Modified CreateBookingDto
+// Modified CreateBookingDto for venue-only bookings
 export class CreateBookingDto {
   @ApiProperty({ description: 'ID of the user who booked', format: 'uuid' })
   @IsUUID('4', { message: 'bookedById must be a valid UUID (version 4).' })
   @IsNotEmpty()
   bookedById: string;
 
-  @ApiPropertyOptional({ description: 'Venue ID (optional)', format: 'uuid' , required: false})
+  @ApiProperty({ description: 'Venue ID', format: 'uuid' })
   @IsUUID()
-  @IsOptional()
-  venueId?: string;
-
-  @ApiPropertyOptional({
-    description: 'Service provider ID (optional)',
-    format: 'uuid',
-    required: false
-  })
-  @IsOptional()
-  @IsUUID()
-  serviceProviderId?: string;
+  @IsNotEmpty()
+  venueId: string;
 
   @ApiProperty({ description: 'Event name' })
   @IsString()
@@ -167,21 +158,6 @@ export class CreateBookingDto {
   @ApiProperty({ enum: BookingStatus, description: 'Booking status' })
   @IsEnum(BookingStatus)
   bookingStatus: BookingStatus;
-
-  // @ApiProperty({ description: 'Total amount for the booking', default: 0 })
-  // @IsInt()
-  // @Min(0)
-  // totalAmount: number;
-
-  // @ApiProperty({ description: 'Amount paid', default: 0 })
-  // @IsInt()
-  // @Min(0)
-  // paid: number;
-
-  // @ApiProperty({ description: 'Due amount', default: 0 })
-  // @IsInt()
-  // @Min(0)
-  // due: number;
 
   @ApiPropertyOptional({ description: 'Is the event finished?' })
   @IsOptional()

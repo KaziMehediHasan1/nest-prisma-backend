@@ -102,6 +102,7 @@ model Profile {
   receivedServiceReviews   ServiceProviderReview[] @relation("ReceivedServiceReviews")
   givenServiceReviews      ServiceProviderReview[] @relation("GivenServiceReviews")
   fcmToken                 FcmToken?
+  notification             Notification[]
 }
 
 model FcmToken {
@@ -109,6 +110,16 @@ model FcmToken {
   token     String   @unique
   Profile   Profile? @relation(fields: [profileId], references: [id])
   profileId String?  @unique
+}
+
+model Notification {
+  id        String  @id @default(uuid())
+  title     String
+  body      String
+  data      Json?
+  profileId String
+  ead       Boolean @default(false)
+  Profile   Profile @relation(fields: [profileId], references: [id])
 }
 
 model ServiceProviderType {

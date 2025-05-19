@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { IdDto } from 'src/common/dto/id.dto';
 import { ApiResponse } from 'src/interfaces/response';
 import { DbService } from 'src/lib/db/db.service';
-import { BookingService } from 'src/main/booking/booking.service';
+import { BookingService } from 'src/main/booking/services/booking.service';
 
 @Injectable()
 export class HomeService {
