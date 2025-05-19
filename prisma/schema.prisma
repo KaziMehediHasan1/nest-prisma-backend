@@ -101,6 +101,14 @@ model Profile {
   susPend                  Boolean                 @default(false)
   receivedServiceReviews   ServiceProviderReview[] @relation("ReceivedServiceReviews")
   givenServiceReviews      ServiceProviderReview[] @relation("GivenServiceReviews")
+  fcmToken                 FcmToken?
+}
+
+model FcmToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  Profile   Profile? @relation(fields: [profileId], references: [id])
+  profileId String?  @unique
 }
 
 model ServiceProviderType {
