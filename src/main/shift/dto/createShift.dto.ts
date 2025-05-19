@@ -4,8 +4,6 @@ import {
   IsNotEmpty,
   IsUUID,
   IsDateString,
-  IsInt,
-  Min,
 } from 'class-validator';
 
 export class CreateShiftDto {
@@ -32,14 +30,6 @@ export class CreateShiftDto {
   @IsDateString()
   @IsNotEmpty()
   endTime: string;
-
-  @ApiProperty({
-    description: 'Duration of the shift in minutes (auto-calculated if backend supports it)',
-    example: 480,
-  })
-  @IsInt()
-  @Min(1)
-  duration: number;
 
   @ApiProperty({
     description: 'Name or title of the shift',

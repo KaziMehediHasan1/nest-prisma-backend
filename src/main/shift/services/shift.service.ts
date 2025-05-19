@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -24,101 +25,134 @@ export class ShiftService {
   }
 
   async createShift(dto: CreateShiftDto): Promise<ApiResponse<any>> {
-    const { venueId, startTime, endTime } = dto;
+  const { venueId, startTime, endTime } = dto;
 
-    const isExist = await this.isVenueExist(venueId);
-    if (!isExist) {
-      throw new NotFoundException('Venue does not exist');
-    }
+  // Validate venue exists
+  const isExist = await this.isVenueExist(venueId);
+  if (!isExist) {
+    throw new NotFoundException('Venue does not exist');
+  }
 
-    const overlappingShift = await this.dbService.shift.findFirst({
-      where: {
-        venueId: isExist.id,
-        OR: [
-          {
-            startTime: {
-              lte: new Date(endTime),
-            },
-            endTime: {
-              gte: new Date(startTime),
-            },
+  // Convert string dates to Date objects
+  const startTimeDate = new Date(startTime);
+  const endTimeDate = new Date(endTime);
+
+  // Validate that end time is after start time
+  if (endTimeDate <= startTimeDate) {
+    throw new BadRequestException('End time must be after start time');
+  }
+
+  // Check for overlapping shifts
+  const overlappingShift = await this.dbService.shift.findFirst({
+    where: {
+      venueId: isExist.id,
+      OR: [
+        {
+          startTime: {
+            lte: endTimeDate,
           },
-        ],
-      },
-    });
+          endTime: {
+            gte: startTimeDate,
+          },
+        },
+      ],
+    },
+  });
 
-    if (overlappingShift) {
-      throw new ConflictException(
-        'Shift time conflicts with an existing shift',
-      );
-    }
-
-    // Create shift
-    const shift = await this.dbService.shift.create({
-      data: {
-        ...dto,
-        startTime: new Date(dto.startTime),
-        endTime: new Date(dto.endTime),
-      },
-    });
-
-    return {
-      message: 'Shift created successfully',
-      data: shift,
-      statusCode: 201,
-      success: true,
-    };
+  if (overlappingShift) {
+    throw new ConflictException(
+      'Shift time conflicts with an existing shift',
+    );
   }
 
-  async updateShift(
-    id: string,
-    dto: UpdateShiftDto,
-  ): Promise<ApiResponse<any>> {
-    const existingShift = await this.dbService.shift.findUnique({
-      where: { id },
-    });
+  // Calculate duration in minutes
+  const durationInMs = endTimeDate.getTime() - startTimeDate.getTime();
+  const durationInMinutes = Math.floor(durationInMs / (1000 * 60));
 
-    if (!existingShift) {
-      throw new NotFoundException('Shift not found');
-    }
+  // Create shift with calculated duration
+  const shift = await this.dbService.shift.create({
+    data: {
+      venueId,
+      startTime: startTimeDate,
+      endTime: endTimeDate,
+      duration: durationInMinutes,
+      shiftName: dto.shiftName,
+    },
+  });
 
-    // Use updated or existing values for conflict check
-    const startTime = dto.startTime
-      ? new Date(dto.startTime)
-      : existingShift.startTime;
-    const endTime = dto.endTime ? new Date(dto.endTime) : existingShift.endTime;
-    const venueId = dto.venueId || existingShift.venueId;
+  return {
+    message: 'Shift created successfully',
+    data: shift,
+    statusCode: 201,
+    success: true,
+  };
+}
 
-    // Conflict check (excluding this shift itself)
-    const conflictingShift = await this.dbService.shift.findFirst({
-      where: {
-        id: { not: id },
-        venueId,
-        startTime: { lte: endTime },
-        endTime: { gte: startTime },
-      },
-    });
+ async updateShift(
+  id: string,
+  dto: UpdateShiftDto,
+): Promise<ApiResponse<any>> {
+  const existingShift = await this.dbService.shift.findUnique({
+    where: { id },
+  });
 
-    if (conflictingShift) {
-      throw new ConflictException('Updated shift conflicts with another shift');
-    }
-
-    const updatedShift = await this.dbService.shift.update({
-      where: { id },
-      data: {
-        ...dto,
-        startTime: dto.startTime ? new Date(dto.startTime) : undefined,
-        endTime: dto.endTime ? new Date(dto.endTime) : undefined,
-      },
-    });
-
-    return {
-      data: updatedShift,
-      message: 'Shift updated successfully',
-      statusCode: 200,
-      success: true,
-    };
+  if (!existingShift) {
+    throw new NotFoundException('Shift not found');
   }
+
+  // Determine effective values
+  const startTime = dto.startTime
+    ? new Date(dto.startTime)
+    : existingShift.startTime;
+
+  const endTime = dto.endTime
+    ? new Date(dto.endTime)
+    : existingShift.endTime;
+
+  const venueId = dto.venueId || existingShift.venueId;
+
+  // Validate that end time is after start time
+  if (endTime <= startTime) {
+    throw new BadRequestException('End time must be after start time');
+  }
+
+  // Check for overlapping shifts excluding this shift
+  const conflictingShift = await this.dbService.shift.findFirst({
+    where: {
+      id: { not: id },
+      venueId,
+      startTime: { lte: endTime },
+      endTime: { gte: startTime },
+    },
+  });
+
+  if (conflictingShift) {
+    throw new ConflictException('Updated shift conflicts with another shift');
+  }
+
+  // Calculate duration in minutes
+  const durationInMs = endTime.getTime() - startTime.getTime();
+  const durationInMinutes = Math.floor(durationInMs / (1000 * 60));
+
+  const updatedShift = await this.dbService.shift.update({
+    where: { id },
+    data: {
+      startTime: dto.startTime ? startTime : undefined,
+      endTime: dto.endTime ? endTime : undefined,
+      duration: durationInMinutes,
+      shiftName: dto.shiftName ?? undefined,
+      venueId: dto.venueId ?? undefined,
+    },
+  });
+
+  return {
+    data: updatedShift,
+    message: 'Shift updated successfully',
+    statusCode: 200,
+    success: true,
+  };
+}
+
 
   async getAllShifts({ skip, take }: PaginationDto): Promise<ApiResponse<any>> {
     const shifts = await this.dbService.shift.findMany({
