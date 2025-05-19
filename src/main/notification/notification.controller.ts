@@ -7,7 +7,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { NotificationService } from './services/notification.service';
-import * as admin from 'firebase-admin';
 import { SendNotificationDto } from './dto/sendNotification.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { SaveFcmTokenDto } from './dto/saveFcm.dot';
