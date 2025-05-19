@@ -169,7 +169,7 @@ export class ShiftService {
       orderBy: { startTime: 'asc' },
       where: {
         venue:{
-          profileId: id
+           id
         }
       }
     });
