@@ -5,8 +5,9 @@ import {
   IsUUID,
   IsDateString,
 } from 'class-validator';
+import { IdsDto } from 'src/common/dto/ids.sto';
 
-export class CreateShiftDto {
+export class CreateShiftDto extends IdsDto {
   @ApiProperty({
     description: 'ID of the venue associated with the shift',
     example: '1c7e5e4a-f5d6-4c89-91c3-b1c937a2aeb9',

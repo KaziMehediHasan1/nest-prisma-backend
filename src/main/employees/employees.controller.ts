@@ -31,7 +31,7 @@ export class EmployeesController {
     return this.employeesService.createEmployee(data);
   }
 
-  @Post('update')
+  @Post('update/:id')
   updateEmployee(@Body() data: UpdateEmployeeDto, @Param() { id }: IdDto) {
     return this.employeesService.updateEmployee(id, data);
   }
