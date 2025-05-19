@@ -175,4 +175,12 @@ export class VenueController {
   getVenueById(@Param() id: IdDto) {
     return this.homeService.getVenueByIdByPlanner(id);
   }
+
+  @Get("get-venue-info-for-booking/:id")
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard)
+  getVenueInfoForBooking(@Param() id: IdDto) {
+    return this.homeService.getVenueInfoForBooking(id);
+  }
+  
 }

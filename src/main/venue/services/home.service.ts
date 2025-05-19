@@ -2,10 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { IdDto } from 'src/common/dto/id.dto';
 import { ApiResponse } from 'src/interfaces/response';
 import { DbService } from 'src/lib/db/db.service';
+import { BookingService } from 'src/main/booking/booking.service';
 
 @Injectable()
 export class HomeService {
-  constructor(private readonly db: DbService) {}
+  constructor(
+    private readonly db: DbService,
+    private readonly bookingService: BookingService,
+  ) {}
 
   async getHomeData(id: string) {
     const today = new Date();
@@ -125,6 +129,34 @@ export class HomeService {
         ...venue,
         averageRating: averageRating._avg.rating,
         totalReviews,
+      },
+      message: 'Venue fetched successfully',
+      statusCode: 200,
+      success: true,
+    };
+  }
+  async getVenueInfoForBooking({id}:IdDto):Promise<ApiResponse<any>>{
+    const venue = await this.db.venue.findUnique({
+      where: { id },
+      select: {
+        name: true,
+        area: true,
+        capacity: true,
+        description: true,
+        amenities: true,
+        venueImage: {
+          select: { path: true },
+        },
+        arrangementsImage: {
+          select: { path: true },
+        }
+      },
+    });
+    return {
+      data: {
+        ...venue,
+        decorationEnum: await this.bookingService.sendEnum(),
+        bookedDate: await this.bookingService.getBookedDate({id},true)
       },
       message: 'Venue fetched successfully',
       statusCode: 200,
