@@ -9,12 +9,12 @@ import { ApiResponse } from 'src/interfaces/response';
 import { DbService } from 'src/lib/db/db.service';
 import { UtilService } from 'src/lib/util/util.service';
 import { v4 as uuid } from 'uuid';
-import { AuthService } from '../../auth/auth.service';
 import { access } from 'fs';
 import { CreateGuestDto } from '../dto/createGuest.dto';
 import { UploadService } from 'src/lib/upload/upload.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { createGroupDto } from '../dto/createGroup.dto';
+import { AuthService } from 'src/main/auth/services/auth.service';
 
 @Injectable()
 export class GuestService {

@@ -3,12 +3,11 @@ import { UserService } from './services/user.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/guard/role.guard';
-import { VerifiedGuard } from 'src/guard/verify.guard';
-import { filter } from 'rxjs';
+import { VerifiedGuard } from 'src/guard/verify.guard';;
 import { GetAllProfilesDto } from './dto/getUser.dto';
 import { IdDto } from 'src/common/dto/id.dto';
-import { AuthService } from 'src/main/auth/auth.service';
 import { GetProfileService } from './services/get-profile.service';
+import { AutUserhService } from 'src/main/auth/services/authuser.service';
 
 @ApiTags('admin')
 @Controller('user-management')
@@ -17,7 +16,7 @@ import { GetProfileService } from './services/get-profile.service';
 export class UserController {
   constructor(
     private readonly userService: UserService,
-    private readonly authService: AuthService,
+    private readonly authuserservices: AutUserhService,
     private readonly getProfileService: GetProfileService,
   ) {}
 
@@ -33,7 +32,7 @@ export class UserController {
 
   @Post('delete-user')
   deleteUser(@Query() { id }: IdDto) {
-    return this.authService.deleteUser(id);
+    return this.authuserservices.deleteUser(id);
   }
 
   @Get('get-profile/:id')

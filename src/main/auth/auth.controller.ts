@@ -7,7 +7,7 @@ import {
   UseGuards,
   Get,
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { AuthService } from './services/auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyCodeDto } from './dto/verifyEmail.dto';
@@ -21,12 +21,16 @@ import { VerificationService } from 'src/lib/verification/verification.service';
 import { ResendVerifyCodeDto } from './dto/resendCode.dto';
 import { SwitchRoleDto } from './dto/switchRole.dto';
 import { VerifiedGuard } from 'src/guard/verify.guard';
+import { AuthpasswordService } from './services/authpassword.service';
+import { AutUserhService } from './services/authuser.service';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly VerificationService: VerificationService,
+    private readonly  authuserService: AutUserhService,
+    private readonly authpasswordService: AuthpasswordService,
   ) {}
 
   @Post('register')
@@ -41,7 +45,7 @@ export class AuthController {
       statusCode: 200,
       success: true,
       message: 'Verification code sent successfully',
-      data: null
+      data: null,
     };
   }
 
@@ -52,17 +56,17 @@ export class AuthController {
 
   @Post('verify-email')
   async verifyEmail(@Body() dto: VerifyCodeDto) {
-    return this.authService.verifyEmail(dto);
+    return this.authpasswordService.verifyEmail(dto);
   }
 
   @Post('send-password-reset-code')
   sendResetCode(@Body() email: SendResetCodeDto) {
-    return this.authService.sendPasswordResetCode(email);
+    return this.authpasswordService.sendPasswordResetCode(email);
   }
 
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.authService.resetPassword(dto);
+    return this.authpasswordService.resetPassword(dto);
   }
 
   @Post('verify-reset-code')
@@ -74,14 +78,14 @@ export class AuthController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   deleteAccount(@Req() req: AuthenticatedRequest) {
-    return this.authService.deleteUser(req.user.sub);
+    return this.authuserService.deleteUser(req.user.sub);
   }
 
   @Get('user-info')
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   GetUserInfo(@Req() req: AuthenticatedRequest) {
-    return this.authService.GetUserInfo({
+    return this.authuserService.GetUserInfo({
       id: req.user.sub,
     });
   }
@@ -93,7 +97,7 @@ export class AuthController {
     @Req() req: AuthenticatedRequest,
     @Body() { role }: SwitchRoleDto,
   ) {
-    return this.authService.switchRoll({
+    return this.authuserService.switchRoll({
       id: req.user.sub,
       role,
     });

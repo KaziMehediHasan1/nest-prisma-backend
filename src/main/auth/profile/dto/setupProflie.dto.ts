@@ -23,8 +23,7 @@ export class SetupPlannerProfileDto {
     message: `Gender must be one of: 
     ${$Enums.Gender.MALE}, 
     ${$Enums.Gender.FEMALE}, 
-    ${$Enums.Gender.OTHER}`
-    ,
+    ${$Enums.Gender.OTHER}`,
   })
   gender: $Enums.Gender;
 
@@ -74,14 +73,6 @@ export class SetupPlannerProfileDto {
   eventPreferenceIds: string[];
 
   @ApiProperty({
-    description: 'User Id',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  @IsString({ message: 'Address must be a string' })
-  @IsUUID('4', { message: 'User Id must be a valid uuid V4' })
-  userId: string;
-
-  @ApiProperty({
     description: 'User address',
     example: 'Jayed Bin Nazir',
   })
@@ -106,13 +97,13 @@ export class SetupVenueOwnerProfileDto {
   })
   image: Express.Multer.File;
 
-  @ApiProperty({
-    description: 'User Id',
-    example: '550e8400-e29b-41d4-a716-446655440000',
-  })
-  @IsString({ message: 'Address must be a string' })
-  @IsUUID('4', { message: 'User Id must be a valid uuid V4' })
-  userId: string;
+  // @ApiProperty({
+  //   description: 'User Id',
+  //   example: '550e8400-e29b-41d4-a716-446655440000',
+  // })
+  // @IsString({ message: 'Address must be a string' })
+  // @IsUUID('4', { message: 'User Id must be a valid uuid V4' })
+  // userId: string;
 
   @ApiProperty({
     description: 'User address',
@@ -152,7 +143,6 @@ export class SetupServiceProviderProfileDto {
   })
   eventPreferenceIds: string[];
 
-
   @ApiProperty({
     description: 'User DDescription',
     example: '123 Main St, Anytown, CA 90210',
@@ -188,9 +178,9 @@ export class SetupServiceProviderProfileDto {
     description: 'User Id',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
-  @IsString({ message: 'Address must be a string' })
-  @IsUUID('4', { message: 'User Id must be a valid uuid V4' })
-  userId: string;
+  // @IsString({ message: 'Address must be a string' })
+  // @IsUUID('4', { message: 'User Id must be a valid uuid V4' })
+  // userId: string;
 
   @ApiProperty({
     description: 'User address',
@@ -206,12 +196,11 @@ export class SetupServiceProviderProfileDto {
   @IsString({ message: 'Name must be a string' })
   name: string;
 
-   @ApiProperty({
+  @ApiProperty({
     description: 'ServiceType Id',
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
   @IsString({ message: 'ServiceType must be a string' })
   @IsUUID('4', { message: 'ServiceType Id must be a valid uuid V4' })
   serviceTypeId: string;
-
 }
