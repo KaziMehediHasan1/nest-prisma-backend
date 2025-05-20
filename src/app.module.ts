@@ -12,19 +12,20 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { CacheModule } from '@nestjs/cache-manager';
-
+import { BullModule } from '@nestjs/bullmq';
+import { QueuesModule } from './queues/queues.module';
 
 @Module({
   controllers: [AppController],
   providers: [
-    AppService, 
+    AppService,
     AdminSeeder,
     AmenitiesSeeder,
     JwtStrategy,
     AdminSeeder,
-    AmenitiesSeeder
+    AmenitiesSeeder,
   ],
-  
+
   imports: [
     LibModule,
     ConfigModule.forRoot({
@@ -38,19 +39,35 @@ import { CacheModule } from '@nestjs/cache-manager';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.getOrThrow('JWT_SECRET'),
-        signOptions: { expiresIn: '7d' }
+        signOptions: { expiresIn: '7d' },
       }),
-      inject: [ConfigService]
+      inject: [ConfigService],
+    }),
+
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService], // <- this line is required
+      useFactory: async (configService: ConfigService) => {
+        const host = configService.getOrThrow<string>('REDIS_HOST');
+        const port = configService.getOrThrow<string>('REDIS_PORT');
+        
+        return {
+          connection: {
+            host,
+            port:parseInt(port, 10),
+          },
+        };
+      },
     }),
 
     EventEmitterModule.forRoot(),
-    
+
     CacheModule.register({
       isGlobal: true,
     }),
-    
-            
+
+    QueuesModule,
   ],
-  exports: [JwtStrategy]
+  exports: [JwtStrategy],
 })
 export class AppModule {}

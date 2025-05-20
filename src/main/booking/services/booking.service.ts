@@ -3,6 +3,7 @@ import {
   BadRequestException,
   NotFoundException,
   Logger,
+  BadGatewayException,
 } from '@nestjs/common';
 import { DbService } from 'src/lib/db/db.service';
 import { CreateBookingDto } from '../dto/createBooking.dto';
@@ -393,10 +394,10 @@ export class BookingService {
           select: {
             id: true,
             name: true,
-            venueImage:{
-              select:{
-                path: true
-              }
+            venueImage: {
+              select: {
+                path: true,
+              },
             },
             Profile: {
               select: {
@@ -440,4 +441,88 @@ export class BookingService {
       success: true,
     };
   }
+
+ async getBookingsByVenueId({ id: venueId }: IdDto): Promise<ApiResponse<any>> {
+  try {
+    // Get bookings for the first three statuses only (REQUESTED, PENDING, CONFIRMED)
+    const requestedBookings = await this.db.booking.findMany({
+      where: {
+        venueId,
+        bookingStatus: 'REQUESTED',
+      },
+     orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        bookedBy: {
+          select: {
+            name: true,
+            image: true,
+            id: true,
+          },
+        },
+        EventType: true,
+      },
+      take:3
+    });
+
+    const pendingBookings = await this.db.booking.findMany({
+      where: {
+        venueId,
+        bookingStatus: 'PENDING',
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        bookedBy: {
+          select: {
+            name: true,
+            image: true,
+            id: true,
+          },
+        },
+        EventType: true,
+      },
+      take:3
+    });
+
+    const confirmedBookings = await this.db.booking.findMany({
+      where: {
+        venueId,
+        bookingStatus: 'COMPLETED',
+      },
+       orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        bookedBy: {
+          select: {
+            name: true,
+            image: true,
+            id: true,
+          },
+        },
+        EventType: true,
+      },
+      take:3
+    });
+
+    // Combine bookings in the desired order (REQUESTED, PENDING, CONFIRMED)
+    const allBookings = {
+      requestedBookings,
+      pendingBookings,
+      confirmedBookings
+    };
+
+    return {
+      data: allBookings,
+      message: 'Bookings fetched successfully',
+      statusCode: 200,
+      success: true,
+    };
+  } catch (error) {
+    throw new BadGatewayException(error);
+  }
+}
 }

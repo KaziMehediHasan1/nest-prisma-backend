@@ -118,7 +118,7 @@ model Notification {
   body      String
   data      Json?
   profileId String
-  ead       Boolean @default(false)
+  read       Boolean @default(false)
   Profile   Profile @relation(fields: [profileId], references: [id])
 }
 
