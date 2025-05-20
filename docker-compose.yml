@@ -9,8 +9,11 @@ services:
       - "5001:3000"
     environment:
       DATABASE_URL: postgresql://myuser:mypassword@db:5432/mydatabase
+      REDIS_HOST: redis  # ✅ now points to Redis container
+      REDIS_PORT: 6379
     depends_on:
       - db
+      - redis  # ✅ make sure Redis starts before app
     env_file:
       - .env
 
@@ -26,6 +29,13 @@ services:
       POSTGRES_DB: mydatabase
     volumes:
       - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis
+    container_name: redis
+    restart: always
+    ports:
+      - "6379:6379"  # ✅ expose for BullMQ
 
 volumes:
   pgdata:

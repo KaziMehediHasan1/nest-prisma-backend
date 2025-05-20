@@ -92,4 +92,12 @@ export class BookingController {
     }
     return this.serviceProviderService.createBooking(dto, {id: user.profileId});
   }
+
+  @Post("get-booking-by-venue-id/:id")
+  @Roles("VENUE_OWNER")
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
+  @ApiBearerAuth()
+  getBookingByVenueId(@Param() id: IdDto) {
+    return this.bookingService.getBookingsByVenueId(id);
+  }
 }

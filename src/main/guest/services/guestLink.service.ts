@@ -9,9 +9,10 @@ import {
   import { DbService } from 'src/lib/db/db.service';
 
   import { v4 as uuid } from 'uuid';
-  import { AuthService } from '../../auth/auth.service';
+  
 
   import { UploadService } from 'src/lib/upload/upload.service';
+import { AuthService } from 'src/main/auth/services/auth.service';
 
   
   @Injectable()

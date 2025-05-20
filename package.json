@@ -23,6 +23,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.758.0",
     "@aws-sdk/s3-request-presigner": "^3.758.0",
+    "@nestjs/bullmq": "^11.0.2",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.1",
@@ -38,6 +39,7 @@
     "@nestjs/websockets": "^11.0.15",
     "@prisma/client": "^6.6.0",
     "bcrypt": "^5.1.1",
+    "bullmq": "^5.52.3",
     "cache-manager": "^6.4.1",
     "cache-manager-redis-store": "^2.0.0",
     "class-transformer": "^0.5.1",
