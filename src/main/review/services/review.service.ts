@@ -105,12 +105,12 @@ export class ReviewService {
     return {
       success: true,
       data: {
-        reviews,
-        stats: {
+         stats: {
           averageRating: avgRating._avg.rating || 0,
           totalReviews,
           ratingsBreakdown: ratingsCount,
         },
+        reviews,
       },
       message: 'Reviews fetched successfully',
       statusCode: 200,

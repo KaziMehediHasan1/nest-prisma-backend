@@ -232,12 +232,13 @@ enum VenueStatus {
 // Verification Submission start ==================================
 
 model VerificationSubmission {
-  id           String        @id @default(uuid())
-  profile      Profile?
-  idCard       FileInstance? @relation("IdCard")
-  tradeLicense FileInstance? @relation("TradeLicense")
-  payment      Payment?
-  bio          String
+  id              String        @id @default(uuid())
+  profile         Profile?
+  idCard          FileInstance? @relation("IdCard")
+  tradeLicense    FileInstance? @relation("TradeLicense")
+  payment         Payment?
+  bio             String
+  isProvedByAdmin Boolean       @default(false)
 }
 
 // Verification Submission end ==================================
