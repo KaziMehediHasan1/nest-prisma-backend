@@ -13,7 +13,6 @@ export class NotificationService {
   constructor(
     private readonly firebaseService: FirebaseService,
     private readonly db: DbService,
-    @InjectQueue('notification') private readonly notificationQueue: Queue,
   ) {}
 
   async sendPushNotification({
@@ -31,8 +30,6 @@ export class NotificationService {
         },
         data: data || {},
       };
-
-      await this.notificationQueue.add('notification', {});
 
       const response = await this.firebaseService.getMessaging().send(message);
       return { success: true, response };

@@ -85,6 +85,12 @@ export class AutUserhService {
                 },
               },
             },
+            serviceType:{
+              select:{
+                name:true,
+                id:true
+              }
+            }
           },
         },
       },
