@@ -12,14 +12,26 @@ import { AuthGuard } from '@nestjs/passport';
 import { SaveFcmTokenDto } from './dto/saveFcm.dot';
 import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { EventService } from 'src/lib/event/event.service';
 
 @Controller('notification')
 export class NotificationController {
-  constructor(private readonly notificationService: NotificationService) {}
+  constructor(
+    private readonly notificationService: NotificationService,
+    private readonly eventEmitter: EventService
+  ) {}
 
   @Post('send')
   async sendNotification(@Body() data: SendNotificationDto) {
-    return this.notificationService.sendPushNotification(data);
+   await this.eventEmitter.emit('NOTIFICATION_SEND', {
+     fcmToken: data.token,
+     title: data.title,
+     body: data.body,
+     data: data.data,
+     profileId: data.id
+   });
+
+   return { success: true, message: 'Notification sent successfully' };
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -34,4 +46,6 @@ export class NotificationController {
     }
     return this.notificationService.saveFcm({ id: req.user.profileId }, data);
   }
+
+
 }

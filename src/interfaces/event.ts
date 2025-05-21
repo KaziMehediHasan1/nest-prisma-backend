@@ -1,4 +1,4 @@
-import { Notification } from "@prisma/client";
+import { NotificationEvent } from "src/common/types/NotificationEvent";
 
 export const EVENT_TYPES = {
   FILE_DELETE: 'FILE_DELETE',
@@ -8,6 +8,7 @@ export const EVENT_TYPES = {
   CONVERSATION_CREATE: 'CONVERSATION_CREATE',
   CHAT_LIST_UPDATE: 'CHAT_LIST_UPDATE',
   NOTIFICATION_SEND: 'NOTIFICATION_SEND',
+  BULK_NOTIFICATION_SEND: 'BULK_NOTIFICATION_SEND',
 } as const;
 
 export type EventType = typeof EVENT_TYPES[keyof typeof EVENT_TYPES];
@@ -66,5 +67,6 @@ export interface EventPayloadMap {
   [EVENT_TYPES.PASSWORD_RESET_EMAIL_SEND]: PasswordResetEmailEvent;
   [EVENT_TYPES.CONVERSATION_CREATE]: ConversationCreateEvent;
   [EVENT_TYPES.CHAT_LIST_UPDATE]: ChatListUpdateEvent;
-  [EVENT_TYPES.NOTIFICATION_SEND]: Partial<Notification>;
+  [EVENT_TYPES.NOTIFICATION_SEND]: Partial<NotificationEvent>;
+  [EVENT_TYPES.BULK_NOTIFICATION_SEND]: Partial<NotificationEvent>[];
 }

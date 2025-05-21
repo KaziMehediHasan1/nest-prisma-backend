@@ -1,8 +1,9 @@
 // src/notification/dto/send-notification.dto.ts
 import { IsNotEmpty, IsString, IsOptional, IsObject } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IdDto } from 'src/common/dto/id.dto';
 
-export class SendNotificationDto {
+export class SendNotificationDto extends IdDto {
   @ApiProperty({
     description: 'FCM token of the recipient device',
     example: 'dLzL_w3vQ8KcQ1SaKJWnhr:APA91bGLT...',
