@@ -115,13 +115,14 @@ model FcmToken {
 }
 
 model Notification {
-  id        String  @id @default(uuid())
+  id        String   @id @default(uuid())
   title     String
   body      String
   data      Json?
   profileId String
-  read      Boolean @default(false)
-  Profile   Profile @relation(fields: [profileId], references: [id])
+  read      Boolean  @default(false)
+  Profile   Profile  @relation(fields: [profileId], references: [id])
+  time      DateTime @default(now())
 }
 
 model ServiceProviderType {

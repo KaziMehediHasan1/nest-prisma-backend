@@ -4,6 +4,7 @@ import { Job } from 'bullmq';
 import { NotificationEvent } from 'src/common/types/NotificationEvent';
 import { NotificationJobPayload } from 'src/interfaces/notification';
 import { DbService } from 'src/lib/db/db.service';
+import { NotificationGateway } from 'src/main/notification/notification.gateway';
 import { NotificationService } from 'src/main/notification/services/notification.service';
 import validator from 'validator';
 
@@ -14,6 +15,7 @@ export class NotificationConsumers extends WorkerHost {
   constructor(
     private readonly db: DbService,
     private readonly NotificationService: NotificationService,
+    private readonly notificationGateway: NotificationGateway,
   ) {
     super();
   }
@@ -33,6 +35,11 @@ export class NotificationConsumers extends WorkerHost {
       data: job.data.data,
       id: job.data.profileId,
     });
+    await this.notificationGateway.notifyUser(job.data.profileId, {
+      title: job.data.title,
+      body: job.data.body,
+      data: job.data.data,
+    })
   }
 
   public async saveNotification(rawData: NotificationJobPayload) {

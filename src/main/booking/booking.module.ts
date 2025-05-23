@@ -4,10 +4,11 @@ import { BookingController } from './booking.controller';
 import { AmenitiesModule } from './amenities/amenities.module';
 import { ServiceProviderService } from './services/service-provider.service';
 import { GetBookingService } from './services/get-booking.service';
+import { GetServiceProviderBookingService } from './services/get-service-provider-booking.service';
 
 @Module({
   controllers: [BookingController],
-  providers: [BookingService, ServiceProviderService, GetBookingService],
+  providers: [BookingService, ServiceProviderService, GetBookingService, GetServiceProviderBookingService],
   imports: [AmenitiesModule],
 })
 export class BookingModule {}

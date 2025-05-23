@@ -9,7 +9,7 @@ import {
   ConnectedSocket,
   WsException,
 } from '@nestjs/websockets';
-import { forwardRef, Inject, Injectable, Logger, Catch, ArgumentsHost, UseFilters } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, UseFilters } from '@nestjs/common';
 import { Server, WebSocket } from 'ws';
 import { ChatService } from './chat.service';
 import { IncomingMessage } from 'http';
