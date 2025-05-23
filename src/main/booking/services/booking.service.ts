@@ -442,87 +442,89 @@ export class BookingService {
     };
   }
 
- async getBookingsByVenueId({ id: venueId }: IdDto): Promise<ApiResponse<any>> {
-  try {
-    // Get bookings for the first three statuses only (REQUESTED, PENDING, CONFIRMED)
-    const requestedBookings = await this.db.booking.findMany({
-      where: {
-        venueId,
-        bookingStatus: 'REQUESTED',
-      },
-     orderBy: {
-        createdAt: 'desc',
-      },
-      include: {
-        bookedBy: {
-          select: {
-            name: true,
-            image: true,
-            id: true,
-          },
+  async getBookingsByVenueId({
+    id: venueId,
+  }: IdDto): Promise<ApiResponse<any>> {
+    try {
+      // Get bookings for the first three statuses only (REQUESTED, PENDING, CONFIRMED)
+      const requestedBookings = await this.db.booking.findMany({
+        where: {
+          venueId,
+          bookingStatus: 'REQUESTED',
         },
-        EventType: true,
-      },
-      take:3
-    });
-
-    const pendingBookings = await this.db.booking.findMany({
-      where: {
-        venueId,
-        bookingStatus: 'PENDING',
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      include: {
-        bookedBy: {
-          select: {
-            name: true,
-            image: true,
-            id: true,
-          },
+        orderBy: {
+          createdAt: 'desc',
         },
-        EventType: true,
-      },
-      take:3
-    });
-
-    const confirmedBookings = await this.db.booking.findMany({
-      where: {
-        venueId,
-        bookingStatus: 'COMPLETED',
-      },
-       orderBy: {
-        createdAt: 'desc',
-      },
-      include: {
-        bookedBy: {
-          select: {
-            name: true,
-            image: true,
-            id: true,
+        include: {
+          bookedBy: {
+            select: {
+              name: true,
+              image: true,
+              id: true,
+            },
           },
+          EventType: true,
         },
-        EventType: true,
-      },
-      take:3
-    });
+        take: 3,
+      });
 
-    // Combine bookings in the desired order (REQUESTED, PENDING, CONFIRMED)
-    const allBookings = {
-      requestedBookings,
-      pendingBookings,
-      confirmedBookings
-    };
+      const pendingBookings = await this.db.booking.findMany({
+        where: {
+          venueId,
+          bookingStatus: 'PENDING',
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          bookedBy: {
+            select: {
+              name: true,
+              image: true,
+              id: true,
+            },
+          },
+          EventType: true,
+        },
+        take: 3,
+      });
 
-    return {
-      data: allBookings,
-      message: 'Bookings fetched successfully',
-      statusCode: 200,
-      success: true,
-    };
-  } catch (error) {
-    throw new BadGatewayException(error);
+      const confirmedBookings = await this.db.booking.findMany({
+        where: {
+          venueId,
+          bookingStatus: 'COMPLETED',
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          bookedBy: {
+            select: {
+              name: true,
+              image: true,
+              id: true,
+            },
+          },
+          EventType: true,
+        },
+        take: 3,
+      });
+
+      // Combine bookings in the desired order (REQUESTED, PENDING, CONFIRMED)
+      const allBookings = {
+        requestedBookings,
+        pendingBookings,
+        confirmedBookings,
+      };
+
+      return {
+        data: allBookings,
+        message: 'Bookings fetched successfully',
+        statusCode: 200,
+        success: true,
+      };
+    } catch (error) {
+      throw new BadGatewayException(error);
+    }
   }
-}
 }

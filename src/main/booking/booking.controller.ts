@@ -1,4 +1,14 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { BookingService } from './services/booking.service';
 import { CreateBookingDto } from './dto/createBooking.dto';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
@@ -14,13 +24,15 @@ import { ServiceProviderService } from './services/service-provider.service';
 import { CreateServiceProviderBookingDto } from './dto/serviceProviderBooking.dto';
 import { GetBookingService } from './services/get-booking.service';
 import { GetBookingByStatusDto } from './dto/getBooking.dto';
+import { GetServiceProviderBookingService } from './services/get-service-provider-booking.service';
 
 @Controller('booking')
 export class BookingController {
   constructor(
     private readonly bookingService: BookingService,
     private readonly serviceProviderService: ServiceProviderService,
-    private readonly getBooking: GetBookingService
+    private readonly getBooking: GetBookingService,
+    private readonly serviceProviderBooking: GetServiceProviderBookingService,
   ) {}
 
   @Post('create')
@@ -32,7 +44,7 @@ export class BookingController {
   }
 
   @Get('decoration_enum')
-  @Roles('PLANNER',"VENUE_OWNER")
+  @Roles('PLANNER', 'VENUE_OWNER')
   @ApiOperation({ summary: 'Get decoration enum to create booking' })
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   @ApiBearerAuth()
@@ -44,10 +56,10 @@ export class BookingController {
   @Roles('VENUE_OWNER')
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   @ApiBearerAuth()
-  getBookingList(@Req() {user}: AuthenticatedRequest) {
+  getBookingList(@Req() { user }: AuthenticatedRequest) {
     console.log(user);
-    
-    return this.bookingService.bookingList(user.profileId || "");
+
+    return this.bookingService.bookingList(user.profileId || '');
   }
 
   @Get('booked_dates/:id')
@@ -55,62 +67,94 @@ export class BookingController {
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   @ApiBearerAuth()
   getBookedDate(@Param() id: IdDto) {
-    
     return this.bookingService.getBookedDate(id);
   }
-  
 
   @Get('set-price')
   @Roles('VENUE_OWNER')
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   @ApiBearerAuth()
   setPrice(@Body() data: SetPriceDto) {
-    
     return this.bookingService.setPrice(data);
   }
 
-  @Get("get-all-venue-owner-bookings")
-  @Roles("VENUE_OWNER")
+  @Get('get-all-venue-owner-bookings')
+  @Roles('VENUE_OWNER')
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   @ApiBearerAuth()
-  getAllVenueOwnerBookings(@Req() {user}: AuthenticatedRequest, @Query() pagination: PaginationDto) {
-    if(!user.profileId){
+  getAllVenueOwnerBookings(
+    @Req() { user }: AuthenticatedRequest,
+    @Query() pagination: PaginationDto,
+  ) {
+    if (!user.profileId) {
       return {
         data: [],
-        message: "No venues found",
+        message: 'No venues found',
         statusCode: 200,
         success: true,
       };
     }
-    return this.bookingService.getAllVenueOwnerBookings(user.profileId, pagination)
+    return this.bookingService.getAllVenueOwnerBookings(
+      user.profileId,
+      pagination,
+    );
   }
 
-  @Post("service-provider-booking")
-  @Roles("PLANNER")
+  @Post('service-provider-booking')
+  @Roles('PLANNER')
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   @ApiBearerAuth()
-  createServiceProviderBooking(@Body() dto: CreateServiceProviderBookingDto, @Req() {user}: AuthenticatedRequest) {
+  createServiceProviderBooking(
+    @Body() dto: CreateServiceProviderBookingDto,
+    @Req() { user }: AuthenticatedRequest,
+  ) {
     if (!user.profileId) {
       throw new BadRequestException('Profile not Created');
     }
-    return this.serviceProviderService.createBooking(dto, {id: user.profileId});
+    return this.serviceProviderService.createBooking(dto, {
+      id: user.profileId,
+    });
   }
 
-  @Post("get-booking-by-venue-id/:id")
-  @Roles("VENUE_OWNER")
+  @Post('get-booking-by-venue-id/:id')
+  @Roles('VENUE_OWNER')
   @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
   @ApiBearerAuth()
   getBookingByVenueId(@Param() id: IdDto) {
     return this.bookingService.getBookingsByVenueId(id);
   }
 
-  @Get("get-booking-by-status/:bookingStatus/:id")
+  @Get('get-booking-by-status/:bookingStatus/:id')
   @UseGuards(AuthGuard('jwt'), VerifiedGuard)
   @ApiBearerAuth()
   getBookings(
     @Query() pagination: PaginationDto,
-    @Param() rawData: GetBookingByStatusDto
+    @Param() rawData: GetBookingByStatusDto,
   ) {
-    return this.getBooking.getBookingStatus(pagination, rawData.bookingStatus, {id: rawData.id});
+    return this.getBooking.getBookingStatus(pagination, rawData.bookingStatus, {
+      id: rawData.id,
+    });
+  }
+
+  @Get('get-service-provider-booking-by-status/:bookingStatus/:id')
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard)
+  @ApiBearerAuth()
+  getServiceProviderBookings(
+    @Query() pagination: PaginationDto,
+    @Param() rawData: GetBookingByStatusDto,
+  ) {
+    return this.serviceProviderBooking.getBookingStatus(
+      pagination,
+      rawData.bookingStatus,
+      { id: rawData.id },
+    );
+  }
+
+  @Post('get-booking-by-service-provider-id/:id')
+  @Roles('SERVICE_PROVIDER')
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard, RolesGuard)
+  @ApiBearerAuth()
+  getBookingByServiceProviderId(@Param() id: IdDto) {
+    return this.serviceProviderBooking.getServiceProviderBookingSummaries(id);
   }
 }
