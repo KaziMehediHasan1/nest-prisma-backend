@@ -85,12 +85,11 @@ export class AutUserhService {
                 },
               },
             },
-            serviceType:{
+            ServiceProviderType:{
               select:{
                 name:true,
                 id:true
               },
-              take:1
             }
           },
         },

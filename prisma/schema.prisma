@@ -96,13 +96,15 @@ model Profile {
   groupMessageId           String?
   amenities                Amenities[]
   works                    Works[]
-  serviceType              ServiceProviderType[]
-  basePrice                Int                     @default(0)
-  susPend                  Boolean                 @default(false)
-  receivedServiceReviews   ServiceProviderReview[] @relation("ReceivedServiceReviews")
-  givenServiceReviews      ServiceProviderReview[] @relation("GivenServiceReviews")
-  fcmToken                 FcmToken?
-  notification             Notification[]
+
+  basePrice              Int                     @default(0)
+  susPend                Boolean                 @default(false)
+  receivedServiceReviews ServiceProviderReview[] @relation("ReceivedServiceReviews")
+  givenServiceReviews    ServiceProviderReview[] @relation("GivenServiceReviews")
+  fcmToken               FcmToken?
+  notification           Notification[]
+  ServiceProviderType    ServiceProviderType?    @relation(fields: [serviceProviderTypeId], references: [id])
+  serviceProviderTypeId  String?
 }
 
 model FcmToken {
@@ -118,7 +120,7 @@ model Notification {
   body      String
   data      Json?
   profileId String
-  read       Boolean @default(false)
+  read      Boolean @default(false)
   Profile   Profile @relation(fields: [profileId], references: [id])
 }
 
