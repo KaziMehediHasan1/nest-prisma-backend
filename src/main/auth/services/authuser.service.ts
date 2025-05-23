@@ -89,7 +89,8 @@ export class AutUserhService {
               select:{
                 name:true,
                 id:true
-              }
+              },
+              take:1
             }
           },
         },

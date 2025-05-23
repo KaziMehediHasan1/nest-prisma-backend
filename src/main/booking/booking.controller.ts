@@ -12,12 +12,15 @@ import { SetPriceDto } from './dto/setPrice.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { ServiceProviderService } from './services/service-provider.service';
 import { CreateServiceProviderBookingDto } from './dto/serviceProviderBooking.dto';
+import { GetBookingService } from './services/get-booking.service';
+import { GetBookingByStatusDto } from './dto/getBooking.dto';
 
 @Controller('booking')
 export class BookingController {
   constructor(
     private readonly bookingService: BookingService,
-    private readonly serviceProviderService: ServiceProviderService
+    private readonly serviceProviderService: ServiceProviderService,
+    private readonly getBooking: GetBookingService
   ) {}
 
   @Post('create')
@@ -99,5 +102,15 @@ export class BookingController {
   @ApiBearerAuth()
   getBookingByVenueId(@Param() id: IdDto) {
     return this.bookingService.getBookingsByVenueId(id);
+  }
+
+  @Get("get-booking-by-status/:bookingStatus/:id")
+  @UseGuards(AuthGuard('jwt'), VerifiedGuard)
+  @ApiBearerAuth()
+  getBookings(
+    @Query() pagination: PaginationDto,
+    @Param() rawData: GetBookingByStatusDto
+  ) {
+    return this.getBooking.getBookingStatus(pagination, rawData.bookingStatus, {id: rawData.id});
   }
 }
