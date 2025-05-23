@@ -99,10 +99,10 @@ export class providerProfileService {
               id: userId,
             },
           },
-          serviceType: {
+          ServiceProviderType: {
             connect: {
-              id: serviceTypeId,
-            },
+              id: serviceTypeId
+          }
           },
           gender: 'OTHER',
           location,
@@ -342,7 +342,7 @@ export class providerProfileService {
             email: true,
           },
         },
-        serviceType: true,
+        ServiceProviderType: true,
         image: {
           select: {
             path: true,
