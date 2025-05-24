@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -13,6 +14,7 @@ import { SaveFcmTokenDto } from './dto/saveFcm.dot';
 import { AuthenticatedRequest } from 'src/common/types/RequestWithUser';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { EventService } from 'src/lib/event/event.service';
+import { CursorDto } from 'src/common/dto/cursor.dto';
 
 @Controller('notification')
 export class NotificationController {
@@ -47,5 +49,18 @@ export class NotificationController {
     return this.notificationService.saveFcm({ id: req.user.profileId }, data);
   }
 
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('get')
+  @ApiBearerAuth()
+  async getNotification(
+    @Req() req: AuthenticatedRequest,
+    @Query() rawDate: CursorDto
+  ) {
+    if (!req.user.profileId) {
+      throw new BadRequestException('Profile not Created');
+    }
+      return this.notificationService.getNotification({ id: req.user.profileId }, rawDate);
+  }
 
 }

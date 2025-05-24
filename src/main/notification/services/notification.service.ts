@@ -5,8 +5,7 @@ import { DbService } from 'src/lib/db/db.service';
 import { IdDto } from 'src/common/dto/id.dto';
 import { SaveFcmTokenDto } from '../dto/saveFcm.dot';
 import { ApiResponse } from 'src/interfaces/response';
-import { Queue } from 'bullmq';
-import { InjectQueue } from '@nestjs/bullmq';
+import { CursorDto } from 'src/common/dto/cursor.dto';
 
 @Injectable()
 export class NotificationService {
@@ -78,6 +77,23 @@ export class NotificationService {
     return {
       data: created,
       message: 'FCM token created successfully',
+      statusCode: 200,
+      success: true,
+    };
+  }
+
+  public async getNotification({ id }: IdDto,{ cursor, take }: CursorDto): Promise<ApiResponse<any>> {
+    
+    const data = await this.db.notification.findMany({
+      where: {
+        profileId: id,
+      },
+      take,
+      ...(cursor && { cursor: { id: cursor }, skip: 1 }),
+    });
+    return {
+      data,
+      message: 'Notifications fetched successfully',
       statusCode: 200,
       success: true,
     };
