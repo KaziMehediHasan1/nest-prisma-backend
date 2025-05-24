@@ -9,7 +9,13 @@ import {
   ConnectedSocket,
   WsException,
 } from '@nestjs/websockets';
-import { forwardRef, Inject, Injectable, Logger, UseFilters } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  UseFilters,
+} from '@nestjs/common';
 import { Server, WebSocket } from 'ws';
 import { ChatService } from './chat.service';
 import { IncomingMessage } from 'http';
@@ -27,7 +33,6 @@ interface MessagesSubscriptionData extends SubscriptionData {
     cursor?: string;
   };
 }
-
 
 @UseFilters(new WebSocketExceptionsFilter())
 @WebSocketGateway({
@@ -102,11 +107,11 @@ export class ChatGateway
       throw new WsException('Conversation ID is missing');
     }
     const isExist = await this.chatService.findConversationById(conversationId);
-    
+
     if (!isExist) {
       throw new WsException(`Conversation ${conversationId} does not exist`);
     }
-    
+
     this.subscribeClient(conversationId, client);
     client.send(JSON.stringify({ status: 'subscribed', conversationId }));
   }
@@ -127,19 +132,19 @@ export class ChatGateway
     @MessageBody() data: MessagesSubscriptionData,
   ): Promise<void> {
     const { conversationId, payload } = data;
-    if(!conversationId) {
+    if (!conversationId) {
       throw new WsException('Conversation ID is missing');
     }
     if (!payload) {
       throw new WsException('Payload is missing');
     }
-    
+
     const messages = await this.chatService.findMessagesByConversationId({
       id: conversationId,
       cursor: payload?.cursor,
       take: payload?.take,
     });
-    
+
     client.send(JSON.stringify(messages));
   }
 
@@ -163,7 +168,9 @@ export class ChatGateway
     for (const [conversationId, clients] of this.clients.entries()) {
       if (clients.has(client)) {
         clients.delete(client);
-        this.logger.log(`Client removed from conversation ${conversationId} due to disconnect`);
+        this.logger.log(
+          `Client removed from conversation ${conversationId} due to disconnect`,
+        );
       }
     }
   }
@@ -187,7 +194,9 @@ export class ChatGateway
         client.send(message);
       }
     });
-    
-    this.logger.log(`Broadcasted ${type} event to ${clients.size} clients in conversation ${conversationId}`);
+
+    this.logger.log(
+      `Broadcasted ${type} event to ${clients.size} clients in conversation ${conversationId}`,
+    );
   }
 }
