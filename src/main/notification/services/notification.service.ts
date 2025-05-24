@@ -83,7 +83,6 @@ export class NotificationService {
   }
 
   public async getNotification({ id }: IdDto,{ cursor, take }: CursorDto): Promise<ApiResponse<any>> {
-    console.log(cursor);
     
     const data = await this.db.notification.findMany({
       where: {
